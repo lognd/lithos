@@ -12,6 +12,7 @@ passes the existing gating drafting audit (INV-31).
 from __future__ import annotations
 
 import pytest
+from regolith._schema.models import Entity3
 from regolith.backends.drawings.audit import assert_ship_ready, run_drafting_rules
 from regolith.backends.drawings.producers import diagram_moody
 
@@ -98,6 +99,7 @@ def test_laminar_line_and_turbulent_curves_are_polylines():
     # one laminar line + one per eps/D family member.
     assert len(polylines) == 1 + 2
     for pl in polylines:
+        assert isinstance(pl, Entity3)
         assert len(pl.points) > 2
 
 

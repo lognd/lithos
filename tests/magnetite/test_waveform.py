@@ -10,6 +10,8 @@ outright, not a runtime `if` check).
 
 from __future__ import annotations
 
+from typing import Literal
+
 import pytest
 from pydantic import ValidationError
 from regolith.magnetite.waveform import (
@@ -62,7 +64,7 @@ def test_waveform_record_measured_construction_refuses_without_instrument_fields
     None
 ):
     with pytest.raises(TypeError):
-        WaveformMaskRecord.construct_measured(  # type: ignore[call-arg]
+        WaveformMaskRecord.construct_measured(  # ty: ignore[missing-argument]  # proving the constructor refuses without instrument fields
             package="p",
             key="k",
             record_class="mask",
@@ -134,11 +136,15 @@ def test_waveform_record_model_derived_construction_succeeds_with_resolving_hash
 
 
 def test_waveform_record_posture_less_construction_is_unrepresentable() -> None:
+    # `class` is a reserved word and can't be a normal kwarg -- unpack a
+    # dict typed to the field's real `Literal["waveform", "mask"]` alias
+    # type instead of losing it to `str`.
+    class_kwarg: dict[str, Literal["waveform", "mask"]] = {"class": "mask"}
     with pytest.raises(ValidationError):
         WaveformMaskRecord(
             package="p",
             key="k",
-            **{"class": "mask"},
+            **class_kwarg,
             quantity="elec.voltage",
             axes=_axes(),
             kind="envelope",
@@ -146,7 +152,7 @@ def test_waveform_record_posture_less_construction_is_unrepresentable() -> None:
             segments=_segments(),
             evidence=_evidence(),
             content_hash="sha256:" + "a" * 64,
-        )  # type: ignore[call-arg]
+        )
 
 
 def test_load_waveform_mask_records_reads_the_real_corpus_row() -> None:

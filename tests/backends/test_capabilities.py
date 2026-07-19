@@ -10,7 +10,10 @@ they retrofit (not just "the field exists").
 
 from __future__ import annotations
 
+from typing import Literal, TypedDict
+
 import pytest
+from pydantic import BaseModel
 from regolith._schema.models import FeatureProgram
 from regolith.backends.capabilities import (
     CapabilityRegistry,
@@ -24,7 +27,22 @@ from regolith.backends.capabilities import (
 from regolith.realizer.elec.kicad import LayoutRequest
 
 
-def _complete_kwargs() -> dict[str, object]:
+class _CapabilityKwargs(TypedDict):
+    """Mirrors `RealizerCapability`'s field set precisely (not
+    `dict[str, object]`) so `**kwargs` construction below type-checks
+    against the model's real per-field types instead of losing them."""
+
+    domain: str
+    program_kind: type[BaseModel]
+    realized_kind: str
+    artifact_families: tuple[str, ...]
+    tool_adapters: tuple[ToolAdapterDescriptor, ...]
+    process_records: tuple[str, ...]
+    dfm_checks: tuple[str, ...]
+    claim_kinds: tuple[str, ...]
+
+
+def _complete_kwargs() -> _CapabilityKwargs:
     """A fully-populated field set a test can selectively empty out."""
     return {
         "domain": "toy",
@@ -57,7 +75,11 @@ def test_registers_a_complete_capability() -> None:
         "claim_kinds",
     ],
 )
-def test_refuses_capability_missing_a_tuple_field(field: str) -> None:
+def test_refuses_capability_missing_a_tuple_field(
+    field: Literal[
+        "artifact_families", "tool_adapters", "process_records", "dfm_checks", "claim_kinds"
+    ],
+) -> None:
     kwargs = _complete_kwargs()
     kwargs[field] = ()
     registry = CapabilityRegistry()
@@ -200,4 +222,4 @@ def test_wire_edm_capability_is_honestly_populated() -> None:
 def test_capability_model_is_frozen() -> None:
     capability = RealizerCapability(**_complete_kwargs())
     with pytest.raises(Exception):  # noqa: B017, PT011 -- pydantic ValidationError on frozen mutation
-        capability.domain = "mutated"  # type: ignore[misc]
+        capability.domain = "mutated"  # ty: ignore[invalid-assignment]  # proving the frozen-model raise, not a real assignment

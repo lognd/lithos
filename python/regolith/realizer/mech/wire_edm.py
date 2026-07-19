@@ -41,6 +41,9 @@ from typani.result import Err, Ok, Result
 from regolith._schema.models import (
     Annotation,
     DrawingModel,
+    Entity1,
+    Entity2,
+    Entity4,
     EntityIndice,
     Kind2,
     Point,
@@ -222,7 +225,9 @@ def profile_drawing_model(realized: RealizedWireEdmProfile) -> DrawingModel:
     points = [Point([v.x_mm, v.y_mm]) for v in profile.vertices]
     if profile.closed:
         points.append(points[0])
-    entities = [PolylineEntity(kind=Kind2.polyline, points=points)]
+    entities: list[Entity1 | Entity2 | PolylineEntity | Entity4] = [
+        PolylineEntity(kind=Kind2.polyline, points=points)
+    ]
 
     annotations = [
         Annotation(

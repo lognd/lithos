@@ -227,6 +227,16 @@ class MetallurgyRecord(BaseModel):
         return value
 
 
+def _as_str_keyed(table: object, *, row_key: object, field: str) -> dict[str, object]:
+    """Narrows a parsed-TOML table to `dict[str, object]` for real (not a
+    suppression): TOML tables always have string keys, but `dict.get`
+    on a `dict[str, object]` row loses that at the type level, so we
+    verify it explicitly rather than asserting past it."""
+    if not isinstance(table, dict) or not all(isinstance(k, str) for k in table):
+        raise ValueError(f"row {row_key!r} field {field!r} is not a string-keyed table")
+    return table  # ty: ignore[invalid-return-type]  # dict is invariant; isinstance already proved str keys
+
+
 def _provenance_from_row(
     row: dict[str, object], field: str
 ) -> tuple[ProvenanceNote, ...]:
@@ -235,10 +245,19 @@ def _provenance_from_row(
     sub-note naming one specific declined source -- a TUPLE, never a
     single enum, matching the sibling `std.process` schema's own rule)."""
     table = row.get(field)
+    row_key = row.get("key")
     if isinstance(table, dict):
-        return (ProvenanceNote(**table),)  # type: ignore[arg-type]
+        # ty cannot verify a dynamic dict[str, object]'s values line up
+        # with ProvenanceNote's precise per-field types (LaxStr, a
+        # Literal enum, ...) -- pydantic validates that at runtime, and
+        # that runtime validation IS the real check; a static per-field
+        # match is not obtainable from a TOML-sourced table.
+        return (ProvenanceNote(**_as_str_keyed(table, row_key=row_key, field=field)),)  # ty: ignore[invalid-argument-type]
     if isinstance(table, list):
-        return tuple(ProvenanceNote(**t) for t in table)  # type: ignore[arg-type]
+        return tuple(
+            ProvenanceNote(**_as_str_keyed(t, row_key=row_key, field=field))  # ty: ignore[invalid-argument-type]
+            for t in table
+        )
     raise ValueError(f"row {row.get('key')!r} missing {field!r} table/array")
 
 

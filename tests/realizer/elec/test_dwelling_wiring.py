@@ -7,6 +7,8 @@ ampacity/voltage-drop claim through the real WO-135 `AmpacityModel`/
 
 from __future__ import annotations
 
+from typing import NotRequired, TypedDict, Unpack
+
 from regolith.realizer.elec.dwelling_wiring import (
     BranchCircuit,
     DwellingCircuitPlan,
@@ -16,9 +18,32 @@ from regolith.realizer.elec.dwelling_wiring import (
 )
 
 
+class _CircuitOverrides(TypedDict, total=False):
+    """Mirrors `BranchCircuit`'s field set precisely (not
+    `dict[str, object]`) so `**overrides` type-checks against the
+    model's real per-field types instead of losing them to `object`."""
+
+    name: str
+    room: str
+    load_class: str
+    connected_va: float
+    wire_gauge: str
+    breaker_a: float
+    length_m: float
+    base_ampacity_a: float
+    resistance_ohm_per_m: float
+    reactance_ohm_per_m: float
+    power_factor: float
+    phase_multiplier: float
+    voltage_v: float
+    temperature_correction_factor: float
+    fill_adjustment_factor: float
+    max_voltage_drop_pct: float
+
+
 # frob:ticket T-0047
-def _circuit(**overrides: object) -> BranchCircuit:
-    defaults: dict[str, object] = dict(
+def _circuit(**overrides: Unpack[_CircuitOverrides]) -> BranchCircuit:
+    defaults: _CircuitOverrides = dict(
         name="kitchen_feed",
         room="Kitchen",
         load_class="receptacle",
@@ -30,12 +55,29 @@ def _circuit(**overrides: object) -> BranchCircuit:
         resistance_ohm_per_m=0.00521,
     )
     defaults.update(overrides)
-    return BranchCircuit(**defaults)  # type: ignore[arg-type]
+    return BranchCircuit(**defaults)
+
+
+class _PlanOverrides(TypedDict, total=False):
+    """Mirrors `DwellingCircuitPlan`'s field set precisely (not
+    `dict[str, object]`); `circuits` is filled in below `_plan`'s own
+    default from its `*circuits` varargs, never passed as an override
+    directly."""
+
+    panel_name: str
+    service_amps: float
+    service_voltage: float
+    circuits: NotRequired[tuple[BranchCircuit, ...]]
+    room: str
+    working_clearance_mm: float
+    min_working_clearance_mm: float
 
 
 # frob:ticket T-0047
-def _plan(*circuits: BranchCircuit, **overrides: object) -> DwellingCircuitPlan:
-    defaults: dict[str, object] = dict(
+def _plan(
+    *circuits: BranchCircuit, **overrides: Unpack[_PlanOverrides]
+) -> DwellingCircuitPlan:
+    defaults: _PlanOverrides = dict(
         panel_name="MainPanel",
         service_amps=200.0,
         service_voltage=240.0,
@@ -45,7 +87,7 @@ def _plan(*circuits: BranchCircuit, **overrides: object) -> DwellingCircuitPlan:
         circuits=circuits or (_circuit(),),
     )
     defaults.update(overrides)
-    return DwellingCircuitPlan(**defaults)  # type: ignore[arg-type]
+    return DwellingCircuitPlan(**defaults)
 
 
 # frob:ticket T-0047

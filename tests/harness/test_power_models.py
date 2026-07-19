@@ -172,7 +172,9 @@ def test_ampacity_named_absence_refuses_without_default() -> None:
     )
     outcome = model.discharge(request, registry_version="test")
     assert outcome.is_err
-    assert outcome.danger_err.missing == ("base_ampacity_a",)
+    err = outcome.danger_err
+    assert isinstance(err, InputError)
+    assert err.missing == ("base_ampacity_a",)
 
 
 # ---------------------------------------------------------------------------
@@ -214,7 +216,9 @@ def test_fault_current_pct_z_named_absence_refuses() -> None:
     )
     outcome = model.discharge(request, registry_version="test")
     assert outcome.is_err
-    assert outcome.danger_err.missing == ("pct_z",)
+    err = outcome.danger_err
+    assert isinstance(err, InputError)
+    assert err.missing == ("pct_z",)
 
 
 def test_fault_current_citation_names_screening_not_certified_study() -> None:
@@ -256,7 +260,9 @@ def test_motor_start_dip_named_absence_refuses_without_code_letter_default() -> 
     )
     outcome = model.discharge(request, registry_version="test")
     assert outcome.is_err
-    assert outcome.danger_err.missing == ("motor_locked_rotor_kva",)
+    err = outcome.danger_err
+    assert isinstance(err, InputError)
+    assert err.missing == ("motor_locked_rotor_kva",)
 
 
 # ---------------------------------------------------------------------------

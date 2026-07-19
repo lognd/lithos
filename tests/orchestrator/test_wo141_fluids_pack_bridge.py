@@ -242,6 +242,7 @@ def _obligation_like(
     irrelevant field of `ClaimForm1`/`Given`/`Obligation` from scratch."""
     form = template.claim.form.model_copy(update={"lhs": lhs, "op": op, "rhs": rhs})
     claim = template.claim.model_copy(update={"name": name, "form": form})
+    assert template.payloads is not None, "template obligation must carry payloads"
     payloads = [
         p.model_copy(update={"origin": flownet_name}) for p in template.payloads
     ]

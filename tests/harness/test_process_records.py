@@ -13,6 +13,8 @@ without type mismatch (WO-164 integration).
 
 from __future__ import annotations
 
+from typing import NotRequired, TypedDict
+
 import pytest
 from pydantic import ValidationError
 from regolith._schema.models import FeatureProgram
@@ -38,7 +40,29 @@ from regolith.harness.models.dfm.process_seeds import (
 )
 
 
-def _minimal_kwargs() -> dict[str, object]:
+class _ProcessRecordKwargs(TypedDict):
+    """Mirrors `ProcessRecord`'s field set precisely (not
+    `dict[str, object]`) so `**kwargs` construction below type-checks
+    against the model's real per-field types. `provenance` is
+    `NotRequired` only so `test_process_record_requires_provenance`
+    below can `del` it to prove the schema itself refuses the
+    omission -- every other test still supplies it."""
+
+    key: str
+    name: str
+    din_8580_class: str
+    materials: tuple[str, ...]
+    size_limits: tuple[SizeLimit, ...]
+    tolerance_grades: tuple[object, ...]
+    surface_finish: tuple[object, ...]
+    min_features: tuple[MinFeature, ...]
+    cost_drivers: tuple[object, ...]
+    lead_class: str
+    provenance: NotRequired[tuple[ProvenanceNote, ...]]
+    dfm_check_ids: tuple[str, ...]
+
+
+def _minimal_kwargs() -> _ProcessRecordKwargs:
     """A fully-populated `ProcessRecord` kwargs dict a test can
     selectively break."""
     return {
@@ -102,7 +126,7 @@ def test_provenance_note_missing_posture_is_refused() -> None:
     """Constructing a `ProvenanceNote` with no `posture` at all is
     refused (the required-field, no-default posture marker)."""
     with pytest.raises(ValidationError):
-        ProvenanceNote(scope="record", detail="x")  # type: ignore[call-arg]
+        ProvenanceNote(scope="record", detail="x")  # ty: ignore[missing-argument]  # proving pydantic refuses the omission at runtime
 
 
 def test_provenance_note_pd_gov_requires_citation_detail() -> None:

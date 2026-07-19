@@ -238,12 +238,21 @@ def check_index_consistency(
     unresolved_rows = sorted(index_paths - file_paths)
     known_families = set(registry.families())
     hintless_families = sorted({r.family for r in index.rows} - known_families)
-    unmatched_patterns = sorted(
-        r.relpath
-        for r in index.rows
-        if r.family in known_families
-        and match_path_pattern(r.relpath, registry.get(r.family)) is None  # type: ignore[arg-type]
-    )
+    unmatched_patterns = []
+    for r in index.rows:
+        if r.family not in known_families:
+            continue
+        registration = registry.get(r.family)
+        # `r.family in known_families` (built from `registry.families()`)
+        # guarantees this lookup hits -- but ty can't correlate a set
+        # membership test against a separate dict lookup, so narrow
+        # explicitly rather than re-suppressing a real None-ability check.
+        assert registration is not None, (
+            f"family {r.family!r} in known_families but missing from registry"
+        )
+        if match_path_pattern(r.relpath, registration) is None:
+            unmatched_patterns.append(r.relpath)
+    unmatched_patterns = sorted(unmatched_patterns)
     malformed_provenance = sorted(
         r.relpath
         for r in index.rows

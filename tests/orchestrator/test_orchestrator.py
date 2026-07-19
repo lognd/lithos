@@ -1391,7 +1391,9 @@ def test_working_clearance_discharges_end_to_end_via_build(tmp_path) -> None:  #
         and r.evidence.model_id == "elec_power_working_clearance@1"
     ]
     assert results, "the working_clearance claim must reach its registered model"
-    assert results[0].evidence.status.value == "discharged"
+    evidence = results[0].evidence
+    assert evidence is not None
+    assert evidence.status.value == "discharged"
 
 
 def test_working_clearance_violates_for_an_undersized_room(tmp_path) -> None:  # type: ignore[no-untyped-def]
@@ -1412,7 +1414,9 @@ def test_working_clearance_violates_for_an_undersized_room(tmp_path) -> None:  #
         and r.evidence.model_id == "elec_power_working_clearance@1"
     ]
     assert results, "the working_clearance claim must still reach its model"
-    assert results[0].evidence.status.value == "violated"
+    evidence = results[0].evidence
+    assert evidence is not None
+    assert evidence.status.value == "violated"
 
 
 def test_working_clearance_with_no_declared_room_dimension_defers_naming_it(

@@ -359,7 +359,12 @@ class WaveformMaskRecord(BaseModel):
 
 
 def _parse_segment(row: dict[str, object]) -> Segment:
-    return Segment(t=float(row["t"]), v=float(row["v"]))
+    t_raw, v_raw = row["t"], row["v"]
+    if not isinstance(t_raw, (int, float, str)):
+        raise ValueError(f"segment 't' must be numeric, got {t_raw!r}")
+    if not isinstance(v_raw, (int, float, str)):
+        raise ValueError(f"segment 'v' must be numeric, got {v_raw!r}")
+    return Segment(t=float(t_raw), v=float(v_raw))
 
 
 def _parse_provenance(
@@ -496,7 +501,7 @@ def load_waveform_mask_records(
             return Err(provenance.danger_err)
         try:
             segments = tuple(_parse_segment(s) for s in row["segments"])
-            record_row = {
+            record_row: dict[str, object] = {
                 "quantity": str(row["quantity"]),
                 "axes": axes_row,
                 "kind": str(row["kind"]),
