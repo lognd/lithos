@@ -202,6 +202,85 @@ extra L1 legality check.
 - The `==` ban applies to the underlying continuous quantity,
   view or no view.
 
+## 5b. Waveform and mask records (D263.1, WO-151)
+
+[SETTLED, cycle 37/D263] Sec. 5's `mask` and `structure: transient(...)`
+vocabulary named the shape ("registry objects, `from_table`/`from_fn`,
+hash-pinned") without a concrete record home. This subsection is that
+home: the `waveform` and `mask` record classes, a `class = "waveform"
+| "mask"` row under a package's `records/*.toml` (the ordinary
+magnetite record-class mechanism, sec. 6 -- no new plugin kind).
+
+```toml
+[[waveform]]
+key = "monotonic_rise"
+class = "mask"                       # "waveform" | "mask"
+quantity = "elec.voltage"            # dimension checked vs. the
+                                      # consuming claim's subject at
+                                      # ref-resolution time
+axes = { t = "s", value = "V" }      # units declared ONCE per record
+                                      # (charter 41 discipline,
+                                      # generalized to records)
+kind = "envelope"                    # nominal | envelope | tolerance
+interp = "linear"                    # linear | hold -- NO splines,
+                                      # permanent language rule
+segments = [
+  { t = 0.0, v = 0.0 },
+  { t = 1.0, v = 1.0 },
+]
+provenance = { posture = "authored", tool = "hand-drawn", author = "...", date = "..." }
+evidence = { method = "analysis", trust_tier = "community", reference = "..." }
+```
+
+- **The alignment rule**: `t = 0` in `segments` is the CONSUMING
+  WINDOW's start (the claim's own `during`/`within d after e` text
+  supplies the anchor event); the record never names an event itself,
+  so one record can be cited from any window without a second copy.
+- **`quantity`/`axes` dimension check**: at the point a `mask=`
+  reference resolves, the record's declared `quantity` (and its
+  `axes.value` unit) is checked against the citing claim's subject
+  dimension -- a disagreement is a diagnostic, not a silent
+  coincidence of the numbers working out. One home for the check,
+  regolith-qty's job (the compiler core), same as every other
+  dimension check in this spec.
+- **Posture taxonomy** (D263.1, orthogonal to the sec. 6 trust tier):
+  every record declares exactly one of --
+  - `posture = "authored"`: hand-drawn design intent (D260 ruling 3).
+    The only posture any authoring-surface code path (a GUI, a hand-
+    editor) can construct. Usable as a mask/stimulus profile
+    (`stays_within`, `structure: transient`) -- NEVER as a verified
+    numeric expectation.
+  - `posture = "measured"`: a real captured trace. Requires
+    instrument-provenance fields (`instrument`, `date`, `operator` at
+    minimum) to construct at all -- unconstructible without them, the
+    same "no constructor without a citation" precedent as D257 ruling
+    2. The measured-trace IMPORTER is deferred (charter 40 sec. 6);
+    this posture's SHAPE is settled here so the importer has
+    somewhere to land later.
+  - `posture = "model_derived"`: computed from a resolving calc-sheet.
+    Unconstructible without that resolving hash, which only the
+    pipeline holds -- there is no public constructor path a GUI or
+    hand-editor could reach to mint one directly (D246's
+    unreachability doctrine: "cannot forge a pass").
+  A record with no posture is unrepresentable (the field is required,
+  no default) -- a fourth, silently-trusted kind never appears
+  (`python/regolith/backends/harness_pack.py`'s `Provenance.kind` stays
+  exactly `"none"`/`"calc_sheet"`/`"claim"`/`"record"`; an authored
+  waveform record cited where a verified expectation is required
+  refuses, it never becomes a fifth silently-trusted kind -- see the
+  `bringup_expectation_authored_posture` diagnostic, regolith-diag
+  family `BringUp`, E11xx).
+- **`interp = linear | hold`, no splines**: permanent language rule
+  (cuprite/03 sec. 7); a freehand-curve-fit mask is out of scope by
+  construction, matching hematite's `from_table`/`from_fn` rule for
+  geometric curves (02-language.md sec. on curves).
+- Constraint-solving over waveform segments stays retired (D46,
+  cuprite/03 sec. 7); this record class is a data shape, not a solver.
+
+Python home: `regolith.magnetite.waveform` (`WaveformMaskRecord`,
+`Posture`, `AuthoredProvenance`/`MeasuredProvenance`/
+`ModelDerivedProvenance`, `resolve_mask_ref`).
+
 ## 6. Property registries
 
 Shared, hash-pinned databases of real-world facts, owned by neither

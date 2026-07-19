@@ -387,8 +387,16 @@ pub(crate) fn parse_settles_form(
 /// core's job, `resolve_unit_suffix`). Scoped to the `floor(`/
 /// `ceiling(` constructors ONLY: a NAMED mask (`CISPR_11_A`,
 /// `cell_ovp(4.2V, 2)`) is a hash-pinned reference whose text is
-/// never rewritten -- its containment semantics stay the recorded
-/// payload-channel residual.
+/// never rewritten here -- its containment semantics stay the
+/// recorded payload-channel residual at THIS layer. The residual is
+/// resolved one layer up, not by rewriting this text: WO-151/D263.1
+/// gives the referenced name a real record home (`class = "waveform"
+/// | "mask"` in `records/*.toml`, `regolith.magnetite.waveform.
+/// resolve_mask_ref`, regolith/02 sec. 5b) with a posture taxonomy
+/// (`authored`/`measured`/`model_derived`) and a quantity/axes
+/// dimension check against the citing claim's subject -- this
+/// lowering pass still only ever sees and preserves the bare ref
+/// string.
 // frob:doc docs/modules/regolith-lower.md#claims
 // frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn resolve_scalar_mask_units(mask: &str) -> String {

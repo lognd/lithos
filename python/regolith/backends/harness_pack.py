@@ -35,10 +35,24 @@ from regolith.backends.debug_taps import Tap, TapHeaderRecord, TapSet, tap_marke
 from regolith.backends.framework import OutputFile
 from regolith.errors import BackendError
 from regolith.logging_setup import get_logger
+from regolith.magnetite.waveform import resolve_mask_ref
 from regolith.orchestrator.discharge import ObligationResult
 from regolith.orchestrator.translate import si_sheet_fields
 
 _log = get_logger(__name__)
+
+# `E1104` -- WO-151/D263.1: `bringup_expectation_authored_posture`.
+# PENDING-CODEGEN (this WO's implementer is scoped to the
+# `comparison.rs` Rust residual only, per dispatch; minting the real
+# `regolith-diag::code::BringUp` slot -- confirmed free at E1104 as of
+# this WO, `crates/regolith-diag/src/code.rs:620-640` shows E1101-
+# E1103 assigned -- and its `explain.rs` entry is escalated to a
+# follow-up so `make codes` can regenerate `regolith._codes` from a
+# single Rust source, per the WO-131/D247.1 house mechanism). Bare
+# string now, backfilled to the real `DiagCode` later with NO
+# grandfathering, exactly like `EXPECTATION_PROVENANCE_UNRESOLVED`'s
+# own pre-D247.2 history above.
+BRINGUP_EXPECTATION_AUTHORED_POSTURE = "bringup_expectation_authored_posture"
 
 # charter 40 sec. 2 ranking, reused for bring-up ordering (safety-relevant
 # rails first, then clocks, buses, everything else) -- the SAME family
@@ -69,13 +83,21 @@ ProvenanceKind = Literal["calc_sheet", "claim", "record", "none"]
 class Provenance(BaseModel):
     """D224's provenance pin for one expected signal: a discharged calc
     sheet's digest, a claim id (declared but not model-backed numeric),
-    a declared record, or `none` (the honest, reasoned absence)."""
+    a declared record, or `none` (the honest, reasoned absence).
+
+    `posture` is populated ONLY for `kind == "record"` (WO-151,
+    D263.1): the record class's own evidence-posture tag
+    (`authored`/`measured`/`model_derived`), carried here so
+    `check_bringup_expectation_authored_posture` can refuse an
+    `authored` record cited as a verified expectation without a
+    second resolution pass."""
 
     model_config = ConfigDict(frozen=True)
 
     kind: ProvenanceKind
     ref: str
     reason: str = ""
+    posture: str | None = None
 
 
 # frob:doc docs/modules/py-backends.md#backends-harness-pack
@@ -485,6 +507,82 @@ def check_expectation_provenance(
         "check_expectation_provenance: %d signal row(s), all provenance refs "
         "resolve, every populated value carries units",
         len(doc.get("signals", ())),
+    )
+    return Ok(None)
+
+
+# frob:doc docs/modules/py-backends.md#backends-harness-pack
+def check_bringup_expectation_authored_posture(
+    expected_bytes: bytes,
+    records_dirs: tuple[str, ...],
+    package: str = "",
+) -> Result[None, BackendError]:
+    """WO-151 deliverable 4: refuse an `expected_signals.json` row whose
+    `provenance.kind == "record"` cites a `posture = "authored"`
+    waveform/mask record -- an authored (hand-drawn) record is design
+    intent (D260 ruling 3), never a verified numeric expectation. The
+    record remains perfectly usable as a mask/stimulus profile
+    (`stays_within`, `structure: transient`); it is only refused HERE,
+    at the point it is cited as a `expected_signals`/`model=` verified
+    pin.
+
+    Every `record`-kind ref is resolved fresh against `records_dirs`
+    (WO-151 deliverable 3's `resolve_mask_ref`) rather than trusting
+    the row's own `posture` field, so a row that lies about its cited
+    record's posture cannot forge a pass (D246's unreachability
+    doctrine, the same one this record class's constructors follow)."""
+    try:
+        doc = json.loads(expected_bytes.decode("ascii"))
+    except (ValueError, UnicodeDecodeError) as exc:
+        return Err(
+            BackendError(
+                kind="expected_signals_malformed",
+                message=f"expected_signals.json is not JSON: {exc}",
+            )
+        )
+    refused: list[str] = []
+    for row in doc.get("signals", ()):
+        provenance = row.get("provenance", {})
+        if provenance.get("kind") != "record":
+            continue
+        ref = provenance.get("ref", "")
+        resolved = resolve_mask_ref(ref, records_dirs, package=package)
+        if resolved.is_err:
+            # A record ref that does not resolve at all is
+            # `check_expectation_provenance`'s job (an unresolved
+            # provenance ref, E1101); this check only judges POSTURE
+            # on a ref that DID resolve.
+            continue
+        posture = resolved.danger_ok.provenance.posture
+        if posture == "authored":
+            refused.append(
+                f"channel {row.get('channel')}: record ref {ref!r} is "
+                f"posture={posture!r}"
+            )
+    if refused:
+        _log.error(
+            "check_bringup_expectation_authored_posture: %d authored-posture "
+            "record(s) cited as a verified expectation: %s",
+            len(refused),
+            refused,
+        )
+        return Err(
+            BackendError(
+                kind=BRINGUP_EXPECTATION_AUTHORED_POSTURE,  # E1104 (pending codegen)
+                message=(
+                    "expected_signals.json cites an authored-posture "
+                    "waveform/mask record where a verified expectation is "
+                    "required (D263.1: authored is design intent, never a "
+                    "model-backed or measured value); the record stays "
+                    "usable as a mask/stimulus profile (stays_within, "
+                    f"structure: transient), never as a verified pin: "
+                    f"{refused}"
+                ),
+            )
+        )
+    _log.info(
+        "check_bringup_expectation_authored_posture: no authored-posture "
+        "record cited as a verified expectation"
     )
     return Ok(None)
 

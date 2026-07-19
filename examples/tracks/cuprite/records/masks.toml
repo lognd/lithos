@@ -1,0 +1,34 @@
+# Waveform/mask records (D263.1, WO-151, regolith/02 sec. 5b).
+#
+# `buck_converter.cupr:34`'s `softstart: stays_within(v(out),
+# mask=monotonic_rise(5ms), within 5ms after enabled)` cited a NAMED
+# mask that resolved to nothing (the comparison.rs residual this WO
+# closes). This row gives it a real, cited, unit-declared record: a
+# hand-drawn monotonic soft-start envelope, posture `authored` (D260
+# ruling 3 -- design intent, never dressed as model-backed or
+# measured), tier `community`. `t = 0` here is the CONSUMING window's
+# start (the claim's own `within 5ms after enabled` supplies the
+# anchor event) -- the record never names `enabled` itself.
+
+[[waveform]]
+key = "monotonic_rise"
+class = "mask"
+quantity = "elec.voltage"
+axes = { t = "s", value = "V" }
+kind = "envelope"
+interp = "linear"
+segments = [
+  { t = 0.0, v = 0.0 },
+  { t = 0.005, v = 1.0 },
+]
+
+[waveform.provenance]
+posture = "authored"
+tool = "hand-drawn"
+author = "coordinator"
+date = "2026-07-19"
+
+[waveform.evidence]
+method = "analysis"
+trust_tier = "community"
+reference = "buck_converter.cupr softstart intent: monotonic 0->100% rise over the 5ms softstart window, no overshoot/undershoot segments (design intent, not a measured trace)"

@@ -142,6 +142,30 @@ and `CitedInterval` require a `Citation` at construction time, so
 pydantic's own validation makes an uncited value a parse/type error,
 never a lint finding a reviewer could miss.
 
+<a id="magnetite-waveform"></a>
+### `magnetite/waveform.py`
+
+The `waveform`/`mask` record class (D263.1, WO-151; `regolith/02-
+quantity-core.md` sec. 5b). `WaveformMaskRecord` (frozen) is built
+ONLY through three named constructors that enforce the
+`authored`/`measured`/`model_derived` evidence-posture taxonomy by
+UNREACHABILITY, not a runtime check: `construct_authored` is the only
+one any authoring-surface code path can reach; `construct_measured`
+requires instrument-provenance fields (`instrument`/`date`/`operator`)
+as required keyword arguments; `construct_model_derived` requires a
+`calc_sheet_hash` and refuses a structurally malformed one outright
+(no default anywhere lets a caller mint a `model_derived` record
+without a resolving hash). `load_waveform_mask_records` parses
+`records/*.toml` `[[waveform]]` rows; `resolve_mask_ref` is the
+name-based, hash-pinned lookup a `mask=` reference resolves through
+(WO-151 deliverable 3), re-checking a resolved `model_derived` row's
+`calc_sheet_hash` against real calc-sheet digests rather than
+trusting the row. The quantity/axes dimension check against a citing
+claim's subject is regolith-qty's job in the compiler core (escalated
+in this WO's close-out, `docs/workflow/design-log/
+2026-07-19-cycle-38.md`); this module resolves the NAME and the hash
+only.
+
 ## Registry client and trust
 
 <a id="magnetite-index"></a>

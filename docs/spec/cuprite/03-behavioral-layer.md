@@ -310,3 +310,10 @@ masks, eye masks parameterized by data rate, parameterized ramps --
 is a `from_fn`/`from_table` mask with parameters, no solved
 constraint system needed. Reopen only on a failing example (a mask
 whose segments must be *solved for* jointly under claims).
+
+The concrete record HOME for a waveform/mask profile (the TOML
+`class = "waveform" | "mask"` shape, the `authored`/`measured`/
+`model_derived` posture taxonomy, and the alignment rule that `t = 0`
+is the consuming window's start, never an event carried in the
+record) is `regolith/02-quantity-core.md` sec. 5b (D263.1, WO-151) --
+one record home shared by mech and elec, not duplicated here.

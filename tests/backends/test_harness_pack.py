@@ -445,3 +445,83 @@ def _empty_acceptance():
     from regolith.orchestrator.acceptance import AcceptanceOutcome
 
     return AcceptanceOutcome(accepted_hashes=frozenset(), deviations=())
+
+
+# frob:tests python/regolith/backends/harness_pack.py::check_bringup_expectation_authored_posture
+def test_check_bringup_expectation_authored_posture_refuses_authored_record_cited_as_expectation() -> (
+    None
+):
+    """WO-151 deliverable 4/D263.1: a fixture `expected_signals.json` row
+    citing `examples/tracks/cuprite/records/masks.toml`'s real
+    `monotonic_rise` record (posture `authored`) as a `record`-kind
+    provenance ref refuses with `BRINGUP_EXPECTATION_AUTHORED_POSTURE`,
+    naming the ref and its posture directly (not a placeholder)."""
+    import json
+
+    from regolith.backends.harness_pack import (
+        BRINGUP_EXPECTATION_AUTHORED_POSTURE,
+        check_bringup_expectation_authored_posture,
+    )
+
+    doc = {
+        "schema": "regolith.expected_signals.v1",
+        "signals": [
+            {
+                "channel": 0,
+                "target_path": "v(out)",
+                "kind": "rail",
+                "quantity": "voltage",
+                "expected": "1.0",
+                "units": "V",
+                "provenance": {
+                    "kind": "record",
+                    "ref": "monotonic_rise(5ms)",
+                    "reason": "",
+                },
+                "note": "",
+            }
+        ],
+    }
+    expected_bytes = json.dumps(doc).encode("ascii")
+    result = check_bringup_expectation_authored_posture(
+        expected_bytes,
+        ("examples/tracks/cuprite/records",),
+        package="examples.tracks.cuprite",
+    )
+    assert result.is_err
+    assert result.danger_err.kind == BRINGUP_EXPECTATION_AUTHORED_POSTURE
+    assert "monotonic_rise(5ms)" in result.danger_err.message
+    assert "authored" in result.danger_err.message
+
+
+# frob:tests python/regolith/backends/harness_pack.py::check_bringup_expectation_authored_posture
+def test_check_bringup_expectation_authored_posture_passes_when_no_record_refs_present() -> (
+    None
+):
+    """A row set with no `record`-kind provenance ref at all (the
+    ordinary calc_sheet/claim/none shapes every other test in this
+    file exercises) never trips this check."""
+    import json
+
+    from regolith.backends.harness_pack import check_bringup_expectation_authored_posture
+
+    doc = {
+        "schema": "regolith.expected_signals.v1",
+        "signals": [
+            {
+                "channel": 0,
+                "target_path": "v(out)",
+                "kind": "rail",
+                "quantity": "voltage",
+                "expected": None,
+                "units": "",
+                "provenance": {"kind": "none", "ref": "", "reason": "no obligation"},
+                "note": "no_verified_expectation",
+            }
+        ],
+    }
+    expected_bytes = json.dumps(doc).encode("ascii")
+    result = check_bringup_expectation_authored_posture(
+        expected_bytes, ("examples/tracks/cuprite/records",), package="examples.tracks.cuprite"
+    )
+    assert result.is_ok
