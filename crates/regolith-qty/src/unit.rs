@@ -27,6 +27,7 @@ pub type Scale = Ratio<i64>;
 )]
 #[must_use]
 // frob:doc docs/modules/regolith-qty.md#unit
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn ratio_to_f64(r: Scale) -> f64 {
     *r.numer() as f64 / *r.denom() as f64
 }
@@ -217,6 +218,7 @@ impl Unit {
     /// True when this unit has a nonzero additive offset (`degC`).
     #[must_use]
     // frob:doc docs/modules/regolith-qty.md#unit
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn is_offset(&self) -> bool {
         self.offset != Scale::from_integer(0)
     }
@@ -237,6 +239,7 @@ impl Unit {
                   produces (same precedent as quantity.rs's ratio_to_f64)"
     )]
     // frob:doc docs/modules/regolith-qty.md#unit
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn si_magnitude(&self, magnitude: f64) -> f64 {
         let scale = (*self.scale.numer() as f64) / (*self.scale.denom() as f64);
         let offset = (*self.offset.numer() as f64) / (*self.offset.denom() as f64);
@@ -256,6 +259,7 @@ impl Unit {
     /// itself accept back as input.
     #[must_use]
     // frob:doc docs/modules/regolith-qty.md#unit
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn base_symbol(&self) -> String {
         for (name, exps, scale, offset) in UNIT_TABLE {
             if *scale != (1, 1) || *offset != (0, 1) {
@@ -283,6 +287,7 @@ impl Unit {
     /// Returns [`UnitError`] when the symbol is unknown or an offset
     /// unit is prefixed.
     // frob:doc docs/modules/regolith-qty.md#unit
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn parse_atom(symbol: &str) -> Result<Unit, UnitError> {
         // Trailing integer exponent suffix (`m2`, `s2`, `mm3`): the atom
         // is its base symbol raised to that integer power (AD-9 rational
@@ -364,6 +369,7 @@ impl Unit {
     /// Returns [`UnitError`] on any unknown atom or misuse of offset
     /// units in algebra.
     // frob:doc docs/modules/regolith-qty.md#unit
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn parse_expr(expr: &str) -> Result<Unit, UnitError> {
         // WO-02 scope: at most one binary operator (`/` or `.`); the
         // full precedence/parenthesized grammar is the WO-05 hook.
@@ -387,6 +393,7 @@ impl Unit {
     /// Returns [`UnitError::OffsetInAlgebra`] if either operand is an
     /// offset unit.
     // frob:doc docs/modules/regolith-qty.md#unit
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn mul(&self, other: &Unit) -> Result<Unit, UnitError> {
         if self.is_offset() {
             return Err(UnitError::OffsetInAlgebra(self.symbol.clone()));
@@ -408,6 +415,7 @@ impl Unit {
     /// Returns [`UnitError::OffsetInAlgebra`] if either operand is an
     /// offset unit.
     // frob:doc docs/modules/regolith-qty.md#unit
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn div(&self, other: &Unit) -> Result<Unit, UnitError> {
         if self.is_offset() {
             return Err(UnitError::OffsetInAlgebra(self.symbol.clone()));
@@ -429,6 +437,7 @@ impl Unit {
 /// ASCII-only rule.
 #[must_use]
 // frob:doc docs/modules/regolith-qty.md#unit
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn si_prefix_exponent(prefix: &str) -> Option<i32> {
     let exp = match prefix {
         "T" => 12,

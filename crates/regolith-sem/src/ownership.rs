@@ -71,6 +71,7 @@ impl BorrowTable {
 
     /// Record a borrow held by a construct.
     // frob:doc docs/modules/regolith-sem.md#ownership
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn borrow(&mut self, borrow: Borrow) {
         self.borrows.push(borrow);
     }
@@ -81,6 +82,7 @@ impl BorrowTable {
     /// hematite/03 sec. 2.1).
     #[must_use]
     // frob:doc docs/modules/regolith-sem.md#ownership
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn check_conflict(&self, modifier: &str, delta: &PredictedDelta) -> Vec<Diagnostic> {
         let touched: Vec<EntityId> = delta
             .modifies
@@ -120,6 +122,7 @@ impl BorrowTable {
     /// b)` or rescoping.
     #[must_use]
     // frob:doc docs/modules/regolith-sem.md#ownership
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn merge_analysis(
         &self,
         a: (&str, MergeSign, &PredictedDelta),
@@ -163,6 +166,7 @@ impl BorrowTable {
     /// Re-evaluate borrows after a `rebind()` (drops stale borrows so a
     /// query taken after a modifier is legal).
     // frob:doc docs/modules/regolith-sem.md#ownership
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn rebind(&mut self, borrower: &str) {
         self.borrows.retain(|b| b.borrower != borrower);
     }
@@ -174,6 +178,7 @@ impl BorrowTable {
 /// naming every driver.
 #[must_use]
 // frob:doc docs/modules/regolith-sem.md#ownership
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn check_single_driver(
     _net: EntityId,
     drivers: &[String],

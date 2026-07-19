@@ -23,6 +23,7 @@ pub struct Session {
 impl Session {
     /// Open a session over a project root directory.
     // frob:doc docs/modules/regolith-api.md#session-opening-and-running-a-build
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     #[must_use]
     pub fn open_root(root: impl Into<Utf8PathBuf>) -> Session {
         Session {
@@ -32,6 +33,7 @@ impl Session {
 
     /// Open a session over an explicit set of source files.
     // frob:doc docs/modules/regolith-api.md#session-opening-and-running-a-build
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     #[must_use]
     pub fn open_files(files: impl IntoIterator<Item = Utf8PathBuf>) -> Session {
         Session {
@@ -72,6 +74,7 @@ impl Session {
     /// # Errors
     /// Same as [`Session::check`].
     // frob:doc docs/modules/regolith-api.md#session-opening-and-running-a-build
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn check_with_lints(
         &self,
         realized_inputs: &regolith_lower::RealizedInputs,
@@ -117,6 +120,7 @@ impl Session {
     /// # Errors
     /// Same as [`Session::compile`].
     // frob:doc docs/modules/regolith-api.md#session-opening-and-running-a-build
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn compile_with_lints(
         &self,
         registry_version: &str,
@@ -407,6 +411,7 @@ impl BuildOutput {
     /// The diagnostics rendered to text (the ONE renderer, AD-7). Python
     /// prints this verbatim.
     // frob:doc docs/modules/regolith-api.md#build-output-and-payload
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     #[must_use]
     pub fn rendered(&self, ansi: bool) -> &str {
         if ansi {
@@ -434,6 +439,7 @@ impl BuildOutput {
 
     /// True when the build succeeded (no error-severity diagnostics).
     // frob:doc docs/modules/regolith-api.md#build-output-and-payload
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     #[must_use]
     pub fn ok(&self) -> bool {
         !self
@@ -445,6 +451,7 @@ impl BuildOutput {
 
     /// Number of diagnostics.
     // frob:doc docs/modules/regolith-api.md#build-output-and-payload
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     #[must_use]
     pub fn diagnostic_count(&self) -> usize {
         self.payload.diagnostics.len()

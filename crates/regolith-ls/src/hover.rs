@@ -21,6 +21,7 @@ use crate::position::LineIndex;
 /// book for the artifact-fed claim half; static hover needs no root.
 #[must_use]
 // frob:doc docs/modules/regolith-ls.md#hover
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn hover_at(
     text: &str,
     index: &LineIndex,

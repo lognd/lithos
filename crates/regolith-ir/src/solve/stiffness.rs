@@ -67,6 +67,7 @@ pub struct StiffnessSolution {
 /// node, and a grounded query node. Never a panic, never NaN.
 #[must_use]
 // frob:doc docs/modules/regolith-ir.md#solve
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn effective_stiffness(net: &StiffnessNetwork, at: &str) -> StiffnessSolution {
     let span = tracing::info_span!("solve.stiffness", system = %net.system, at);
     let _enter = span.enter();

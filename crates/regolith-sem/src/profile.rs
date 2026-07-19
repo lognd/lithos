@@ -40,6 +40,7 @@ impl DofLedger {
     /// True when the sketch closes (residual is zero).
     #[must_use]
     // frob:doc docs/modules/regolith-sem.md#profile
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn is_closed(&self) -> bool {
         self.residual() == 0
     }
@@ -79,6 +80,7 @@ fn segment_constraint(seg: &Segment) -> i64 {
 /// free variable iff its right-hand side is the `free` value source.
 #[must_use]
 // frob:doc docs/modules/regolith-sem.md#profile
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn count_declared_free(walk: &Walk) -> i64 {
     let n = walk
         .constraints
@@ -120,6 +122,7 @@ fn declares_free(item: &str) -> bool {
 /// DECLARED imbalance, not to certify exact determinacy.
 #[must_use]
 // frob:doc docs/modules/regolith-sem.md#profile
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn compute_ledger(walk: &Walk, declared_free: i64) -> DofLedger {
     let mut freedoms = 0i64;
     let mut constraints = 0i64;
@@ -163,6 +166,7 @@ pub fn compute_ledger(walk: &Walk, declared_free: i64) -> DofLedger {
 /// `perpendicular`, else a diagnostic listing the unpinned joints.
 #[must_use]
 // frob:doc docs/modules/regolith-sem.md#profile
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn check_branch_pins(walk: &Walk) -> Vec<Diagnostic> {
     let mut unpinned = Vec::new();
     for (i, seg) in walk.segments.iter().enumerate() {
@@ -199,6 +203,7 @@ pub fn check_branch_pins(walk: &Walk) -> Vec<Diagnostic> {
 /// direction (under- vs over-constrained).
 #[must_use]
 // frob:doc docs/modules/regolith-sem.md#profile
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn check_ledger_closes(ledger: &DofLedger) -> Vec<Diagnostic> {
     let residual = ledger.residual();
     if residual == 0 {
@@ -240,6 +245,7 @@ const SEGMENT_METRIC_HEADS: &[&str] = &["length", "radius", "angle"];
 /// only dotted metric references -- the unambiguous segment positions.
 #[must_use]
 // frob:doc docs/modules/regolith-sem.md#profile
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn check_label_bindings(profile: &str, walk: &Walk) -> Vec<Diagnostic> {
     let mut bound: BTreeSet<&str> = walk
         .segments
@@ -372,6 +378,7 @@ impl InstantiationContext {
     /// this context's declared exports. Boxed: `Diagnostic` is large
     /// relative to the `Ok` value.
     // frob:doc docs/modules/regolith-sem.md#profile
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn resolve_export(&self, name: &str) -> Result<String, Box<Diagnostic>> {
         if self.anchor_feature.is_empty() {
             return Err(Box::new(

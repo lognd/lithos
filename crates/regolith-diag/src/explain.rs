@@ -314,6 +314,7 @@ pub const ALL: &[ExplainEntry] = &[
 /// case-insensitive). `regolith explain <code>` reads this.
 #[must_use]
 // frob:doc docs/modules/regolith-diag.md#explain
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn find(code_str: &str) -> Option<&'static ExplainEntry> {
     let needle = code_str.trim().to_ascii_uppercase();
     ALL.iter().find(|e| e.code.to_string() == needle)
@@ -325,6 +326,7 @@ pub fn find(code_str: &str) -> Option<&'static ExplainEntry> {
 /// surfaces `E0901`.
 #[must_use]
 // frob:doc docs/modules/regolith-diag.md#explain
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn near_matches(code_str: &str, limit: usize) -> Vec<&'static ExplainEntry> {
     let needle = code_str.trim().to_ascii_uppercase();
     let prefix: String = needle.chars().take(3).collect();

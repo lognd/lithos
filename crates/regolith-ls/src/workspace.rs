@@ -14,6 +14,7 @@ const MANIFEST: &str = "magnetite.toml";
 /// filesystem root, `opened` itself is the root (deliverable 1).
 #[must_use]
 // frob:doc docs/modules/regolith-ls.md#workspace
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn discover_root(opened: &Utf8Path) -> Utf8PathBuf {
     let mut dir = if opened.is_dir() {
         Some(opened.to_path_buf())

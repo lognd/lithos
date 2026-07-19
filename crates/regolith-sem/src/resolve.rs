@@ -63,6 +63,7 @@ fn strip_parens(node: &SyntaxNode) -> SyntaxNode {
 /// `Unknown` and are simply never banned).
 #[must_use]
 // frob:doc docs/modules/regolith-sem.md#resolve
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn classify_value(node: &SyntaxNode) -> QuantityClass {
     let n = strip_parens(node);
     if n.kind() != SyntaxKind::QuantityLit {
@@ -84,6 +85,7 @@ pub fn classify_value(node: &SyntaxNode) -> QuantityClass {
 /// table the `==` ban consults.
 #[must_use]
 // frob:doc docs/modules/regolith-sem.md#resolve
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn field_classes(decl: &Decl) -> IndexMap<String, QuantityClass> {
     let mut table: IndexMap<String, QuantityClass> = IndexMap::new();
     for field in decl.fields() {
@@ -141,6 +143,7 @@ fn bin_operator(node: &SyntaxNode) -> Option<SyntaxKind> {
 #[must_use]
 // frob:doc docs/modules/regolith-sem.md#resolve
 // frob:invariant INV-017
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn check_equality_ban(decl: &Decl, file: &Utf8PathBuf) -> Vec<Diagnostic> {
     let span = tracing::debug_span!("sem.equality_ban", subject = decl.name());
     let _enter = span.enter();

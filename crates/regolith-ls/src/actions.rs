@@ -19,6 +19,7 @@ use crate::position::LineIndex;
 /// replacement surfaces disabled, carrying its message (deliverable 4).
 #[must_use]
 // frob:doc docs/modules/regolith-ls.md#actions
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn code_actions_for(diagnostics: &[LspDiagnostic]) -> Vec<CodeAction> {
     let mut actions = Vec::new();
     for lsp_diag in diagnostics {

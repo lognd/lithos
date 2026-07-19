@@ -108,6 +108,7 @@ impl Qty {
     /// # Errors
     /// [`QuantityError::IncompatibleDimensions`] when dimensions differ.
     // frob:doc docs/modules/regolith-qty.md#quantity
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn add(&self, other: &Qty) -> Result<Qty, QuantityError> {
         if self.dimension() != other.dimension() {
             return Err(QuantityError::IncompatibleDimensions {
@@ -124,6 +125,7 @@ impl Qty {
     /// # Errors
     /// [`QuantityError::IncompatibleDimensions`] when dimensions differ.
     // frob:doc docs/modules/regolith-qty.md#quantity
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn sub(&self, other: &Qty) -> Result<Qty, QuantityError> {
         if self.dimension() != other.dimension() {
             return Err(QuantityError::IncompatibleDimensions {
@@ -142,6 +144,7 @@ impl Qty {
     /// [`QuantityError::Unit`] if the unit algebra rejects the operands
     /// (offset units).
     // frob:doc docs/modules/regolith-qty.md#quantity
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn mul(&self, other: &Qty) -> Result<Qty, QuantityError> {
         let unit = self.unit.mul(&other.unit)?;
         Ok(Qty::new(self.magnitude * other.magnitude, unit))
@@ -152,6 +155,7 @@ impl Qty {
     /// # Errors
     /// [`QuantityError::Unit`] if the unit algebra rejects the operands.
     // frob:doc docs/modules/regolith-qty.md#quantity
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn div(&self, other: &Qty) -> Result<Qty, QuantityError> {
         let unit = self.unit.div(&other.unit)?;
         Ok(Qty::new(self.magnitude / other.magnitude, unit))
@@ -177,6 +181,7 @@ pub(crate) fn convert(magnitude: f64, from: &Unit, to: &Unit) -> f64 {
 /// tolerance is 5 K-degrees, never 278.15). Use this, not [`convert`],
 /// whenever the magnitude is a span rather than a point (FE-5).
 // frob:doc docs/modules/regolith-qty.md#quantity
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub(crate) fn convert_delta(magnitude: f64, from: &Unit, to: &Unit) -> f64 {
     let from_scale = ratio_to_f64(from.scale);
     let to_scale = ratio_to_f64(to.scale);

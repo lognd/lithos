@@ -67,6 +67,7 @@ impl Namespace {
     /// The lowercase spelling used in source (`mech`, `elec`, ...).
     #[must_use]
     // frob:doc docs/modules/regolith-qty.md#decl
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub const fn as_str(self) -> &'static str {
         match self {
             Namespace::Mech => "mech",

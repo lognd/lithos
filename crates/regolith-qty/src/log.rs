@@ -151,6 +151,7 @@ impl LogUnit {
     /// this dimension.
     #[must_use]
     // frob:doc docs/modules/regolith-qty.md#log
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn reference_dimension(&self) -> Option<Dimension> {
         self.reference.as_ref().map(|u| u.dimension)
     }
@@ -159,6 +160,7 @@ impl LogUnit {
     /// magnitude in SI base units: `reference * 10^(db / factor)`.
     #[must_use]
     // frob:doc docs/modules/regolith-qty.md#log
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn to_linear_si(&self, db: f64) -> f64 {
         self.reference_si_value * 10.0_f64.powf(db / f64::from(self.factor))
     }
@@ -168,6 +170,7 @@ impl LogUnit {
     /// [`LogUnit::to_linear_si`] (round-trips up to float precision).
     #[must_use]
     // frob:doc docs/modules/regolith-qty.md#log
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn from_linear_si(&self, linear_si: f64) -> f64 {
         f64::from(self.factor) * (linear_si / self.reference_si_value).log10()
     }
@@ -183,6 +186,7 @@ impl LogUnit {
 /// survives (`dBm + dBm`); [`LogError::UncancelledInverse`] when a
 /// subtracted reference has no added partner (`dB - dBm`).
 // frob:doc docs/modules/regolith-qty.md#log
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn log_sum_reference(terms: &[LogTerm]) -> Result<LogSumResult, LogError> {
     // Split surviving references by sign, pairing by dimension. Each
     // subtracted reference cancels one added reference of equal

@@ -158,6 +158,7 @@ pub(crate) fn full_predicate_text(field: &Field) -> String {
 /// predicates): it finds each `<number><unit-like-suffix>` run and
 /// replaces it in place when the suffix is a unit `regolith-qty` accepts.
 // frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub(crate) fn resolve_unit_suffix(text: &str) -> String {
     let bytes = text.as_bytes();
     let mut out = String::with_capacity(text.len());

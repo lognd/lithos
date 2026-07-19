@@ -151,6 +151,7 @@ impl WaiveLedger {
     /// pipeline emits obligations for, yet accepted none.
     #[must_use]
     // frob:doc docs/modules/regolith-oblig.md#waiver
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn stale_waiver_diagnostics(&self) -> Vec<Diagnostic> {
         self.entries
             .iter()

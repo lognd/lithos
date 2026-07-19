@@ -77,6 +77,7 @@ pub struct CalciteReport {
 /// order.
 #[must_use]
 // frob:doc docs/modules/regolith-lower.md#calcite
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn run_calcite_checks(files: &[ParsedFile]) -> CalciteReport {
     let span = tracing::info_span!("lower.calcite");
     let _enter = span.enter();

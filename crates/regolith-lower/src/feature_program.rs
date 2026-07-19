@@ -64,6 +64,7 @@ pub struct ProgramsReport {
 /// WO-51 projection diagnostics.
 #[must_use]
 // frob:doc docs/modules/regolith-lower.md#feature-program
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn build_feature_programs(files: &[ParsedFile]) -> ProgramsReport {
     let span = tracing::info_span!("lower.programs");
     let _enter = span.enter();

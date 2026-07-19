@@ -29,6 +29,7 @@ const TY_VARIABLE: u32 = 4;
 /// response.
 #[must_use]
 // frob:doc docs/modules/regolith-ls.md#semtok
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn legend() -> SemanticTokensLegend {
     SemanticTokensLegend {
         token_types: LEGEND.to_vec(),
@@ -39,6 +40,7 @@ pub fn legend() -> SemanticTokensLegend {
 /// Compute the full delta-encoded semantic token stream for `text`.
 #[must_use]
 // frob:doc docs/modules/regolith-ls.md#semtok
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn tokens_for(text: &str, index: &LineIndex) -> Vec<SemanticToken> {
     let path = camino::Utf8PathBuf::from("<ls>");
     let parse = regolith_syntax::parse(text, &path);

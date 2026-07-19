@@ -101,6 +101,7 @@ pub struct CalcBook {
 /// (`editors/vscode/src/artifacts.ts::findDistProjects`).
 #[must_use]
 // frob:doc docs/modules/regolith-ls.md#artifacts
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn find_calc_book_path(root: &Utf8Path) -> Option<Utf8PathBuf> {
     let direct = root.join("dist").join("calc").join("calc_book.json");
     if direct.is_file() {
@@ -125,6 +126,7 @@ pub fn find_calc_book_path(root: &Utf8Path) -> Option<Utf8PathBuf> {
 /// static hover form, never a hard error (D111 discipline).
 #[must_use]
 // frob:doc docs/modules/regolith-ls.md#artifacts
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn load_calc_book(path: &Utf8Path) -> Option<CalcBook> {
     let bytes = std::fs::read(path).ok()?;
     serde_json::from_slice(&bytes).ok()
@@ -144,6 +146,7 @@ fn normalize(s: &str) -> String {
 /// discharged.
 #[must_use]
 // frob:doc docs/modules/regolith-ls.md#artifacts
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn find_claim_row<'a>(
     book: &'a CalcBook,
     needle: &str,
@@ -167,6 +170,7 @@ pub fn find_claim_row<'a>(
 /// otherwise -- consumed verbatim, never recomputed (D229).
 #[must_use]
 // frob:doc docs/modules/regolith-ls.md#artifacts
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn render_claim_hover(row: &AuditRow, sheet: Option<&CalcSheet>) -> String {
     match sheet {
         Some(sheet) => format!(

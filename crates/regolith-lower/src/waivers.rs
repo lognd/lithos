@@ -45,6 +45,7 @@ pub struct WaiverReport {
 /// Build the waiver ledger by matching every `waive ...:` block against
 /// the emitted `obligations`, and collect the honesty diagnostics.
 // frob:doc docs/modules/regolith-lower.md#waivers
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 #[must_use]
 pub fn build_ledger(
     files: &[ParsedFile],

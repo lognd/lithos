@@ -67,6 +67,7 @@ struct Layout<'a> {
 /// and mapping keyword idents. Tab-indentation errors are returned as
 /// diagnostics alongside a best-effort token stream (batch discipline).
 // frob:doc docs/modules/regolith-syntax.md#layout
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 #[must_use]
 pub fn apply_layout(
     raw: &[(RawToken, std::ops::Range<usize>)],

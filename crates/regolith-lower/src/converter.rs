@@ -62,6 +62,7 @@ const CONTINUOUS_OUTPUT_WORDS: [&str; 2] = ["dac", "pwm"];
 #[must_use]
 // frob:doc docs/modules/regolith-lower.md#converter
 // frob:invariant INV-016
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn run_converter_check(files: &[ParsedFile]) -> Vec<Diagnostic> {
     let span = tracing::info_span!("lower.converter");
     let _enter = span.enter();
@@ -200,6 +201,7 @@ pub fn build_decl_graph(decl: &Decl, scope_name: &str) -> Option<ConverterGraph>
 /// [`run_converter_check`].
 #[must_use]
 // frob:doc docs/modules/regolith-lower.md#converter
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn collect_converter_graphs(files: &[ParsedFile]) -> IndexMap<String, ConverterGraph> {
     let span = tracing::info_span!("lower.converter.collect");
     let _enter = span.enter();
@@ -336,6 +338,7 @@ fn collect_assigns(spec: &Field) -> Vec<Assign> {
 /// (INV-20 gating), matching `run_converter_check`.
 #[must_use]
 // frob:doc docs/modules/regolith-lower.md#converter
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn collect_on_events(files: &[ParsedFile]) -> Vec<(String, String)> {
     let span = tracing::info_span!("lower.converter.on_events");
     let _enter = span.enter();

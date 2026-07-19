@@ -40,6 +40,7 @@ pub struct EntitySnapshots {
 /// board domains stay empty; declared instances/nets still commit).
 #[must_use]
 // frob:doc docs/modules/regolith-lower.md#entities
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn build_entities(files: &[ParsedFile]) -> EntitySnapshots {
     build_entities_with_registry(files, &crate::registry::RegistryRecords::empty())
 }
@@ -68,6 +69,7 @@ pub fn build_entities_with_registry(
 /// at the staged loop's re-lower instead of deferring forever.
 #[must_use]
 // frob:doc docs/modules/regolith-lower.md#entities
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn build_entities_with_realized(
     files: &[ParsedFile],
     registry: &crate::registry::RegistryRecords,

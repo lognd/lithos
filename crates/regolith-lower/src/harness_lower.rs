@@ -221,6 +221,7 @@ pub struct HarnessLowerReport {
 /// Pure and IO-free (AD-17); deterministic (AD-6). The WO-34
 /// deliverable-2 entry point.
 // frob:doc docs/modules/regolith-lower.md#harness-lower
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 #[must_use]
 pub fn elaborate_harnesses(files: &[ParsedFile], inputs: &dyn HarnessInputs) -> HarnessLowerReport {
     let span = tracing::info_span!("lower.harness");

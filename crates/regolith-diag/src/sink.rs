@@ -40,6 +40,7 @@ impl DiagnosticSink {
     /// build-fails predicate).
     #[must_use]
     // frob:doc docs/modules/regolith-diag.md#sink
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn has_errors(&self) -> bool {
         self.diagnostics
             .iter()
@@ -49,6 +50,7 @@ impl DiagnosticSink {
     /// Number of collected diagnostics.
     #[must_use]
     // frob:doc docs/modules/regolith-diag.md#sink
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn len(&self) -> usize {
         self.diagnostics.len()
     }
@@ -65,6 +67,7 @@ impl DiagnosticSink {
     /// by code number. Diagnostics without a span sort last.
     #[must_use]
     // frob:doc docs/modules/regolith-diag.md#sink
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn finish(self) -> Vec<Diagnostic> {
         let mut diagnostics = self.diagnostics;
         diagnostics.sort_by(|a, b| {

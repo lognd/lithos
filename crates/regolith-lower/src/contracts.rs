@@ -121,6 +121,7 @@ pub struct ContractGraph {
 /// Build the contract IR available from `files`' structured syntax.
 #[must_use]
 // frob:doc docs/modules/regolith-lower.md#contracts
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn build_contract_ir(files: &[ParsedFile], _snapshots: &EntitySnapshots) -> ContractGraph {
     let span = tracing::info_span!("lower.contracts");
     let _enter = span.enter();
@@ -1216,6 +1217,7 @@ fn literal_qty_from_text(text: &str) -> Option<Qty> {
 /// (AD-22).
 #[must_use]
 // frob:doc docs/modules/regolith-lower.md#contracts
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn build_contract_graph_payload(graph: &ContractGraph) -> regolith_oblig::ContractGraphPayload {
     use regolith_oblig::{ContractEdge, ContractGraphPayload, ContractNode};
     use std::collections::BTreeSet;

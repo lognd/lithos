@@ -37,6 +37,7 @@ pub struct Occurrence {
 /// if the cursor sits on an `Ident` token.
 #[must_use]
 // frob:doc docs/modules/regolith-ls.md#nav
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn identifier_at(
     text: &str,
     index: &LineIndex,
@@ -195,6 +196,7 @@ fn walk_files(root: &Utf8Path) -> Vec<Utf8PathBuf> {
 /// name is unresolved).
 #[must_use]
 // frob:doc docs/modules/regolith-ls.md#nav
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn definitions(
     workspace_root: &Utf8Path,
     file: &Utf8Path,
@@ -221,6 +223,7 @@ pub fn definitions(
 /// across every reachable file.
 #[must_use]
 // frob:doc docs/modules/regolith-ls.md#nav
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn references(
     workspace_root: &Utf8Path,
     file: &Utf8Path,
@@ -264,6 +267,7 @@ pub enum RenameOutcome {
 /// single rename target).
 #[must_use]
 // frob:doc docs/modules/regolith-ls.md#nav
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn rename(
     workspace_root: &Utf8Path,
     file: &Utf8Path,
@@ -324,6 +328,7 @@ pub fn rename(
 /// references responses need `Url` + `Range`, not raw byte ranges).
 #[must_use]
 // frob:doc docs/modules/regolith-ls.md#nav
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn occurrences_to_locations(occurrences: Vec<Occurrence>) -> Vec<lsp_types::Location> {
     occurrences
         .into_iter()
@@ -344,6 +349,7 @@ pub fn occurrences_to_locations(occurrences: Vec<Occurrence>) -> Vec<lsp_types::
 /// edit).
 #[must_use]
 // frob:doc docs/modules/regolith-ls.md#nav
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn edits_to_workspace_edit(
     edits: Vec<(Utf8PathBuf, Vec<TextEdit>)>,
 ) -> lsp_types::WorkspaceEdit {

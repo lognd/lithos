@@ -32,6 +32,7 @@ impl Window {
     /// Lower magnitude of the demanded band.
     #[must_use]
     // frob:doc docs/modules/regolith-qty.md#window
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn lo(&self) -> f64 {
         self.lo
     }
@@ -39,6 +40,7 @@ impl Window {
     /// Upper magnitude of the demanded band.
     #[must_use]
     // frob:doc docs/modules/regolith-qty.md#window
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn hi(&self) -> f64 {
         self.hi
     }

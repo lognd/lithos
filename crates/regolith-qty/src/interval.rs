@@ -66,6 +66,7 @@ impl Interval {
     /// # Errors
     /// [`QuantityError::IncompatibleDimensions`] on dimension mismatch.
     // frob:doc docs/modules/regolith-qty.md#interval
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn plus_minus(center: &Qty, tol: &Qty) -> Result<Interval, QuantityError> {
         if center.dimension() != tol.dimension() {
             return Err(QuantityError::IncompatibleDimensions {
@@ -86,6 +87,7 @@ impl Interval {
     /// Percentage tolerance `center +- p%` (`3.3V +- 5%`).
     #[must_use]
     // frob:doc docs/modules/regolith-qty.md#interval
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn plus_minus_percent(center: &Qty, percent: f64) -> Interval {
         let mag = center.magnitude();
         let a = mag * (1.0 - percent / 100.0);
@@ -101,6 +103,7 @@ impl Interval {
     /// Scale an interval by a scalar factor range: `[k1, k2] * x`.
     #[must_use]
     // frob:doc docs/modules/regolith-qty.md#interval
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn scaled(x: &Qty, k1: f64, k2: f64) -> Interval {
         let mag = x.magnitude();
         let a = k1 * mag;
@@ -116,6 +119,7 @@ impl Interval {
     /// The lower bound as a quantity.
     #[must_use]
     // frob:doc docs/modules/regolith-qty.md#interval
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn lo(&self) -> Qty {
         Qty::new(self.lo, self.unit.clone())
     }
@@ -123,6 +127,7 @@ impl Interval {
     /// The upper bound as a quantity.
     #[must_use]
     // frob:doc docs/modules/regolith-qty.md#interval
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn hi(&self) -> Qty {
         Qty::new(self.hi, self.unit.clone())
     }
@@ -139,6 +144,7 @@ impl Interval {
     /// # Errors
     /// [`QuantityError::IncompatibleDimensions`] on dimension mismatch.
     // frob:doc docs/modules/regolith-qty.md#interval
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn add(&self, other: &Interval) -> Result<Interval, QuantityError> {
         if self.unit.dimension != other.unit.dimension {
             return Err(QuantityError::IncompatibleDimensions {
@@ -160,6 +166,7 @@ impl Interval {
     /// # Errors
     /// [`QuantityError::IncompatibleDimensions`] on dimension mismatch.
     // frob:doc docs/modules/regolith-qty.md#interval
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn sub(&self, other: &Interval) -> Result<Interval, QuantityError> {
         if self.unit.dimension != other.unit.dimension {
             return Err(QuantityError::IncompatibleDimensions {
@@ -180,6 +187,7 @@ impl Interval {
     /// products' min/max, outward-rounded.
     #[must_use]
     // frob:doc docs/modules/regolith-qty.md#interval
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn mul_scalar_interval(&self, k1: f64, k2: f64) -> Interval {
         let products = [self.lo * k1, self.lo * k2, self.hi * k1, self.hi * k2];
         let lo = products.iter().copied().fold(f64::INFINITY, f64::min);

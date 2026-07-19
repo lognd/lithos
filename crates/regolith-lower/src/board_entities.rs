@@ -109,6 +109,7 @@ enum CapTier {
 /// board-scoped by the WO). `next_id` advances past every allocated id
 /// (the `feature_entities` convention, AD-6 determinism).
 // frob:doc docs/modules/regolith-lower.md#board-entities
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 #[must_use]
 pub fn board_entities(
     decl: &Decl,
@@ -167,6 +168,7 @@ pub fn board_entities(
 /// domain by name (INV-29: an un-realized build is "not yet checked",
 /// never a vacuous pass).
 // frob:doc docs/modules/regolith-lower.md#board-entities
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 #[must_use]
 pub fn realized_trace_entities(
     decl: &Decl,

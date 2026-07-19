@@ -125,6 +125,7 @@ const BODY_KEYWORDS: &[&str] = &[
 /// grammar (WO-38: no second grammar, AD-24).
 #[must_use]
 // frob:doc docs/modules/regolith-ls.md#completion
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn keyword_completions() -> Vec<CompletionItem> {
     keyword_items(KEYWORDS)
 }
@@ -134,6 +135,7 @@ pub fn keyword_completions() -> Vec<CompletionItem> {
 /// every in-scope declaration name in `text`.
 #[must_use]
 // frob:doc docs/modules/regolith-ls.md#completion
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn completions_at(text: &str, index: &LineIndex, position: Position) -> Vec<CompletionItem> {
     let offset = index.offset(position);
     let path = camino::Utf8PathBuf::from("<ls>");

@@ -18,6 +18,7 @@ pub use indexmap::{IndexMap, IndexSet};
 /// [`canon::content_address`], here at the bottom of the layering,
 /// AD-18; this is the primitive it builds on).
 // frob:doc docs/modules/regolith-util.md#hash-hex
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 #[must_use]
 pub fn hash_hex(bytes: &[u8]) -> String {
     blake3::hash(bytes).to_hex().to_string()

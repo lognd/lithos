@@ -95,6 +95,7 @@ impl Coverage {
     /// precedent, kept for callers not yet stating axes).
     #[must_use]
     // frob:doc docs/modules/regolith-oblig.md#evidence
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn from_fraction(fraction: f64) -> Coverage {
         Coverage {
             axes: Vec::new(),
@@ -153,6 +154,7 @@ pub struct Evidence {
 /// otherwise indeterminate. This is the ONE place the rule lives.
 #[must_use]
 // frob:doc docs/modules/regolith-oblig.md#evidence
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn decide_margin(value: f64, eps: f64, limit: f64) -> Status {
     if value + eps <= limit {
         Status::Discharged
@@ -190,6 +192,7 @@ impl EvidenceCache {
 
     /// Insert evidence under its cache key.
     // frob:doc docs/modules/regolith-oblig.md#evidence
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn insert(&mut self, key: String, evidence: Evidence) {
         self.entries.insert(key, evidence);
     }

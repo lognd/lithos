@@ -342,6 +342,7 @@ fn extract_segment(
 /// absent, the path is empty, or a segment names an unknown roughness
 /// class.
 // frob:doc docs/modules/regolith-lower.md#extract
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn extract_path(
     bytes: &[u8],
     selector: &str,

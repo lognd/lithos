@@ -51,6 +51,7 @@ impl SymmetryGroup {
     #[must_use]
     // frob:doc docs/modules/regolith-sem.md#symmetry
     // frob:invariant INV-004
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn intersect(&self, other: &SymmetryGroup) -> SymmetryGroup {
         use SymmetryGroup::{Continuous, Cyclic, Permutation, Trivial};
 
@@ -116,6 +117,7 @@ impl OrbitTable {
     /// candidate -- the sound default (INV-4) is to refuse.
     #[must_use]
     // frob:doc docs/modules/regolith-sem.md#symmetry
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn any_is_legal(&self, _orbit: OrbitId) -> bool {
         !matches!(self.group, None | Some(SymmetryGroup::Trivial))
     }
@@ -134,6 +136,7 @@ impl OrbitTable {
     /// constructs; without it the table had no way to acquire a non-
     /// trivial group from source.
     // frob:doc docs/modules/regolith-sem.md#symmetry
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn contribute(&mut self, group: SymmetryGroup) {
         self.group = Some(match self.group.take() {
             None => group,
@@ -154,6 +157,7 @@ impl OrbitTable {
     /// membership table and is out of this WO's scope.
     #[must_use]
     // frob:doc docs/modules/regolith-sem.md#symmetry
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn split_on_break(&self, _broken: OrbitId) -> OrbitTable {
         OrbitTable {
             group: Some(SymmetryGroup::Trivial),

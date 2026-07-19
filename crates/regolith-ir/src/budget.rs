@@ -47,6 +47,7 @@ pub struct Contribution {
 /// Returns an E0432 diagnostic naming the worst contributors when the
 /// budget cannot close.
 // frob:doc docs/modules/regolith-ir.md#budget
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn close_budget(
     budget: &Budget,
     contributions: &[Contribution],

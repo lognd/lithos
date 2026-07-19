@@ -179,6 +179,7 @@ impl NetDiscipline for CirculationDiscipline {
 /// does not accumulate every violation.
 #[must_use]
 // frob:doc docs/modules/regolith-sem.md#net-core
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn first_violation<D: NetDiscipline>(discipline: &D, nets: &[NetEntry]) -> Option<Violation> {
     for net in nets {
         let imposers: Vec<String> = net

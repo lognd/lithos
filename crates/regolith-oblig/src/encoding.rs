@@ -27,6 +27,7 @@ use crate::SCHEMA_VERSION;
 /// this is a programmer bug, not a user-facing error.
 #[must_use]
 // frob:doc docs/modules/regolith-oblig.md#encoding
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn export_schemas() -> String {
     use schemars::gen::SchemaSettings;
 

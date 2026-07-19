@@ -795,6 +795,7 @@ impl SyntaxKind {
     /// Panics if `raw` names no `SyntaxKind` variant -- that is a
     /// compiler bug (a raw value only ever comes from `kind_to_raw`).
     // frob:doc docs/modules/regolith-syntax.md#syntax-kind
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     #[must_use]
     pub fn from_raw(raw: u16) -> SyntaxKind {
         ALL_KINDS
@@ -806,6 +807,7 @@ impl SyntaxKind {
     /// True when this kind is trivia (whitespace or comment): skipped by
     /// the typed AST layer but present in the CST.
     // frob:doc docs/modules/regolith-syntax.md#syntax-kind
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     #[must_use]
     pub fn is_trivia(self) -> bool {
         matches!(self, SyntaxKind::Whitespace | SyntaxKind::Comment)
@@ -868,6 +870,7 @@ pub const KEYWORD_TABLE: &[(&str, SyntaxKind)] = &[
 /// Map an identifier's text to its keyword kind, or `None` if it is a
 /// plain identifier. Reads `KEYWORD_TABLE`, the one keyword table.
 // frob:doc docs/modules/regolith-syntax.md#syntax-kind
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 #[must_use]
 pub fn keyword_kind(text: &str) -> Option<SyntaxKind> {
     KEYWORD_TABLE

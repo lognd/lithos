@@ -161,6 +161,7 @@ impl Query {
     /// scope). Returns diagnostics (empty = valid).
     #[must_use]
     // frob:doc docs/modules/regolith-sem.md#query
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn validate(&self, registry: &PredicateRegistry) -> Vec<Diagnostic> {
         let mut diags = Vec::new();
         let (_owner, kind) = base_selector(&self.base);

@@ -182,6 +182,7 @@ fn attach_converter_graph_ref(obligations: &mut [Obligation], decl: &Decl, decl_
 /// cost, conformance, rule); to add a new claim family, add a
 /// `push_*_obligations` fn and wire it here.
 // frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 #[must_use]
 pub fn build_obligations(
     files: &[ParsedFile],

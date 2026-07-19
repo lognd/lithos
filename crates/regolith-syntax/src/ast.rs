@@ -578,6 +578,7 @@ impl WorkloadsBlock {
     /// Every declared workload in this block, in source order.
     #[must_use]
     // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn workloads(&self) -> Vec<WorkloadStmt> {
         self.syntax
             .children()
@@ -599,6 +600,7 @@ impl WorkloadStmt {
     /// the second `Ident` token on the line (the first is the name).
     #[must_use]
     // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn kind_word(&self) -> Option<String> {
         ident_texts(&self.syntax).into_iter().nth(1)
     }
@@ -607,6 +609,7 @@ impl WorkloadStmt {
     /// present (see [`SyntaxKind::WorkloadParams`]).
     #[must_use]
     // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn params(&self) -> Option<SyntaxNode> {
         self.syntax
             .children()
@@ -685,6 +688,7 @@ impl RuleDecl {
     /// The rule's `advise:` field (warning severity), if present.
     #[must_use]
     // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn advise(&self) -> Option<Field> {
         self.named_field("advise")
     }
@@ -699,6 +703,7 @@ impl RuleDecl {
     /// The rule's `why:` explanation text (quotes stripped), if present.
     #[must_use]
     // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn why(&self) -> Option<String> {
         self.named_field("why").and_then(|f| field_value_text(&f))
     }
@@ -733,6 +738,7 @@ impl ForallClause {
     /// after the `forall` word.
     #[must_use]
     // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn var(&self) -> Option<String> {
         self.syntax
             .children_with_tokens()
@@ -747,6 +753,7 @@ impl ForallClause {
     /// unmodeled filter tail is included (cycle 18 F95).
     #[must_use]
     // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn query_text(&self) -> String {
         let mut seen_in = false;
         let mut out = String::new();
@@ -780,6 +787,7 @@ impl ForallSweepClaim {
     /// have).
     #[must_use]
     // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn var(&self) -> Option<String> {
         let full = self.syntax.text().to_string();
         let after_forall = full.trim_start().strip_prefix("forall")?.trim_start();
@@ -858,6 +866,7 @@ impl ResolvesClause {
     /// only source specced; anything else is the engine wave's E060x).
     #[must_use]
     // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn from_free(&self) -> bool {
         let toks: Vec<_> = self
             .syntax
@@ -875,6 +884,7 @@ impl ExpectBlock {
     /// The block's fixture cases, in source order.
     #[must_use]
     // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn cases(&self) -> Vec<ExpectCase> {
         self.syntax
             .children()
@@ -936,6 +946,7 @@ impl WaiveBlock {
     /// The `expires:` marker text, if any (regolith/12 rule 8).
     #[must_use]
     // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn expires(&self) -> Option<String> {
         self.body_field_value("expires")
     }
@@ -945,6 +956,7 @@ impl WaiveBlock {
     /// the block subtree.
     #[must_use]
     // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn has_evidence(&self) -> bool {
         self.syntax
             .descendants_with_tokens()
@@ -1278,6 +1290,7 @@ impl RequireClaim {
     /// (WO-33 D98).
     #[must_use]
     // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn compute_claims(&self) -> Vec<ComputeField> {
         self.syntax
             .children()
@@ -1322,6 +1335,7 @@ impl ComputeField {
     /// split-on-`:` approach).
     #[must_use]
     // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn predicate_text(&self) -> String {
         let full = self.syntax.text().to_string();
         match full.split_once(':') {
@@ -1385,6 +1399,7 @@ impl Decl {
     /// The declaration keyword (`part`, `interface`, `system`, ...).
     #[must_use]
     // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn kind_keyword(&self) -> Option<SyntaxKind> {
         self.syntax
             .children_with_tokens()
@@ -1413,6 +1428,7 @@ impl Decl {
     /// `OpaqueIsland` children directly to see everything).
     #[must_use]
     // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn fields(&self) -> Vec<Field> {
         self.syntax.children().filter_map(Field::cast).collect()
     }
@@ -1443,6 +1459,7 @@ impl Decl {
     /// this subject declares (regolith/12 sec. 3).
     #[must_use]
     // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn waivers(&self) -> Vec<WaiveBlock> {
         self.syntax
             .descendants()
@@ -1454,6 +1471,7 @@ impl Decl {
     /// sec. 2A) -- the leading word is the contextual `process` ident.
     #[must_use]
     // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn is_process(&self) -> bool {
         self.syntax
             .children_with_tokens()
@@ -1471,6 +1489,7 @@ impl Decl {
     /// subjects rely on).
     #[must_use]
     // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn process_name(&self) -> Option<String> {
         if !self.is_process() {
             return None;
@@ -1505,6 +1524,7 @@ impl Decl {
     /// source order.
     #[must_use]
     // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn rule_packs(&self) -> Vec<RulePackBlock> {
         self.syntax
             .children()
@@ -1526,6 +1546,7 @@ impl MediumDecl {
     /// `:` (fluorite/02 sec. 1).
     #[must_use]
     // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn phase(&self) -> Option<String> {
         let mut toks = self
             .syntax
@@ -1564,6 +1585,7 @@ impl FlownetDecl {
     /// The flownet's `reference:`/`nodes:` header fields.
     #[must_use]
     // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn fields(&self) -> Vec<Field> {
         self.syntax.children().filter_map(Field::cast).collect()
     }
@@ -1669,6 +1691,7 @@ impl SensePair {
     /// The "from" (positive-sense source) name, if present.
     #[must_use]
     // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn from_name(&self) -> Option<String> {
         self.names().into_iter().next()
     }
@@ -1676,6 +1699,7 @@ impl SensePair {
     /// The "to" (positive-sense sink) name, if present.
     #[must_use]
     // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn to_name(&self) -> Option<String> {
         self.names().into_iter().nth(1)
     }
@@ -1689,6 +1713,7 @@ impl DomainSet {
     /// separators is a label.
     #[must_use]
     // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn items(&self) -> Vec<String> {
         self.syntax
             .descendants_with_tokens()
@@ -1743,6 +1768,7 @@ impl HarnessDecl {
     /// source order.
     #[must_use]
     // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn environments(&self) -> Vec<EnvironmentStmt> {
         self.syntax
             .children()
@@ -1773,6 +1799,7 @@ impl RunStmt {
     /// The run's routed-PATH line, if declared.
     #[must_use]
     // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn along(&self) -> Option<AlongClause> {
         self.syntax.children().find_map(AlongClause::cast)
     }
@@ -1799,6 +1826,7 @@ impl AlongClause {
     /// marker (`route: free`, with or without a leading `along`).
     #[must_use]
     // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn is_route_free(&self) -> bool {
         let t = self.text();
         let t = t.strip_prefix("along").unwrap_or(&t).trim();
@@ -1850,6 +1878,7 @@ impl TestDecl {
     /// The test's `scenario:` block, if declared.
     #[must_use]
     // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn scenario(&self) -> Option<ScenarioBlock> {
         self.syntax.children().find_map(ScenarioBlock::cast)
     }
@@ -1868,6 +1897,7 @@ impl ScenarioBlock {
     /// grammar -- see `ctors()` for the `=` shape).
     #[must_use]
     // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn fields(&self) -> Vec<Field> {
         self.syntax.children().filter_map(Field::cast).collect()
     }
@@ -1876,6 +1906,7 @@ impl ScenarioBlock {
     /// lines (`path = value`, the [`CtorStmt`] shape).
     #[must_use]
     // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn ctors(&self) -> Vec<CtorStmt> {
         self.syntax.children().filter_map(CtorStmt::cast).collect()
     }
@@ -1883,6 +1914,7 @@ impl ScenarioBlock {
     /// The scenario's rung-2 pin blocks (`locked:` lines).
     #[must_use]
     // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn locked_blocks(&self) -> Vec<LockedBlock> {
         self.syntax
             .children()
@@ -1895,6 +1927,7 @@ impl TestExpectBlock {
     /// Every expectation case in this block, in source order.
     #[must_use]
     // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn cases(&self) -> Vec<TestExpectCase> {
         self.syntax
             .children()
@@ -1929,6 +1962,7 @@ impl TestExpectCase {
     /// five shapes do not unify under one field/ctor production.
     #[must_use]
     // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn tail(&self) -> Option<String> {
         let text = self.text();
         let form = self.form()?;
@@ -1985,6 +2019,7 @@ impl File {
     /// The top-level declarations of the file.
     #[must_use]
     // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn decls(&self) -> Vec<Decl> {
         self.syntax.children().filter_map(Decl::cast).collect()
     }
@@ -1992,6 +2027,7 @@ impl File {
     /// The top-level `medium` declarations (fluorite/02 sec. 1).
     #[must_use]
     // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn mediums(&self) -> Vec<MediumDecl> {
         self.syntax
             .children()
@@ -2013,6 +2049,7 @@ impl File {
     /// (fluorite/02 sec. 6).
     #[must_use]
     // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn fluid_requires(&self) -> Vec<RequireDecl> {
         self.syntax
             .children()
@@ -2128,6 +2165,7 @@ impl File {
     /// cross-track design test in this file.
     #[must_use]
     // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn tests(&self) -> Vec<TestDecl> {
         self.syntax.children().filter_map(TestDecl::cast).collect()
     }
@@ -2172,6 +2210,7 @@ impl SpaceDecl {
     /// `bounded_by`, `offers:`).
     #[must_use]
     // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn fields(&self) -> Vec<Field> {
         self.syntax.children().filter_map(Field::cast).collect()
     }
@@ -2201,6 +2240,7 @@ impl CirculationDecl {
     /// sec. 3).
     #[must_use]
     // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn fields(&self) -> Vec<Field> {
         self.syntax.children().filter_map(Field::cast).collect()
     }
@@ -2218,6 +2258,7 @@ impl MemberDecl {
     /// ...` anchor line, recorded as ordinary generic statements.
     #[must_use]
     // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn fields(&self) -> Vec<Field> {
         self.syntax.children().filter_map(Field::cast).collect()
     }
@@ -2234,6 +2275,7 @@ impl StructureDecl {
     /// The `support:`/`members:` header fields.
     #[must_use]
     // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn fields(&self) -> Vec<Field> {
         self.syntax.children().filter_map(Field::cast).collect()
     }

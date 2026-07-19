@@ -49,6 +49,7 @@ pub struct StaticsFeedReport {
 /// computed loads are semantic inputs, so obligations fed here hash
 /// differently from their declared-only forms.
 // frob:doc docs/modules/regolith-lower.md#solve-pass
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 #[must_use]
 pub fn feed_interface_loads(
     graph: &ContractGraph,

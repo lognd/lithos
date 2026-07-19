@@ -92,6 +92,7 @@ impl RuleDef {
     /// E06xx provenance all use.
     #[must_use]
     // frob:doc docs/modules/regolith-lower.md#rule-engine
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn qualified(&self) -> String {
         format!("{}.{}", self.pack, self.name)
     }
@@ -101,6 +102,7 @@ impl RuleDef {
     /// matches rule obligations with zero new machinery (D-D).
     #[must_use]
     // frob:doc docs/modules/regolith-lower.md#rule-engine
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn claim_name(&self) -> String {
         format!("{}({})", self.family, self.qualified())
     }
@@ -178,6 +180,7 @@ impl PackIndex {
 
     /// Every indexed pack, in index (file-then-source) order.
     // frob:doc docs/modules/regolith-lower.md#rule-engine
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn iter(&self) -> impl Iterator<Item = &PackDef> {
         self.packs.values()
     }
@@ -196,6 +199,7 @@ impl PackIndex {
     /// `jlc_2l`; `process=sheet_metal` attaches `sheet_metal`).
     #[must_use]
     // frob:doc docs/modules/regolith-lower.md#rule-engine
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn attached_to<'a>(&'a self, decl: &Decl) -> Vec<&'a PackDef> {
         let mut seen: Vec<String> = Vec::new();
         let mut out = Vec::new();
@@ -520,6 +524,7 @@ impl BindingEnv {
     /// passing the owning pack's table to [`EvalCtx`]).
     #[must_use]
     // frob:doc docs/modules/regolith-lower.md#rule-engine
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn for_decl(decl: &Decl) -> BindingEnv {
         let mut bindings = IndexMap::new();
         // Tier 1: the decl's own direct fields.
@@ -565,6 +570,7 @@ impl BindingEnv {
     /// `expect:` fixture runner's synthetic facts).
     #[must_use]
     // frob:doc docs/modules/regolith-lower.md#rule-engine
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn from_pairs(pairs: &[(String, String)]) -> BindingEnv {
         let mut bindings = IndexMap::new();
         for (k, v) in pairs {
@@ -660,6 +666,7 @@ pub struct EvalCtx<'a> {
 /// [`EvalError`] when a term is unbound/unparseable or the expression
 /// uses an unmodeled shape -- the caller's honest-deferral signal.
 // frob:doc docs/modules/regolith-lower.md#rule-engine
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn eval_demand(text: &str, ctx: &EvalCtx<'_>) -> Result<Verdict, EvalError> {
     let trimmed = text.trim();
     match trimmed {
@@ -723,6 +730,7 @@ pub fn eval_demand(text: &str, ctx: &EvalCtx<'_>) -> Result<Verdict, EvalError> 
 /// [`EvalError`] when the demand is not in the solvable shape or its
 /// bound side does not evaluate.
 // frob:doc docs/modules/regolith-lower.md#rule-engine
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn solve_resolves(
     demand: &str,
     target_var: &str,
@@ -752,6 +760,7 @@ pub fn solve_resolves(
 /// re-parses through the same literal grammar that produced it.
 #[must_use]
 // frob:doc docs/modules/regolith-lower.md#rule-engine
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn render_qty(q: &Qty) -> String {
     let symbol = normalize_symbol(&q.unit().symbol);
     let mut s = format!("{:.9}", q.magnitude());
@@ -1141,6 +1150,7 @@ impl RuleEvaluation {
     /// modeled domain -- a part with no holes satisfies hole rules).
     #[must_use]
     // frob:doc docs/modules/regolith-lower.md#rule-engine
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn is_clean_pass(&self) -> bool {
         self.violations.is_empty() && self.deferrals.is_empty()
     }
@@ -1373,6 +1383,7 @@ impl ExpectReport {
     /// are warnings by design).
     #[must_use]
     // frob:doc docs/modules/regolith-lower.md#rule-engine
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn ok(&self) -> bool {
         self.cases.iter().all(|c| c.outcome == CaseOutcome::Ok)
     }
@@ -1386,6 +1397,7 @@ impl ExpectReport {
 /// demand names); bare flag words (`interior`) are logged and ignored.
 #[must_use]
 // frob:doc docs/modules/regolith-lower.md#rule-engine
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn run_expect_cases(pack: &PackDef) -> ExpectReport {
     let span = tracing::info_span!("rules.test", pack = %pack.name);
     let _enter = span.enter();

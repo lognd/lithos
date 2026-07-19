@@ -101,6 +101,7 @@ export interface CalcBook {
 /** Mirrors `calc.py::_safe_name`: any character outside `[A-Za-z0-9._-]`
  * becomes `_`, so a sheet id round-trips to its shipped filename. */
 // frob:doc docs/modules/vscode-extension.md#artifacts
+// frob:waive TEST002 reason="no TS collection oracle; covered by node --test suite (21 passing), see FROBLEMS 2026-07-19"
 export function safeName(sheetId: string): string {
   return sheetId.replace(/[^A-Za-z0-9._-]/g, "_");
 }
@@ -121,6 +122,7 @@ export interface DistProject {
  * multi-project workspace, WO-105 layout). Never recurses deeper: a
  * `dist/` is a package boundary, not a place to search inside. */
 // frob:doc docs/modules/vscode-extension.md#artifacts
+// frob:waive TEST002 reason="no TS collection oracle; covered by node --test suite (21 passing), see FROBLEMS 2026-07-19"
 export function findDistProjects(workspaceRoot: string): DistProject[] {
   const candidates: string[] = [workspaceRoot];
   try {
@@ -171,6 +173,7 @@ function normalize(s: string): string {
  * accepted limitation (see WO-120 escalation note), not silently
  * resolved by guessing. */
 // frob:doc docs/modules/vscode-extension.md#artifacts
+// frob:waive TEST002 reason="no TS collection oracle; covered by node --test suite (21 passing), see FROBLEMS 2026-07-19"
 export function findClaimRow(
   projects: DistProject[],
   needle: string,
@@ -202,6 +205,7 @@ export interface ArtifactTarget {
  * claim's subject anchor -- go-to-artifact never invents a path that
  * is not actually present on disk. */
 // frob:doc docs/modules/vscode-extension.md#artifacts
+// frob:waive TEST002 reason="no TS collection oracle; covered by node --test suite (21 passing), see FROBLEMS 2026-07-19"
 export function resolveArtifacts(
   project: DistProject,
   row: AuditRow,

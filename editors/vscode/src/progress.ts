@@ -41,6 +41,7 @@ const LINE_RE =
  * the line carries no progress record (the overwhelming majority of the
  * log stream) -- callers filter, never throw, on ordinary log noise. */
 // frob:doc docs/modules/vscode-extension.md#progress
+// frob:waive TEST002 reason="no TS collection oracle; covered by node --test suite (21 passing), see FROBLEMS 2026-07-19"
 export function parseProgressLine(line: string): ProgressEvent | undefined {
   const plain = line.replace(ANSI_RE, "");
   const m = LINE_RE.exec(plain);
@@ -60,6 +61,7 @@ export function parseProgressLine(line: string): ProgressEvent | undefined {
  * report, e.g. "fleet: widget_a (3/15)" or "discharge: widget_b" for an
  * indeterminate phase. */
 // frob:doc docs/modules/vscode-extension.md#progress
+// frob:waive TEST002 reason="no TS collection oracle; covered by node --test suite (21 passing), see FROBLEMS 2026-07-19"
 export function formatProgressMessage(event: ProgressEvent): string {
   if (event.done === null || event.total === null) {
     return `${event.phase}: ${event.subject}`;
@@ -73,6 +75,7 @@ export function formatProgressMessage(event: ProgressEvent): string {
  * `total` is not positive. VS Code's `report({ increment })` is a
  * delta, so callers must track `previousDone` themselves per phase. */
 // frob:doc docs/modules/vscode-extension.md#progress
+// frob:waive TEST002 reason="no TS collection oracle; covered by node --test suite (21 passing), see FROBLEMS 2026-07-19"
 export function progressIncrement(
   event: ProgressEvent,
   previousDone: number,

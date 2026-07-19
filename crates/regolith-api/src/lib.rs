@@ -36,6 +36,7 @@ pub fn format(text: &str) -> String {
 /// are NOT linear SI units and are the honest `None` case here; the
 /// caller defers by name rather than guessing).
 // frob:doc docs/modules/regolith-api.md#format-and-unit-literal-reduction
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 #[must_use]
 pub fn reduce_unit_literal(magnitude: f64, unit_symbol: &str) -> Option<f64> {
     let unit = regolith_qty::Unit::parse_expr(unit_symbol).ok()?;
@@ -53,6 +54,7 @@ pub fn reduce_unit_literal(magnitude: f64, unit_symbol: &str) -> Option<f64> {
 /// stage name is a caller (programmer) bug, not a user error, and
 /// crosses the FFI as `CoreBug` (AD-4).
 // frob:doc docs/modules/regolith-api.md#debug-dump-and-debug-ir
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn debug_dump(stage: &str, path: &Utf8Path) -> Result<String, CoreError> {
     // An unknown stage name is a caller (programmer) bug, not a user
     // error -- it never reaches CoreError; it panics, which crosses the
@@ -140,6 +142,7 @@ pub fn debug_ir(
 /// # Errors
 /// Returns [`CoreError`] if a source file cannot be read.
 // frob:doc docs/modules/regolith-api.md#event-surface-extraction
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn on_events(paths: &[&Utf8Path]) -> Result<Vec<(String, String)>, CoreError> {
     let mut files = Vec::with_capacity(paths.len());
     for path in paths {
@@ -175,6 +178,7 @@ pub fn on_events(paths: &[&Utf8Path]) -> Result<Vec<(String, String)>, CoreError
 /// # Errors
 /// Returns [`CoreError::Io`] if a source file cannot be read.
 // frob:doc docs/modules/regolith-api.md#extrusion-outline-resolution
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn resolve_extrusion_outline(
     paths: &[&Utf8Path],
     profile: &str,
@@ -279,6 +283,7 @@ pub fn extensions() -> Vec<(&'static str, &'static str)> {
 /// caller (the payload it passes is always core-produced), surfaced as
 /// a value rather than a panic.
 // frob:doc docs/modules/regolith-api.md#obligation-content-hashes
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn obligation_content_hashes(obligations_json: &str) -> Result<Vec<String>, CoreError> {
     let obligations: Vec<regolith_oblig::Obligation> = serde_json::from_str(obligations_json)
         .map_err(|e| CoreError::CacheCorrupt(format!("obligations JSON: {e}")))?;

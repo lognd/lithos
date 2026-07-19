@@ -114,6 +114,7 @@ pub struct Walk {
 /// records the step as one typed leaf and defers word-level semantics to
 /// this ledger half (hematite/07 OPEN-5, D65).
 // frob:doc docs/modules/regolith-syntax.md#walk
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 #[must_use]
 pub fn parse_walk(node: &SyntaxNode) -> Option<Walk> {
     let walk_body = if node.kind() == SyntaxKind::WalkBody {

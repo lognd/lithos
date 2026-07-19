@@ -58,6 +58,7 @@ pub type LintConfig = BTreeMap<String, LintAction>;
 /// enforced where the manifest is validated, not here).
 #[must_use]
 // frob:doc docs/modules/regolith-diag.md#lints
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn apply_lint_config(diagnostics: Vec<Diagnostic>, config: &LintConfig) -> Vec<Diagnostic> {
     diagnostics
         .into_iter()
@@ -85,6 +86,7 @@ pub fn apply_lint_config(diagnostics: Vec<Diagnostic>, config: &LintConfig) -> V
 /// family-glob form is a documented reopen, not v1).
 #[must_use]
 // frob:doc docs/modules/regolith-diag.md#lints
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn lint_code_name(diagnostic: &Diagnostic) -> String {
     diagnostic.code.to_string().to_lowercase()
 }

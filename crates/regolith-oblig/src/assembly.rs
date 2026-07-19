@@ -158,6 +158,7 @@ impl RealizedAssembly {
     /// Propagates [`EncodeError`] from the canonical encoder (only a
     /// non-finite float or a serializer failure -- an upstream bug).
     // frob:doc docs/modules/regolith-oblig.md#assembly
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn content_digest(&self) -> Result<String, EncodeError> {
         content_address(ASSEMBLY_DOMAIN_TAG, self)
     }

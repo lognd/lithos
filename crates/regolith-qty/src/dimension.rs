@@ -119,6 +119,7 @@ impl Dimension {
     /// Construct directly from an exponent vector (base-dimension order).
     #[must_use]
     // frob:doc docs/modules/regolith-qty.md#dimension
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn from_exponents(exps: [Exponent; BASE_DIMENSIONS]) -> Self {
         Dimension { exps }
     }
@@ -126,6 +127,7 @@ impl Dimension {
     /// The exponent of `base` in this dimension.
     #[must_use]
     // frob:doc docs/modules/regolith-qty.md#dimension
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn exponent(&self, base: BaseDimension) -> Exponent {
         self.exps[base.index()]
     }
@@ -133,6 +135,7 @@ impl Dimension {
     /// True when every base exponent is zero.
     #[must_use]
     // frob:doc docs/modules/regolith-qty.md#dimension
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn is_dimensionless(&self) -> bool {
         self.exps.iter().all(|e| *e == Ratio::from_integer(0))
     }
@@ -140,6 +143,7 @@ impl Dimension {
     /// Product of two dimensions: exponents add (`N/m * m` -> `N`).
     #[must_use]
     // frob:doc docs/modules/regolith-qty.md#dimension
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn mul(&self, other: &Dimension) -> Dimension {
         let mut exps = self.exps;
         for (slot, rhs) in exps.iter_mut().zip(other.exps.iter()) {
@@ -151,6 +155,7 @@ impl Dimension {
     /// Quotient of two dimensions: exponents subtract.
     #[must_use]
     // frob:doc docs/modules/regolith-qty.md#dimension
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn div(&self, other: &Dimension) -> Dimension {
         let mut exps = self.exps;
         for (slot, rhs) in exps.iter_mut().zip(other.exps.iter()) {
@@ -162,6 +167,7 @@ impl Dimension {
     /// This dimension raised to a rational power (exponents scale).
     #[must_use]
     // frob:doc docs/modules/regolith-qty.md#dimension
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn pow(&self, power: Exponent) -> Dimension {
         let mut exps = self.exps;
         for slot in &mut exps {

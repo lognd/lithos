@@ -98,6 +98,7 @@ impl Resolution {
     /// `slot = <value>    cause: dfm(rule)`.
     #[must_use]
     // frob:doc docs/modules/regolith-qty.md#resolution
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn lockfile_line(&self, slot: &str) -> String {
         let mut buf = ryu::Buffer::new();
         let value = buf.format(self.value.magnitude());

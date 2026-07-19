@@ -41,6 +41,7 @@ const PROMISES_ARG: &str = "promises";
 /// bare peripheral demand vector) contributes nothing -- absence is
 /// absence, never an empty placeholder.
 // frob:doc docs/modules/regolith-lower.md#block-requirement
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 #[must_use]
 pub fn build_block_requirements(files: &[ParsedFile]) -> Vec<BlockRequirement> {
     let span = tracing::info_span!("lower.block_requirement");

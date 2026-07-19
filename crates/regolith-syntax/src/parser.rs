@@ -87,6 +87,7 @@ pub struct Parse {
 impl Parse {
     /// The typed root node of the parse.
     // frob:doc docs/modules/regolith-syntax.md#parser
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     #[must_use]
     pub fn syntax(&self) -> SyntaxNode {
         SyntaxNode::new_root(self.green.clone())

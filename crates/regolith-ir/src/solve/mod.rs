@@ -36,6 +36,7 @@ impl OutwardBounds {
     /// a singular-system diagnostic, never lets it escape).
     #[must_use]
     // frob:doc docs/modules/regolith-ir.md#solve
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn around(value: f64) -> Option<OutwardBounds> {
         if !value.is_finite() {
             return None;

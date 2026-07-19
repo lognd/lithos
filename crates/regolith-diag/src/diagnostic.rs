@@ -107,6 +107,7 @@ impl Diagnostic {
     /// Attach a labelled span (builder).
     #[must_use]
     // frob:doc docs/modules/regolith-diag.md#diagnostic
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn with_span(mut self, span: LabeledSpan) -> Diagnostic {
         self.spans.push(span);
         self
@@ -115,6 +116,7 @@ impl Diagnostic {
     /// Attach a matched entity row (builder).
     #[must_use]
     // frob:doc docs/modules/regolith-diag.md#diagnostic
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn with_match(mut self, entity: MatchedEntity) -> Diagnostic {
         self.matched.push(entity);
         self
@@ -123,6 +125,7 @@ impl Diagnostic {
     /// Attach a fix suggestion (builder).
     #[must_use]
     // frob:doc docs/modules/regolith-diag.md#diagnostic
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn with_fix(mut self, fix: Fix) -> Diagnostic {
         self.fixes.push(fix);
         self
@@ -131,6 +134,7 @@ impl Diagnostic {
     /// Attach a cross-reference to a related diagnostic (builder).
     #[must_use]
     // frob:doc docs/modules/regolith-diag.md#diagnostic
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn with_related(mut self, related: RelatedRef) -> Diagnostic {
         self.related.push(related);
         self
@@ -140,6 +144,7 @@ impl Diagnostic {
     /// ordering in the sink.
     #[must_use]
     // frob:doc docs/modules/regolith-diag.md#diagnostic
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn primary_span(&self) -> Option<&Span> {
         self.spans.first().map(|s| &s.span)
     }

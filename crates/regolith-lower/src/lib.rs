@@ -61,6 +61,7 @@ pub use regolith_oblig::EvidenceCache;
 /// it (NO DUPLICATION) instead of re-deriving its own truncating
 /// first-line cut.
 // frob:doc docs/modules/regolith-lower.md#join-physical-lines
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 #[must_use]
 pub(crate) fn join_physical_lines(text: &str) -> String {
     text.lines()
@@ -73,6 +74,7 @@ pub(crate) fn join_physical_lines(text: &str) -> String {
 /// caller's order (the caller -- `Session::discover_files` -- already
 /// sorts for determinism, AD-6; this pass does not re-sort).
 // frob:doc docs/modules/regolith-lower.md#parse-sources
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 #[must_use]
 pub fn parse_sources(sources: &[SourceFile]) -> Vec<ParsedFile> {
     let span = tracing::info_span!("parse", files = sources.len());
@@ -106,6 +108,7 @@ pub fn parse_sources(sources: &[SourceFile]) -> Vec<ParsedFile> {
 /// digest against the WO-30 store is the caller's IO, done before this
 /// function is ever called (AD-17).
 // frob:doc docs/modules/regolith-lower.md#lower
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 #[must_use]
 pub fn lower(
     sources: &[SourceFile],
@@ -119,6 +122,7 @@ pub fn lower(
 /// `deny` -> `Error`) at the very end of the batch, in the ONE place
 /// (`regolith_diag::apply_lint_config`) severity changes.
 // frob:doc docs/modules/regolith-lower.md#lower-with-lint-config
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 #[must_use]
 pub fn lower_with_lint_config(
     sources: &[SourceFile],
@@ -275,6 +279,7 @@ pub fn lower_with_lint_config(
 /// AD-1), folded into every evidence-cache key so a model upgrade forces
 /// re-verification (BE-1/INV-1).
 // frob:doc docs/modules/regolith-lower.md#lower-and-discharge
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 #[must_use]
 pub fn lower_and_discharge(
     sources: &[SourceFile],
@@ -294,6 +299,7 @@ pub fn lower_and_discharge(
 /// Same as [`lower_and_discharge`], with the WO-40 `[lints]` promotion
 /// step (see [`lower_with_lint_config`]).
 // frob:doc docs/modules/regolith-lower.md#lower-and-discharge-with-lint-config
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 #[must_use]
 pub fn lower_and_discharge_with_lint_config(
     sources: &[SourceFile],

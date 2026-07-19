@@ -97,6 +97,7 @@ impl Obligation {
     #[must_use]
     // frob:doc docs/modules/regolith-oblig.md#obligation
     // frob:invariant INV-001
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn evidence_cache_key(&self, registry_version: &str) -> String {
         // Built-in models carry the pack identity
         // `("regolith", registry_version)` (AD-19), so the un-packed
@@ -117,6 +118,7 @@ impl Obligation {
     /// bug), for the same reason as [`Obligation::content_hash`].
     #[must_use]
     // frob:doc docs/modules/regolith-oblig.md#obligation
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn evidence_cache_key_for_pack(
         &self,
         registry_version: &str,

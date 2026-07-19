@@ -192,6 +192,7 @@ pub struct ResolvedArc {
 /// [`close_walk`]; this only places the vertices a determined walk has.
 #[must_use]
 // frob:doc docs/modules/regolith-ir.md#sketch
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn resolve_outline(sketch: &SketchClosure) -> Option<ResolvedOutline> {
     let span = tracing::info_span!("solve.sketch.outline", profile = %sketch.profile);
     let _enter = span.enter();
@@ -279,6 +280,7 @@ pub fn resolve_outline(sketch: &SketchClosure) -> Option<ResolvedOutline> {
 /// Non-finite inputs are `E0440`. Never a panic, never NaN out.
 #[must_use]
 // frob:doc docs/modules/regolith-ir.md#sketch
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn close_walk(sketch: &SketchClosure) -> SketchSolution {
     let span = tracing::info_span!("solve.sketch", profile = %sketch.profile);
     let _enter = span.enter();

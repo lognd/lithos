@@ -23,6 +23,7 @@ pub enum Stage {
 /// Render `stage` of parsing `source` (belonging to `file`) as a stable
 /// plain-text dump.
 // frob:doc docs/modules/regolith-syntax.md#debug
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 #[must_use]
 pub fn dump(stage: Stage, source: &str, file: &Utf8PathBuf) -> String {
     match stage {

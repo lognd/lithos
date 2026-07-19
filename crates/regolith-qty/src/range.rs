@@ -47,6 +47,7 @@ impl Range {
     /// An open-right range `[start ..]` (to the extent's end).
     #[must_use]
     // frob:doc docs/modules/regolith-qty.md#range
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn open(start: RangePos) -> Range {
         Range { start, end: None }
     }
@@ -54,6 +55,7 @@ impl Range {
     /// True when the range has no explicit end (open right).
     #[must_use]
     // frob:doc docs/modules/regolith-qty.md#range
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn is_open(&self) -> bool {
         self.end.is_none()
     }
@@ -62,6 +64,7 @@ impl Range {
     /// (`[0 .. 3]` -> 3). `None` for open or address-valued ranges.
     #[must_use]
     // frob:doc docs/modules/regolith-qty.md#range
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn index_len(&self) -> Option<u64> {
         match (&self.start, &self.end) {
             (RangePos::Index(start), Some(RangePos::Index(end))) => Some(end - start),

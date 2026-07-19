@@ -97,6 +97,7 @@ fn read_sources(paths: &[Utf8PathBuf]) -> Result<Vec<SourceFile>, CoreError> {
 /// # Panics
 /// Never in practice: serializing our own report shape cannot fail.
 // frob:doc docs/modules/regolith-api.md#rule-pack-test-and-try-verbs
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn rules_test(paths: &[Utf8PathBuf]) -> Result<String, CoreError> {
     let span = tracing::info_span!("rules.test", files = paths.len());
     let _enter = span.enter();

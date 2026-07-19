@@ -215,6 +215,7 @@ pub const FAMILIES: &[FamilySpec] = &[
 /// The family a constructor verb names, if any.
 #[must_use]
 // frob:doc docs/modules/regolith-lower.md#removal
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn family_for_constructor(ctor: &str) -> Option<&'static FamilySpec> {
     FAMILIES.iter().find(|f| f.ctor == ctor)
 }
@@ -268,6 +269,7 @@ impl SlotValue {
 /// `E0451`). An `Err` means the op must be omitted -- partial
 /// projection of a malformed family op is never done.
 // frob:doc docs/modules/regolith-lower.md#removal
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn validate_family_params(
     family: &FamilySpec,
     args_text: &str,
@@ -330,6 +332,7 @@ pub fn validate_family_params(
 /// best-effort like every other projector input).
 #[must_use]
 // frob:doc docs/modules/regolith-lower.md#removal
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn family_measures(family: &FamilySpec, args_text: &str) -> IndexMap<String, String> {
     match validate_family_params(family, args_text) {
         Ok(params) => params.into_iter().map(|(k, v)| (k, v.text)).collect(),

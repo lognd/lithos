@@ -50,6 +50,7 @@ pub struct CheckReport {
 #[must_use]
 // frob:doc docs/modules/regolith-lower.md#checks
 // frob:invariant INV-020
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn run_checks(files: &[ParsedFile], snapshots: &EntitySnapshots) -> CheckReport {
     run_checks_with_registry(files, snapshots, &crate::registry::RegistryRecords::empty())
 }

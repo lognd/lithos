@@ -122,6 +122,7 @@ impl RegistryRecords {
 
     /// Build directly from (key, fields) pairs (test fixtures).
     // frob:doc docs/modules/regolith-lower.md#registry
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     #[must_use]
     pub fn from_pairs(pairs: &[(&str, &[(&str, &str)])]) -> RegistryRecords {
         let mut records = IndexMap::new();

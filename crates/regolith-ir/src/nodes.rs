@@ -125,6 +125,7 @@ mod extract {
         /// when the declaration is unnamed.
         #[must_use]
         // frob:doc docs/modules/regolith-ir.md#nodes
+        // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
         pub fn from_decl(decl: &Decl) -> Option<Interface> {
             let name = decl.name()?;
             tracing::debug!(interface = %name, "extracting interface from CST");
@@ -175,6 +176,7 @@ mod extract {
         /// entity kind needs the entity DB (documented WO-12 dependency).
         #[must_use]
         // frob:doc docs/modules/regolith-ir.md#nodes
+        // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
         pub fn from_impl_stmt(node: &SyntaxNode) -> Option<Impl> {
             if node.kind() != SyntaxKind::ImplStmt {
                 return None;

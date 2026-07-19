@@ -87,6 +87,7 @@ impl EntityKind {
     /// validate.
     #[must_use]
     // frob:doc docs/modules/regolith-sem.md#entity-db
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn from_kind_word(word: &str) -> Self {
         match word {
             "faces" | "face" => EntityKind::Face,
@@ -118,6 +119,7 @@ impl EntityKind {
     /// fields -- absence is "not modeled", not "no fields".
     #[must_use]
     // frob:doc docs/modules/regolith-sem.md#entity-db
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn known_measure_keys(&self) -> Option<&'static [&'static str]> {
         match self {
             EntityKind::Hole => Some(&["position", "diameter", "edge_distance"]),
@@ -185,6 +187,7 @@ impl EntityKind {
     /// word-to-kind lookup grows).
     #[must_use]
     // frob:doc docs/modules/regolith-sem.md#entity-db
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn from_constructor_word(head: &str) -> Option<Self> {
         match head {
             // Round material-removal features -> Hole.
@@ -346,6 +349,7 @@ impl EntityDb {
     /// Number of entities in this snapshot.
     #[must_use]
     // frob:doc docs/modules/regolith-sem.md#entity-db
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn len(&self) -> usize {
         self.entities.len()
     }
@@ -396,6 +400,7 @@ impl EntityDb {
     /// upstream compiler bug).
     #[must_use]
     // frob:doc docs/modules/regolith-sem.md#entity-db
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn snapshot_hash(&self) -> String {
         let mut ids: Vec<&EntityId> = self.entities.keys().collect();
         ids.sort();
@@ -417,6 +422,7 @@ impl EntityDb {
     /// query engine (WO-08) to enumerate a base selection; never expose
     /// `IndexMap`'s own iteration order here (AD-6).
     // frob:doc docs/modules/regolith-sem.md#entity-db
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn iter(&self) -> impl Iterator<Item = &Entity> {
         let mut entities: Vec<&Entity> = self.entities.values().collect();
         entities.sort_by_key(|e| e.id);

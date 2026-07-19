@@ -128,6 +128,7 @@ pub enum RawToken {
 /// Never fails: unclassified bytes become [`RawToken::Error`] tokens so
 /// the CST still covers every byte (the fuzz invariant, AD-3).
 // frob:doc docs/modules/regolith-syntax.md#token
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 #[must_use]
 pub fn lex(source: &str) -> Vec<(RawToken, std::ops::Range<usize>)> {
     let mut lexer = RawToken::lexer(source);

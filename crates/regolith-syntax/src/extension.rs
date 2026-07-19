@@ -60,6 +60,7 @@ pub const EXTENSIONS: &[(&str, Language)] = &[
 /// Resolve a bare extension (no leading dot, case-sensitive) to its
 /// language, or `None` if it is not a regolith source file.
 // frob:doc docs/modules/regolith-syntax.md#extension
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 #[must_use]
 pub fn language_for_extension(ext: &str) -> Option<Language> {
     EXTENSIONS
@@ -92,6 +93,7 @@ pub const TEST_FILE_INFIX: &str = "test";
 /// `test`, not a test file -- the infix marks a SUFFIX on a name, not
 /// the whole stem).
 // frob:doc docs/modules/regolith-syntax.md#extension
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 #[must_use]
 pub fn test_file_language(file_name: &str) -> Option<Language> {
     let (base, ext) = file_name.rsplit_once('.')?;

@@ -50,6 +50,7 @@ pub struct DomainConstraint {
 /// the expansion, only how callers treat the points.
 #[must_use]
 // frob:doc docs/modules/regolith-qty.md#monomorphize
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn monomorphize(set: &DiscreteSet, _external: bool) -> Vec<InstantiationPoint> {
     match set {
         DiscreteSet::Ints(members) => members

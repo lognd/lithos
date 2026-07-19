@@ -140,6 +140,7 @@ fn styled_renderer() -> Renderer {
 /// diagnostics separated by a blank line.
 #[must_use]
 // frob:doc docs/modules/regolith-diag.md#render
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn render_batch(
     diagnostics: &[Diagnostic],
     color: ColorMode,

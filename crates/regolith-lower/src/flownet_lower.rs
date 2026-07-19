@@ -355,6 +355,7 @@ pub struct FlownetLowerReport {
 /// the WO-32 deliverable-3 entry point.
 #[must_use]
 // frob:doc docs/modules/regolith-lower.md#flownet-lower
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn elaborate_flownets(files: &[ParsedFile], inputs: &dyn FlownetInputs) -> FlownetLowerReport {
     let span = tracing::info_span!("lower.flownet");
     let _enter = span.enter();

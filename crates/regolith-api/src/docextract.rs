@@ -30,6 +30,7 @@ use crate::CoreError;
 /// # Errors
 /// Returns [`CoreError`] if the source file cannot be read.
 // frob:doc docs/modules/regolith-api.md#public-surface-doc-extraction
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn doc_extract(path: &Utf8Path) -> Result<String, CoreError> {
     let source = std::fs::read_to_string(path).map_err(|e| CoreError::Io {
         path: path.to_path_buf(),

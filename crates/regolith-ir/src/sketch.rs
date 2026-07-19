@@ -153,6 +153,7 @@ pub enum WalkPromotion {
 /// (`regolith-sem` `check_label_bindings`), reported once, not twice.
 #[must_use]
 // frob:doc docs/modules/regolith-ir.md#sketch
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn sketch_closure_from_walk(profile: &str, walk: &Walk) -> WalkPromotion {
     let span = tracing::info_span!("solve.sketch.promote", profile);
     let _enter = span.enter();

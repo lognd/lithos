@@ -29,6 +29,7 @@ use crate::nodes::{Impl, Interface, PromiseSlot};
 ///    `bound_kinds` is a documented WO-12 dependency).
 #[must_use]
 // frob:doc docs/modules/regolith-ir.md#conformance
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn check_role_kind(iface: &Interface, imp: &Impl) -> Vec<Diagnostic> {
     let span = tracing::debug_span!("check_role_kind", interface = %iface.name);
     let _enter = span.enter();
@@ -105,6 +106,7 @@ pub fn check_role_kind(iface: &Interface, imp: &Impl) -> Vec<Diagnostic> {
 /// A mismatch is `E0410` (CAPABILITY_VS_DEMAND).
 #[must_use]
 // frob:doc docs/modules/regolith-ir.md#conformance
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn check_param_match(iface: &Interface, imp: &Impl) -> Vec<Diagnostic> {
     let span = tracing::debug_span!("check_param_match", interface = %iface.name);
     let _enter = span.enter();
@@ -171,6 +173,7 @@ pub struct Capability {
 /// decides (deterministic tie-break, no `HashMap` involved).
 #[must_use]
 // frob:doc docs/modules/regolith-ir.md#conformance
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn check_capability_vs_demand(demands: &[String], supplied: &[Capability]) -> Vec<Diagnostic> {
     let mut diags = Vec::new();
     for demand in demands {
@@ -201,6 +204,7 @@ pub fn check_capability_vs_demand(demands: &[String], supplied: &[Capability]) -
 /// false-positive rejection.
 #[must_use]
 // frob:doc docs/modules/regolith-ir.md#conformance
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn check_refinement(base: &[PromiseSlot], refined: &[PromiseSlot]) -> Vec<Diagnostic> {
     let mut diags = Vec::new();
     for b in base {

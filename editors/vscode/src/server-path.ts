@@ -11,6 +11,7 @@ import * as path from "node:path";
 import * as os from "node:os";
 
 // frob:doc docs/modules/vscode-extension.md#server-path
+// frob:waive TEST002 reason="no TS collection oracle; covered by node --test suite (21 passing), see FROBLEMS 2026-07-19"
 /** Platform/arch triple used for the bundled binary directory name. */
 export function platformDir(): string {
   const plat = process.platform === "win32" ? "windows" : process.platform;
@@ -41,6 +42,7 @@ export interface ServerResolution {
 }
 
 // frob:doc docs/modules/vscode-extension.md#server-path
+// frob:waive TEST002 reason="no TS collection oracle; covered by node --test suite (21 passing), see FROBLEMS 2026-07-19"
 /** Resolve the server binary, in the documented priority order. */
 export function resolveServerPath(
   extensionPath: string,

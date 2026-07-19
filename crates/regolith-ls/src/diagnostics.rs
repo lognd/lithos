@@ -27,6 +27,7 @@ use crate::position::LineIndex;
 /// into the same type cannot fail (a failure would be a programmer bug).
 #[must_use]
 // frob:doc docs/modules/regolith-ls.md#diagnostics
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn check_workspace(root: &Utf8PathBuf) -> Option<BTreeMap<Utf8PathBuf, Vec<Diagnostic>>> {
     let session = regolith_api::Session::open_root(root.clone());
     let realized_inputs = regolith_lower::RealizedInputs::new();
@@ -54,6 +55,7 @@ pub fn check_workspace(root: &Utf8PathBuf) -> Option<BTreeMap<Utf8PathBuf, Vec<D
 /// workspace-level `check_workspace` runs in the background.
 #[must_use]
 // frob:doc docs/modules/regolith-ls.md#diagnostics
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn syntax_diagnostics_for_text(path: &Utf8PathBuf, text: &str) -> Vec<Diagnostic> {
     let parse = regolith_syntax::parse(text, path);
     let index = LineIndex::new(text);
@@ -154,6 +156,7 @@ fn line_index_for(file: &Utf8PathBuf) -> LineIndex {
 /// Convert an absolute file path to a `file://` URI.
 #[must_use]
 // frob:doc docs/modules/regolith-ls.md#diagnostics
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn file_uri(path: &Utf8PathBuf) -> Option<Url> {
     Url::from_file_path(path).ok()
 }
@@ -161,6 +164,7 @@ pub fn file_uri(path: &Utf8PathBuf) -> Option<Url> {
 /// Convert a `file://` URI back to an absolute [`Utf8PathBuf`].
 #[must_use]
 // frob:doc docs/modules/regolith-ls.md#diagnostics
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn uri_to_path(uri: &Url) -> Option<Utf8PathBuf> {
     uri.to_file_path()
         .ok()

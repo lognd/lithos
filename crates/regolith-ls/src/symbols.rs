@@ -10,6 +10,7 @@ use crate::position::LineIndex;
 /// Every top-level declaration in `text`, as an LSP outline entry.
 #[must_use]
 // frob:doc docs/modules/regolith-ls.md#symbols
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn document_symbols(text: &str, index: &LineIndex) -> Vec<DocumentSymbol> {
     let path = camino::Utf8PathBuf::from("<ls>");
     let parse = regolith_syntax::parse(text, &path);

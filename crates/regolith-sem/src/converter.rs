@@ -79,6 +79,7 @@ impl EdgeKind {
     /// on. Combinational edges do not; converters and registers do.
     #[must_use]
     // frob:doc docs/modules/regolith-sem.md#converter
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn is_delta(self) -> bool {
         matches!(self, EdgeKind::Converter | EdgeKind::Register)
     }
@@ -128,6 +129,7 @@ impl ConverterGraph {
 
     /// Add a node and return its index.
     // frob:doc docs/modules/regolith-sem.md#converter
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn add_node(&mut self, name: impl Into<String>, domain: Domain) -> usize {
         let id = self.nodes.len();
         self.nodes.push(Node {
@@ -139,6 +141,7 @@ impl ConverterGraph {
 
     /// Add a dependency edge between two existing node indices.
     // frob:doc docs/modules/regolith-sem.md#converter
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn add_edge(&mut self, from: usize, to: usize, kind: EdgeKind) {
         self.edges.push(Edge { from, to, kind });
     }
@@ -168,6 +171,7 @@ impl ConverterGraph {
     /// entry node. Deterministic (nodes visited in index order).
     #[must_use]
     // frob:doc docs/modules/regolith-sem.md#converter
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn combinational_cycles(&self) -> Vec<Vec<usize>> {
         // Adjacency built from cycle-forming edges only.
         let mut adj: BTreeMap<usize, Vec<usize>> = BTreeMap::new();
@@ -196,6 +200,7 @@ impl ConverterGraph {
     /// (loop-free in the combinational sense) -- the legal case.
     #[must_use]
     // frob:doc docs/modules/regolith-sem.md#converter
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn check_acyclic(&self) -> Vec<Diagnostic> {
         let cycles = self.combinational_cycles();
         if cycles.is_empty() {

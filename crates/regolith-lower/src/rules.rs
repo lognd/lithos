@@ -55,6 +55,7 @@ struct RuleSite {
 /// of `lower.checks` uses.
 #[must_use]
 // frob:doc docs/modules/regolith-lower.md#rules
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn check_rule_packs(files: &[ParsedFile]) -> Vec<Diagnostic> {
     let span = tracing::info_span!("lower.checks.rules");
     let _enter = span.enter();
@@ -257,6 +258,7 @@ fn leading_ident(text: &str) -> String {
 /// both). File-then-source order (AD-6).
 #[must_use]
 // frob:doc docs/modules/regolith-lower.md#rules
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn evaluate_static_rules(
     files: &[ParsedFile],
     snapshots: &EntitySnapshots,

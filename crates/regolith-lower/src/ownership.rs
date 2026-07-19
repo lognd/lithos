@@ -37,6 +37,7 @@ use crate::output::ParsedFile;
 /// file-then-source order (AD-6). The final artifact orbit table is not
 /// returned (it is per-scope); callers that need it recompute per decl.
 // frob:doc docs/modules/regolith-lower.md#ownership
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 #[must_use]
 pub fn run_ownership_and_symmetry(files: &[ParsedFile]) -> Vec<Diagnostic> {
     let span = tracing::info_span!("lower.ownership");

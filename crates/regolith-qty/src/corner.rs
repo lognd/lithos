@@ -51,6 +51,7 @@ impl CornerInputs {
 
     /// Register a named interval input (declaration order preserved).
     // frob:doc docs/modules/regolith-qty.md#corner
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn insert(&mut self, name: impl Into<String>, interval: Interval) {
         self.inputs.insert(name.into(), interval);
     }
@@ -58,6 +59,7 @@ impl CornerInputs {
     /// Number of interval inputs (the corner space is `2^n`).
     #[must_use]
     // frob:doc docs/modules/regolith-qty.md#corner
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn len(&self) -> usize {
         self.inputs.len()
     }
@@ -96,6 +98,7 @@ impl CornerInputs {
     /// is the model's call; this only maximizes/minimizes the evaluator.
     #[must_use]
     // frob:doc docs/modules/regolith-qty.md#corner
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn worst_case(
         &self,
         direction: CheckDirection,

@@ -54,6 +54,7 @@ const L2_STIFFNESS_REL_EPS: f64 = 0.05;
 // frob:doc docs/modules/regolith-lower.md#discharge
 #[must_use]
 // frob:invariant INV-010
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn discharge_static(
     obligations: &[Obligation],
     _graph: &crate::contracts::ContractGraph,

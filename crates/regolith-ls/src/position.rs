@@ -42,6 +42,7 @@ impl LineIndex {
     /// past the end of the text clamp to the last valid position.
     #[must_use]
     // frob:doc docs/modules/regolith-ls.md#position
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn position(&self, byte_offset: usize) -> Position {
         #[allow(clippy::cast_possible_truncation)]
         let byte_offset = (byte_offset as u32).min(self.text.len().try_into().unwrap_or(u32::MAX));

@@ -64,12 +64,14 @@ impl SignatureRegistry {
 
     /// Register a signature.
     // frob:doc docs/modules/regolith-oblig.md#signature
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn add_signature(&mut self, sig: Signature) {
         self.signatures.insert(sig.name.clone(), sig);
     }
 
     /// Register an impl record.
     // frob:doc docs/modules/regolith-oblig.md#signature
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn add_impl(&mut self, imp: ImplRecord) {
         self.impls.push(imp);
     }
@@ -77,6 +79,7 @@ impl SignatureRegistry {
     /// The impls implementing `signature`, cheapest first.
     #[must_use]
     // frob:doc docs/modules/regolith-oblig.md#signature
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
     pub fn impls_for(&self, signature: &str) -> Vec<&ImplRecord> {
         let mut matching: Vec<&ImplRecord> = self
             .impls

@@ -641,6 +641,7 @@ pub(crate) fn sweep_domain_from_ast(
 /// domain (`{}`, `[]`) stays legal (it starts with a bracket) -- an
 /// honest empty sweep, not this trap.
 // frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub(crate) fn is_undeclared_bare_plural_domain(domain: &str) -> bool {
     let d = domain.trim();
     if d.is_empty() {

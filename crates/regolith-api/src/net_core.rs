@@ -52,6 +52,7 @@ pub struct ElecViolation {
 /// as the expected wire shape -- an infrastructure/programmer-facing
 /// failure, not a design error (those are `Ok(Some(..))`).
 // frob:doc docs/modules/regolith-api.md#elec-net-core-marshalling
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn check_elec_single_driver(nets_json: &str) -> Result<Option<ElecViolation>, String> {
     let wire_nets: Vec<WireNet> =
         serde_json::from_str(nets_json).map_err(|e| format!("invalid net JSON: {e}"))?;

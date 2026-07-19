@@ -50,6 +50,7 @@ use crate::output::ParsedFile;
 // frob:doc docs/modules/regolith-lower.md#query
 #[must_use]
 // frob:invariant INV-006
+// frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn run_query_resolution(files: &[ParsedFile]) -> Vec<Diagnostic> {
     let span = tracing::info_span!("lower.query");
     let _enter = span.enter();
