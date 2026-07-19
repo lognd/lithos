@@ -44,9 +44,13 @@ from demos.harness import REPO_ROOT, DemoWriter, artifact_table, gap_proof
 
 _log = get_logger(__name__)
 
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 DEMO = "demo4_section_search"
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 SURFACE = "civil free-section search over a declared family (footbridge, WO-65)"
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 SOURCE = REPO_ROOT / "examples" / "tracks" / "calcite" / "footbridge.calx"
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 STDLIB = str(REPO_ROOT / "stdlib")
 _TRACE_RE = re.compile(r"trace=(blake3:[0-9a-f]+)")
 
@@ -62,6 +66,7 @@ def _section_search_available() -> bool:
     return True
 
 
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 def run() -> bool:
     """Emit the section-search proof pack; return True iff live."""
     writer = DemoWriter(DEMO, SURFACE)

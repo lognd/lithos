@@ -33,8 +33,11 @@ from pathlib import Path
 
 from tools.stdlib.render import render_records_file
 
+# frob:doc docs/modules/tools.md#stdlib-gen-processors
 REPO_ROOT = Path(__file__).resolve().parents[2]
+# frob:doc docs/modules/tools.md#stdlib-gen-processors
 DATA_FILE = REPO_ROOT / "tools" / "stdlib" / "data" / "ti_mcu_msp430fr5.toml"
+# frob:doc docs/modules/tools.md#stdlib-gen-processors
 OUT_DIR = REPO_ROOT / "stdlib" / "ti.mcu" / "records"
 
 _HEADER = (
@@ -77,6 +80,7 @@ def _section_row(doc: dict, section: dict) -> dict:
     return row
 
 
+# frob:doc docs/modules/tools.md#stdlib-gen-processors
 def generate() -> dict[str, str]:
     with DATA_FILE.open("rb") as f:
         data = tomllib.load(f)
@@ -161,6 +165,8 @@ def generate() -> dict[str, str]:
     return out
 
 
+# frob:doc docs/modules/tools.md#stdlib-gen-processors
+# frob:waive TEST001 reason="CLI entry point; see tests/tools/test_stdlib_gen_drift.py"
 def main() -> None:
     for path_str, content in generate().items():
         path = Path(path_str)

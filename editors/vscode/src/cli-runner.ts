@@ -11,11 +11,14 @@ import * as vscode from "vscode";
 import { spawn } from "node:child_process";
 import { parseProgressLine, formatProgressMessage, progressIncrement } from "./progress";
 
+// frob:doc docs/modules/vscode-extension.md#cli-runner
 export interface CliRunResult {
   exitCode: number | null;
   cancelled: boolean;
 }
 
+// frob:doc docs/modules/vscode-extension.md#cli-runner
+// frob:waive TEST001 reason="child-process + VS Code progress-UI host API surface (vscode.window.withProgress, node:child_process spawn); requires a @vscode/test-electron host harness not wired in this repo -- the wire parsing it delegates to is unit-tested in test/progress.test.ts, see FROBLEMS.md"
 /** Spawn `<cliPath> <args>` in `cwd` with progress logging enabled,
  * streaming `$/progress`-equivalent updates into a VS Code notification
  * progress bar while the command runs. Resolves once the process exits

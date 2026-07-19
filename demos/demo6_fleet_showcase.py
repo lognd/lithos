@@ -31,9 +31,13 @@ from demos.harness import REPO_ROOT, DemoWriter, artifact_table
 
 _log = get_logger(__name__)
 
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 DEMO = "demo6_fleet_showcase"
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 SURFACE = "full regolith ship package with a live optimize pin (small_office)"
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 PROJECT = REPO_ROOT / "examples" / "flagships" / "small_office"
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 SHIP_SPEC = PROJECT / "ship.spec.json"
 
 
@@ -48,6 +52,7 @@ def _cli(*args: str) -> None:
         )
 
 
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 def run() -> bool:
     """Emit the fleet-showcase proof pack; return True (this surface is live)."""
     writer = DemoWriter(DEMO, SURFACE)

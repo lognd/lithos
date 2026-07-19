@@ -37,7 +37,9 @@ from tools.stdlib.organization import SubCheck, is_excluded
 
 _log = get_logger(__name__)
 
+# frob:doc docs/modules/tools.md#health-docs-agreement
 REPO_ROOT = Path(__file__).resolve().parents[2]
+# frob:doc docs/modules/tools.md#health-docs-agreement
 GUIDE_DIR = REPO_ROOT / "docs" / "guide"
 
 
@@ -47,6 +49,8 @@ def _guide_index_entries() -> set[str]:
     return set(re.findall(r"^\|\s*`([\w.-]+\.md)`", text, re.MULTILINE))
 
 
+# frob:doc docs/modules/tools.md#health-docs-agreement
+# frob:waive TEST001 reason="bound at module lvl, see test_docs_agreement_sweeps_clean"
 def check_guide_index() -> SubCheck:
     """The guide index lists exactly the guide files present."""
     on_disk = {p.name for p in GUIDE_DIR.glob("*.md") if p.name != "README.md"}
@@ -73,7 +77,14 @@ def _real_cli_verbs() -> set[str]:
     from regolith.cli.app import app
     from typer.main import get_command
 
-    return set(get_command(app).commands.keys())
+    command = get_command(app)
+    commands = getattr(command, "commands", None)
+    assert isinstance(commands, dict), (
+        "regolith's root typer app must render as a command GROUP (it"
+        " declares subcommands); a bare leaf command here would mean the"
+        " CLI lost its subcommand tree entirely."
+    )
+    return {str(name) for name in commands}
 
 
 #: magnetite subcommands the root README cites as its own subtree
@@ -102,6 +113,8 @@ _NOT_A_VERB = frozenset(
 )
 
 
+# frob:doc docs/modules/tools.md#health-docs-agreement
+# frob:waive TEST001 reason="bound at module lvl, see test_docs_agreement_sweeps_clean"
 def check_cli_verbs() -> SubCheck:
     """Every verb-shaped backtick token in root README's CLI section
     names a real `regolith` command or magnetite subcommand."""
@@ -225,6 +238,8 @@ def _dead_name_offenders() -> tuple[list[str], list[str]]:
     return gating, baseline
 
 
+# frob:doc docs/modules/tools.md#health-docs-agreement
+# frob:waive TEST001 reason="bound at module lvl, see test_docs_agreement_sweeps_clean"
 def check_dead_names() -> SubCheck:
     """Retired names appear only in design-log history + negative/ (or
     the recorded footnote baseline, report-only, WO121-F1)."""
@@ -252,11 +267,15 @@ _ALL_CHECKS = {
 }
 
 
+# frob:doc docs/modules/tools.md#health-docs-agreement
+# frob:waive TEST001 reason="composition fn, see test_docs_agreement_sweeps_clean"
 def run_all() -> list[SubCheck]:
     """Run every docs-agreement sweep; return the list of sub-checks."""
     return [fn() for fn in _ALL_CHECKS.values()]
 
 
+# frob:doc docs/modules/tools.md#health-docs-agreement
+# frob:waive TEST001 reason="CLI entry point; exercised via make health integration"
 def main(argv: list[str] | None = None) -> int:
     """Standalone CLI: run one named check (`--check NAME`) or all."""
     import argparse

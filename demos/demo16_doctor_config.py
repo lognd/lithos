@@ -42,7 +42,9 @@ from demos.harness import REPO_ROOT, DemoWriter, artifact_table
 
 _log = get_logger(__name__)
 
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 DEMO = "demo16_doctor_config"
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 SURFACE = "doctor environment report + config precedence (INV-21 for config)"
 
 
@@ -66,6 +68,7 @@ def _cli(*args: str, env: dict[str, str] | None = None, cwd: str | None = None) 
     return result.stdout
 
 
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 def run() -> bool:
     """Emit the doctor/config proof pack; return True (live)."""
     writer = DemoWriter(DEMO, SURFACE)

@@ -127,7 +127,15 @@ select = ["E", "F", "I", "UP", "B", "SIM"]
 
 [tool.ty.environment]
 python-version = "3.12"
-root = ["python"]
+# "python": the regolith package proper (make typecheck's scope). ".":
+# repo-root-level first-party packages that `make check`'s full-repo ty
+# pass also needs to resolve -- tools/, demos/, tests/ are all imported
+# as `tools.*`/`demos.*`/`tests.*` (pytest rootdir + tools/health,
+# tools/stdlib scripts) but live beside python/, not under it; without
+# this, ty's repo-wide pass sees every such import as unresolved-import
+# (W3 finding, 2026-07-18) even though `python -m pytest`/`python -m
+# tools.health` resolve them fine at runtime (repo root is on sys.path).
+root = ["python", "."]
 
 # OCP (the OCCT Python binding, WO-100) ships no type stubs, so every
 # `from OCP...` member is unresolved to the checker. These two modules

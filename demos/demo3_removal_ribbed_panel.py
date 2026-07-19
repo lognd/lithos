@@ -22,6 +22,7 @@ import json
 import re
 
 from regolith import compiler, core_version
+from regolith._schema.models import OptimizationTrace
 from regolith.backends.drawings.producers import mech_part_drawing, opt_trace
 from regolith.backends.drawings.renderer import render_svg
 from regolith.backends.drawings.renderer_pdf import render_pdf
@@ -60,9 +61,13 @@ from demos.harness import DemoWriter, artifact_table
 
 _log = get_logger(__name__)
 
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 DEMO = "demo3_removal_ribbed_panel"
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 SURFACE = "removal-vocabulary bounded slots (ribbed_panel, WO-77)"
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 FIXTURE = "examples/tracks/hematite/ribbed_panel.hema"
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 PACK = "examples/tracks/hematite/std_removal.hema"
 
 # The fixture panel (see ribbed_panel.hema): 120x80x18mm AL 6061.
@@ -75,7 +80,7 @@ _STIFFNESS_FLOOR = 250.0
 
 
 def _payload() -> dict:
-    out = compiler.check([FIXTURE, PACK])
+    out = compiler.check((FIXTURE, PACK))
     if out.is_err:
         raise RuntimeError(f"ribbed_panel: check failed: {out.danger_err}")
     return json.loads(out.danger_ok.payload_json)
@@ -128,6 +133,7 @@ def _realize(count: int, thickness_m: float):
     return result.danger_ok
 
 
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 def run() -> bool:
     """Emit the ribbed_panel proof pack; return True (this surface is live)."""
     writer = DemoWriter(DEMO, SURFACE)
@@ -138,7 +144,7 @@ def run() -> bool:
         )
     counts, t_bounds = _bounds(payload)
     store = PayloadStore(str(writer.out_dir))
-    inner_traces: dict[str, object] = {}
+    inner_traces: dict[str, OptimizationTrace] = {}
 
     def thickness_evaluator_for(count: int):
         def evaluate(assignment: tuple[float, ...]) -> EvalOutcome:
@@ -184,11 +190,13 @@ def run() -> bool:
         objective=("minimize",),
         budget_evals=len(counts),
     )
+    assert trace.winner is not None, "count search found no feasible winner"
     winner = trace.candidates[trace.winner]
     winner_count = dict(item.root for item in winner.assignment)[
         "RibbedPanel.lightening.count"
     ]
     inner = inner_traces[winner_count]
+    assert inner.winner is not None, "thickness search found no feasible winner"
     winner_t_m = float(
         dict(item.root for item in inner.candidates[inner.winner].assignment)["x"]
     )

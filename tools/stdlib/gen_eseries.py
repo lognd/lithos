@@ -13,8 +13,11 @@ from pathlib import Path
 
 from tools.stdlib.render import render_records_file
 
+# frob:doc docs/modules/tools.md#stdlib-gen-eseries
 REPO_ROOT = Path(__file__).resolve().parents[2]
+# frob:doc docs/modules/tools.md#stdlib-gen-eseries
 DATA_FILE = REPO_ROOT / "tools" / "stdlib" / "data" / "e_series.toml"
+# frob:doc docs/modules/tools.md#stdlib-gen-eseries
 OUT_FILE = REPO_ROOT / "stdlib" / "std.elec" / "records" / "e_series.toml"
 
 _IEC_REF = (
@@ -80,6 +83,7 @@ def _capacitor_families(data: dict) -> list[dict]:
     return sorted(rows, key=lambda r: r["key"])
 
 
+# frob:doc docs/modules/tools.md#stdlib-gen-eseries
 def generate() -> dict[str, str]:
     with DATA_FILE.open("rb") as f:
         data = tomllib.load(f)
@@ -100,6 +104,8 @@ def generate() -> dict[str, str]:
     return {str(OUT_FILE): content}
 
 
+# frob:doc docs/modules/tools.md#stdlib-gen-eseries
+# frob:waive TEST001 reason="CLI entry point; see tests/tools/test_stdlib_gen_drift.py"
 def main() -> None:
     for path_str, content in generate().items():
         path = Path(path_str)

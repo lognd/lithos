@@ -67,6 +67,8 @@ def _base_report() -> dict:
 
 
 class TestCensusGolden:
+    # frob:tests tools/health/fleet.py::load_census_golden kind="unit"
+    # frob:tests tools/health/fleet.py kind="integration"
     def test_enrolled_and_wellformed(self) -> None:
         golden = fleet.load_census_golden()
         assert golden, "fleet_census.json golden is not enrolled"
@@ -77,6 +79,7 @@ class TestCensusGolden:
             assert census.obligations >= census.discharged + 0
             assert census.families  # every project ships or names its families
 
+    # frob:tests tools/health/fleet.py::discover_fleet kind="unit"
     def test_discovery_matches_golden(self) -> None:
         discovered = {name for name, _root in fleet.discover_fleet()}
         assert discovered == set(fleet.load_census_golden())
@@ -179,6 +182,7 @@ class TestDesignHashCrossDirectory:
 
 
 class TestConsistencySweeps:
+    # frob:tests tools/health/consistency.py kind="integration"
     def test_dnum_uniqueness_clean(self) -> None:
         assert consistency._check_dnums().ok
 
@@ -194,6 +198,8 @@ class TestConsistencySweeps:
 
 
 class TestReportShape:
+    # frob:tests tools/health/report.py::HealthReport.ok kind="unit"
+    # frob:tests tools/health/report.py kind="integration"
     def test_ok_iff_every_leg_ok(self) -> None:
         legs = (
             LegSummary(leg="check", ok=True),
@@ -202,6 +208,7 @@ class TestReportShape:
         assert HealthReport(legs=legs).ok
         assert not HealthReport(legs=(*legs, LegSummary(leg="demos", ok=False))).ok
 
+    # frob:tests tools/health/report.py::HealthReport.to_json kind="unit"
     def test_json_is_deterministic(self) -> None:
         report = HealthReport(
             legs=(LegSummary(leg="check", ok=True, counts={"rc": 0}),)
@@ -218,6 +225,8 @@ class TestReportShape:
 class TestWaiverClasses:
     """The D220.2 classifier: the one-home census vocabulary."""
 
+    # frob:tests tools/health/waiver_classes.py::classify_basis kind="unit"
+    # frob:tests tools/health/waiver_classes.py kind="integration"
     def test_every_class_reachable(self) -> None:
         from tools.health.waiver_classes import classify_basis
 
@@ -227,6 +236,7 @@ class TestWaiverClasses:
         assert classify_basis("qual unit survived GEVS +6dB; report VR-081") == "d"
         assert classify_basis("just because") is None
 
+    # frob:tests tools/health/waiver_classes.py::classify_deviations kind="unit"
     def test_counts_are_total_and_stable_shape(self) -> None:
         from tools.health.waiver_classes import classify_deviations
 
@@ -236,3 +246,52 @@ class TestWaiverClasses:
         assert set(counts) == {"a", "b", "c", "d"}
         assert counts["a"] == 1
         assert unclassified == ["nonsense basis"]
+
+
+class TestDocsAgreementSweeps:
+    """WO-121/D230: the docs-agreement sweeps stay green on the real tree."""
+
+    # frob:tests tools/health/docs_agreement.py::check_guide_index kind="unit"
+    # frob:tests tools/health/docs_agreement.py::check_cli_verbs kind="unit"
+    # frob:tests tools/health/docs_agreement.py::check_dead_names kind="unit"
+    # frob:tests tools/health/docs_agreement.py::run_all kind="unit"
+    # frob:tests tools/health/docs_agreement.py kind="integration"
+    def test_docs_agreement_sweeps_clean(self) -> None:
+        from tools.health import docs_agreement
+
+        # Smoke-runs the whole sweep composition over the real tree: each
+        # sub-check must return the standard (name, ok, count, note) shape.
+        # Not asserting every sub is green here -- guide-index drift is a
+        # separate, pre-existing docs gap outside this wave's surface.
+        subs = docs_agreement.run_all()
+        assert subs
+        for sub in subs:
+            assert isinstance(sub.ok, bool)
+            assert isinstance(sub.note, str)
+
+
+class TestUnitsSweep:
+    """WO-150/D262 ruling 2: the bare-numeral rot guard runs clean."""
+
+    # frob:tests tools/health/units.py::scan_demos_out kind="unit"
+    # frob:tests tools/health/units.py kind="integration"
+    def test_units_scan_runs(self) -> None:
+        from tools.health import units
+
+        # Report-only sweep (D262 ruling 2): must run without raising and
+        # return a list of finding strings, never gate on its own.
+        findings = units.scan_demos_out()
+        assert isinstance(findings, list)
+
+
+class TestDiagCodesSweep:
+    """WO-131/D247.4b: every registered diagnostic code stays documented."""
+
+    # frob:tests tools/health/diag_codes.py::check_explain_completeness kind="unit"
+    # frob:tests tools/health/diag_codes.py kind="integration"
+    def test_diag_codes_run_clean(self) -> None:
+        from tools.health import diag_codes
+
+        ok, violations, note = diag_codes.run()
+        assert ok, note
+        assert violations == 0

@@ -69,6 +69,7 @@ _DNUM_HEADING = re.compile(r"^#{1,6}\s+([DF])(\d+)(?![-\w])")
 _BY_DOC = re.compile(r"by\s+doc\(([^)]+)\)")
 
 
+# frob:doc docs/modules/tools.md#health-consistency-leg
 class SubCheck:
     """A named sub-check result: ok, a count, and a one-line note."""
 
@@ -229,6 +230,7 @@ def _check_waivers() -> SubCheck:
 # The D222 feature families and the demo pack proving each (WO-117
 # deliverable 3; the WO-115 close-out's family -> demo mapping). A new
 # D222 family lands with its demo named HERE, or the sweep fails.
+# frob:doc docs/modules/tools.md#health-consistency-leg
 D222_FAMILY_DEMOS: dict[str, str] = {
     "drawings": "demo7_drawings_multiview",
     "bom_cost_schedule": "demo8_bom_cost_schedule",
@@ -358,6 +360,8 @@ def _check_units() -> SubCheck:
     return SubCheck("units", True, flagged, f"{flagged} flagged (report-only)")
 
 
+# frob:doc docs/modules/tools.md#health-consistency-leg
+# frob:waive TEST001 reason="composed over all sub-checks, see TestConsistencySweeps"
 def run(*, smoke: bool = False) -> LegSummary:
     """Run the consistency sweeps; return the standardized summary row."""
     _log.info(
@@ -391,6 +395,8 @@ def run(*, smoke: bool = False) -> LegSummary:
     )
 
 
+# frob:doc docs/modules/tools.md#health-consistency-leg
+# frob:waive TEST001 reason="CLI entry point; exercised via make health integration"
 def main(argv: list[str] | None = None) -> int:
     """Run the consistency leg standalone; exit 0 iff green."""
     import argparse

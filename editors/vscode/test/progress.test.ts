@@ -7,6 +7,7 @@ import { test } from "node:test";
 import * as assert from "node:assert/strict";
 import { parseProgressLine, formatProgressMessage, progressIncrement } from "../src/progress";
 
+// frob:tests editors/vscode/src/progress.ts::parseProgressLine kind="unit"
 test("parses a determinate progress line", () => {
   const event = parseProgressLine(
     "progress v=1 phase=fleet subject=widget_a done=3 total=15 elapsed=1.234",
@@ -41,6 +42,7 @@ test("ordinary log lines are not progress records", () => {
   assert.equal(parseProgressLine(""), undefined);
 });
 
+// frob:tests editors/vscode/src/progress.ts::formatProgressMessage kind="unit"
 test("formatProgressMessage renders determinate and indeterminate forms", () => {
   assert.equal(
     formatProgressMessage({ v: 1, phase: "fleet", subject: "a", done: 3, total: 15, elapsed: 0 }),
@@ -52,6 +54,7 @@ test("formatProgressMessage renders determinate and indeterminate forms", () => 
   );
 });
 
+// frob:tests editors/vscode/src/progress.ts::progressIncrement kind="unit"
 test("progressIncrement computes a delta percentage, ignoring non-advancing events", () => {
   const event = { v: 1, phase: "fleet", subject: "a", done: 5, total: 10, elapsed: 0 };
   assert.equal(progressIncrement(event, 3), 20);

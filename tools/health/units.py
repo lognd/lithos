@@ -34,6 +34,7 @@ from tools.health.report import REPO_ROOT, LegSummary
 
 _log = get_logger(__name__)
 
+# frob:doc docs/modules/tools.md#health-units-sweep
 DEMOS_OUT = REPO_ROOT / "demos" / "out"
 
 # A markdown table cell holding nothing but a numeral: optional sign,
@@ -67,6 +68,8 @@ def _bare_numerals_in_markdown(path: Path) -> list[str]:
     return findings
 
 
+# frob:doc docs/modules/tools.md#health-units-sweep
+# frob:waive TEST001 reason="scan helper, see test_units_scan_runs_clean"
 def scan_demos_out() -> list[str]:
     """Report-only scan of the committed demo proof corpus
     (`demos/out/*/PROOF.md`) for dimensioned-looking bare numerals the
@@ -79,6 +82,7 @@ def scan_demos_out() -> list[str]:
     return findings
 
 
+# frob:doc docs/modules/tools.md#health-units-sweep
 def run() -> LegSummary:
     """Run the sweep; ALWAYS ``ok=True`` (report-only per D262 ruling 2
     -- see module docstring for why this must not gate at first
@@ -97,6 +101,8 @@ def run() -> LegSummary:
     )
 
 
+# frob:doc docs/modules/tools.md#health-units-sweep
+# frob:waive TEST001 reason="CLI entry point; exercised via make health integration"
 def main(argv: list[str] | None = None) -> int:
     """Run the sweep standalone; always exits 0 (report-only)."""
     import argparse

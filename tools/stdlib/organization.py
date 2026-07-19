@@ -45,8 +45,11 @@ from regolith.logging_setup import get_logger
 
 _log = get_logger(__name__)
 
+# frob:doc docs/modules/tools.md#stdlib-organization-sweeps
 REPO_ROOT = Path(__file__).resolve().parents[2]
+# frob:doc docs/modules/tools.md#stdlib-organization-sweeps
 STDLIB_DIR = REPO_ROOT / "stdlib"
+# frob:doc docs/modules/tools.md#stdlib-organization-sweeps
 FELDSPAR_DIR = Path(
     __import__("os").environ.get("FELDSPAR_DIR", str(REPO_ROOT.parent / "feldspar"))
 )
@@ -67,6 +70,7 @@ _EXCLUDED_DIR_NAMES = frozenset(
 )
 
 
+# frob:doc docs/modules/tools.md#stdlib-organization-sweeps
 def is_excluded(path: Path) -> bool:
     """True when `path` sits inside a directory no repo sweep may see.
 
@@ -86,6 +90,7 @@ def is_excluded(path: Path) -> bool:
     )
 
 
+# frob:doc docs/modules/tools.md#stdlib-organization-sweeps
 class SubCheck:
     """One named sub-check result: ok, a count, and a one-line note."""
 
@@ -115,6 +120,7 @@ def _package_name(magnetite_toml: Path) -> str | None:
     return None
 
 
+# frob:doc docs/modules/tools.md#stdlib-organization-sweeps
 def check_prefix_reservation() -> SubCheck:
     """`std.` is reserved: every `std.*` package lives under `stdlib/`."""
     offenders: list[str] = []
@@ -162,6 +168,7 @@ _ONE_FAMILY_BASELINE = {
 }
 
 
+# frob:doc docs/modules/tools.md#stdlib-organization-sweeps
 def check_one_family_per_file() -> SubCheck:
     """Each `records/*.toml` declares exactly one array-of-tables key.
 
@@ -287,6 +294,7 @@ def _structured_citation_offenses(block: str) -> list[str]:
     return offenses
 
 
+# frob:doc docs/modules/tools.md#stdlib-organization-sweeps
 def check_citations() -> SubCheck:
     """Record rows and model docstrings all carry a citation.
 
@@ -354,6 +362,7 @@ def check_citations() -> SubCheck:
     )
 
 
+# frob:doc docs/modules/tools.md#stdlib-organization-sweeps
 def check_generated_drift() -> SubCheck:
     """Extends the WO-66 generator drift test into a standalone check."""
     from tools.stdlib.generate_all import generate_all
@@ -408,6 +417,7 @@ def _registered_builtin_groups() -> set[str]:
     return groups
 
 
+# frob:doc docs/modules/tools.md#stdlib-organization-sweeps
 def check_models_manifest() -> SubCheck:
     """`std.models`'s manifest names every registered built-in module."""
     manifest_path = STDLIB_DIR / "std.models" / "magnetite.toml"
@@ -461,6 +471,7 @@ def _feldspar_claim_kinds() -> set[str] | None:
         return None
 
 
+# frob:doc docs/modules/tools.md#stdlib-organization-sweeps
 def check_double_home() -> SubCheck:
     """No claim kind resolvable from both a built-in and a pack model
     without a recorded router preference (charter 39 sec. 4)."""
@@ -481,6 +492,7 @@ def check_double_home() -> SubCheck:
     return SubCheck("double_home", not both, len(both), f"{len(both)} double-home")
 
 
+# frob:doc docs/modules/tools.md#stdlib-organization-sweeps
 def check_charter_cross_drift() -> SubCheck:
     """Charter 39 sec. 4 == feldspar spec 12 sec. 4, modulo heading."""
     lithos_charter = (
@@ -515,11 +527,14 @@ _ALL_CHECKS = {
 }
 
 
+# frob:doc docs/modules/tools.md#stdlib-organization-sweeps
 def run_all() -> list[SubCheck]:
     """Run every organization sweep; return the list of sub-checks."""
     return [fn() for fn in _ALL_CHECKS.values()]
 
 
+# frob:doc docs/modules/tools.md#stdlib-organization-sweeps
+# frob:waive TEST001 reason="CLI entry pt; see test_stdlib_organization.py"
 def main(argv: list[str] | None = None) -> int:
     """Standalone CLI: run one named check (`--check NAME`) or all."""
     import argparse

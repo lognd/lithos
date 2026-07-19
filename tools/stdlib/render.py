@@ -36,6 +36,7 @@ def _fmt_scalar(value: object) -> str:
     raise TypeError(f"unsupported TOML scalar type: {type(value)!r}")
 
 
+# frob:doc docs/modules/tools.md#stdlib-render
 def render_row(row: Mapping[str, object]) -> str:
     """Render one `[[kind]]` row's key = value lines in sorted-key order
     (determinism: dict insertion order is not a stable generation
@@ -53,6 +54,7 @@ def render_row(row: Mapping[str, object]) -> str:
     return "\n".join(lines)
 
 
+# frob:doc docs/modules/tools.md#stdlib-render
 def render_records_file(
     *,
     script: str,

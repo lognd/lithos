@@ -14,8 +14,11 @@ from pathlib import Path
 
 from tools.stdlib.render import render_records_file
 
+# frob:doc docs/modules/tools.md#stdlib-gen-civil-sections
 REPO_ROOT = Path(__file__).resolve().parents[2]
+# frob:doc docs/modules/tools.md#stdlib-gen-civil-sections
 DATA_FILE = REPO_ROOT / "tools" / "stdlib" / "data" / "aisc_channels_angles.toml"
+# frob:doc docs/modules/tools.md#stdlib-gen-civil-sections
 OUT_FILE = (
     REPO_ROOT / "stdlib" / "std.civil" / "records" / "sections_channels_angles.toml"
 )
@@ -72,6 +75,7 @@ def _angles(data: dict) -> list[dict]:
     return sorted(rows, key=lambda r: r["key"])
 
 
+# frob:doc docs/modules/tools.md#stdlib-gen-civil-sections
 def generate() -> dict[str, str]:
     with DATA_FILE.open("rb") as f:
         data = tomllib.load(f)
@@ -91,6 +95,8 @@ def generate() -> dict[str, str]:
     return {str(OUT_FILE): content}
 
 
+# frob:doc docs/modules/tools.md#stdlib-gen-civil-sections
+# frob:waive TEST001 reason="CLI entry point; see tests/tools/test_stdlib_gen_drift.py"
 def main() -> None:
     for path_str, content in generate().items():
         path = Path(path_str)

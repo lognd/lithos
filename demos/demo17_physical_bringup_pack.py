@@ -55,16 +55,21 @@ from demos.harness import REPO_ROOT, DemoWriter, artifact_table
 
 _log = get_logger(__name__)
 
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 DEMO = "demo17_physical_bringup_pack"
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 SURFACE = (
     "physical bring-up pack: a target's debug package + the la_jig8 tap jig, "
     "cross-referenced through the one published tap-header record"
 )
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 TARGET = REPO_ROOT / "examples" / "flagships" / "mainboard_mx"
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 JIG = REPO_ROOT / "examples" / "flagships" / "la_jig8"
 
 # The ONE published pinout record both sides must cite (charter 40
 # sec. 4). One home for the string, here as in the design sources.
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 HEADER_RECORD = "tap_header_2x08_254"
 
 
@@ -112,6 +117,7 @@ def _ship(project, build_dir, out_dir, *, debug: bool) -> None:
     _cli(*args)
 
 
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 def run() -> bool:
     """Emit the bring-up proof pack; return True (this surface is live)."""
     writer = DemoWriter(DEMO, SURFACE)

@@ -10,6 +10,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import * as os from "node:os";
 
+// frob:doc docs/modules/vscode-extension.md#server-path
 /** Platform/arch triple used for the bundled binary directory name. */
 export function platformDir(): string {
   const plat = process.platform === "win32" ? "windows" : process.platform;
@@ -33,11 +34,13 @@ function pathLookup(): string | undefined {
   return undefined;
 }
 
+// frob:doc docs/modules/vscode-extension.md#server-path
 export interface ServerResolution {
   path: string | undefined;
   source: "setting" | "bundled" | "path" | "none";
 }
 
+// frob:doc docs/modules/vscode-extension.md#server-path
 /** Resolve the server binary, in the documented priority order. */
 export function resolveServerPath(
   extensionPath: string,

@@ -42,6 +42,7 @@ from regolith.logging_setup import get_logger
 _log = get_logger(__name__)
 
 # The four permitted classes, in golden/report order.
+# frob:doc docs/modules/tools.md#health-waiver-classes
 WAIVER_CLASSES: tuple[str, ...] = ("a", "b", "c", "d")
 
 # Class a: structural conformance edges. The D195.3/D213/D215 burn-down
@@ -78,6 +79,7 @@ _CLASS_C = re.compile(
 )
 
 
+# frob:doc docs/modules/tools.md#health-waiver-classes
 def classify_basis(basis: str) -> str | None:
     """Map one waiver ``basis`` text to its D220.2 class (or ``None``).
 
@@ -96,6 +98,7 @@ def classify_basis(basis: str) -> str | None:
     return None
 
 
+# frob:doc docs/modules/tools.md#health-waiver-classes
 def classify_deviations(bases: list[str]) -> tuple[dict[str, int], list[str]]:
     """Count waiver rows per class; return ``(counts, unclassified)``.
 

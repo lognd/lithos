@@ -46,17 +46,23 @@ from demos.harness import DemoWriter, artifact_table
 
 _log = get_logger(__name__)
 
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 DEMO = "demo1_select_ebi_decode"
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 SURFACE = "discrete select() choice point (ebi_decode, WO-56)"
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 SOURCE = "examples/tracks/cuprite/ebi_decode.cupr"
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 SUBJECT = "decoder_board.AddressDecodeGlue"
 
 # The declared, closed-form per-candidate cost table (regolith/12 sec. 4
 # policy surface; the SAME table `tests/test_wo56_ebi_decode.py` uses).
 # nor_glue = two 74HC parts (highest); cpld = one part; mcu_chip_selects
 # = no added part (the MCU already carries the FSMC controller, lowest).
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 COST_BASE = {SUBJECT: {"nor_glue": 2.40, "cpld": 1.10, "mcu_chip_selects": 0.0}}
 # The policy flip: reverse the preference (nor_glue now cheapest).
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 COST_FLIP = {SUBJECT: {"nor_glue": 0.0, "cpld": 1.10, "mcu_chip_selects": 2.40}}
 
 
@@ -99,6 +105,7 @@ def _winner_candidate(trace) -> str:
     return dict(item.root for item in winner.assignment)[SUBJECT]
 
 
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 def run() -> bool:
     """Emit the ebi_decode proof pack; return True (this surface is live)."""
     writer = DemoWriter(DEMO, SURFACE)

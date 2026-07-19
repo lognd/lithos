@@ -35,8 +35,11 @@ from demos.harness import REPO_ROOT, DemoWriter, artifact_table
 
 _log = get_logger(__name__)
 
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 DEMO = "demo11_board_gerbers"
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 SURFACE = "real KiCad gerber set from the mainboard_mx BoardOutline"
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 PROJECT = REPO_ROOT / "examples" / "flagships" / "mainboard_mx"
 
 # Real kicad-cli output embeds TF.CreationDate: honestly nondeterministic.
@@ -53,6 +56,7 @@ def _cli(*args: str) -> None:
         )
 
 
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 def run() -> bool:
     """Emit the boards-family proof pack; return True (this surface is live)."""
     writer = DemoWriter(DEMO, SURFACE)

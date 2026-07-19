@@ -33,8 +33,10 @@ from tools.stdlib import (
 
 _log = get_logger(__name__)
 
+# frob:doc docs/modules/tools.md#stdlib-generate-all
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
+# frob:doc docs/modules/tools.md#stdlib-generate-all
 GENERATORS = (
     gen_fasteners,
     gen_civil_sections,
@@ -45,6 +47,7 @@ GENERATORS = (
 )
 
 
+# frob:doc docs/modules/tools.md#stdlib-generate-all
 def generate_all() -> dict[str, str]:
     """{absolute_output_path: rendered_content} across every generator.
 
@@ -65,6 +68,8 @@ def generate_all() -> dict[str, str]:
     return out
 
 
+# frob:doc docs/modules/tools.md#stdlib-generate-all
+# frob:waive TEST001 reason="CLI entry point; see tests/tools/test_stdlib_gen_drift.py"
 def main() -> None:
     total = 0
     for path_str, content in generate_all().items():

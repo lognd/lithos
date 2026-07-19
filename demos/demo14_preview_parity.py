@@ -39,8 +39,11 @@ from demos.harness import REPO_ROOT, DemoWriter, artifact_table
 
 _log = get_logger(__name__)
 
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 DEMO = "demo14_preview_parity"
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 SURFACE = "spec-less preview artifact set vs ship byte-parity (D197)"
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 PROJECT = REPO_ROOT / "examples" / "flagships" / "cnc_router_r1"
 
 
@@ -67,6 +70,7 @@ def _strip_stamp(model: dict, stamp_text: str) -> dict:
     return model
 
 
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 def run() -> bool:
     """Emit the preview-parity proof pack; return True (live)."""
     writer = DemoWriter(DEMO, SURFACE)

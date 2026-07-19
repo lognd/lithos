@@ -17,8 +17,11 @@ from pathlib import Path
 
 from tools.stdlib.render import render_records_file
 
+# frob:doc docs/modules/tools.md#stdlib-gen-nasa-glenn-cp
 REPO_ROOT = Path(__file__).resolve().parents[2]
+# frob:doc docs/modules/tools.md#stdlib-gen-nasa-glenn-cp
 DATA_FILE = REPO_ROOT / "tools" / "stdlib" / "data" / "nasa_glenn_cp.toml"
+# frob:doc docs/modules/tools.md#stdlib-gen-nasa-glenn-cp
 OUT_FILE = REPO_ROOT / "stdlib" / "std.fluid" / "records" / "gas_cp_glenn.toml"
 
 _REFERENCE = (
@@ -52,6 +55,7 @@ def _rows(data: dict) -> list[dict]:
     return sorted(rows, key=lambda r: r["key"])
 
 
+# frob:doc docs/modules/tools.md#stdlib-gen-nasa-glenn-cp
 def generate() -> dict[str, str]:
     with DATA_FILE.open("rb") as f:
         data = tomllib.load(f)
@@ -73,6 +77,8 @@ def generate() -> dict[str, str]:
     return {str(OUT_FILE): content}
 
 
+# frob:doc docs/modules/tools.md#stdlib-gen-nasa-glenn-cp
+# frob:waive TEST001 reason="CLI entry point; see tests/tools/test_stdlib_gen_drift.py"
 def main() -> None:
     for path_str, content in generate().items():
         path = Path(path_str)

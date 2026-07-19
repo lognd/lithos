@@ -54,8 +54,11 @@ from demos.harness import REPO_ROOT, DemoWriter, artifact_table
 
 _log = get_logger(__name__)
 
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 DEMO = "demo9_assembly_instructions"
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 SURFACE = "mate-ordered assembly instructions with per-step views (arm_a6 J2)"
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 PROJECT = REPO_ROOT / "examples" / "flagships" / "arm_a6"
 
 _AL_DENSITY_KG_M3 = 2700.0
@@ -155,6 +158,7 @@ def _shoulder_assembly(store: NativeArtifactStore) -> AssemblyDef:
     )
 
 
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 def run() -> bool:
     """Emit the assembly-instructions proof pack; return True (live)."""
     writer = DemoWriter(DEMO, SURFACE)

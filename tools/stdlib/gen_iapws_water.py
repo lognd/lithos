@@ -33,8 +33,11 @@ from pathlib import Path
 
 from tools.stdlib.render import render_records_file
 
+# frob:doc docs/modules/tools.md#stdlib-gen-iapws-water
 REPO_ROOT = Path(__file__).resolve().parents[2]
+# frob:doc docs/modules/tools.md#stdlib-gen-iapws-water
 DATA_FILE = REPO_ROOT / "tools" / "stdlib" / "data" / "iapws_water_saturation.toml"
+# frob:doc docs/modules/tools.md#stdlib-gen-iapws-water
 OUT_FILE = REPO_ROOT / "stdlib" / "std.fluid" / "records" / "water_saturation.toml"
 
 _REFERENCE = (
@@ -60,7 +63,7 @@ def _p_sat_mpa(t_k: float, n: list[float]) -> float:
 
 
 def _rows(data: dict) -> list[dict]:
-    n = [None] + [data[f"n{i}"] for i in range(1, 11)]
+    n: list[float] = [0.0] + [data[f"n{i}"] for i in range(1, 11)]
     rows = []
     for t_k in data["t_grid_k"]:
         assert _T_MIN_K <= t_k <= _TC_K, f"T={t_k} outside IF97 Region 4 domain"
@@ -80,6 +83,7 @@ def _rows(data: dict) -> list[dict]:
     return rows
 
 
+# frob:doc docs/modules/tools.md#stdlib-gen-iapws-water
 def generate() -> dict[str, str]:
     with DATA_FILE.open("rb") as f:
         data = tomllib.load(f)
@@ -101,6 +105,8 @@ def generate() -> dict[str, str]:
     return {str(OUT_FILE): content}
 
 
+# frob:doc docs/modules/tools.md#stdlib-gen-iapws-water
+# frob:waive TEST001 reason="CLI entry point; see tests/tools/test_stdlib_gen_drift.py"
 def main() -> None:
     for path_str, content in generate().items():
         path = Path(path_str)

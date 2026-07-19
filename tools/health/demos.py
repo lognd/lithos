@@ -24,7 +24,10 @@ from tools.health.report import REPO_ROOT, LegSummary
 
 _log = get_logger(__name__)
 
+# frob:waive TEST003 reason="WO-108 demo rebuild+determinism; see test_wo108_demos.py"
 
+
+# frob:doc docs/modules/tools.md#health-demos-leg
 def run(*, smoke: bool = False) -> LegSummary:
     """Run the demos leg; return its standardized summary row."""
     from demos.run_all import DEMOS
@@ -63,6 +66,8 @@ def run(*, smoke: bool = False) -> LegSummary:
     )
 
 
+# frob:doc docs/modules/tools.md#health-demos-leg
+# frob:waive TEST001 reason="CLI entry pt, WO-108 demo rebuild; see make health"
 def main(argv: list[str] | None = None) -> int:
     """Run the demos leg standalone; exit 0 iff green."""
     import argparse

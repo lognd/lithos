@@ -65,25 +65,30 @@ _log = get_logger(__name__)
 # retired examples/systems/cnc_router is already deleted; negative/
 # registry/hdl carry no magnetite.toml so they never enter discovery.
 # This set stays EMPTY by design -- an entry here must cite its reason.
+# frob:doc docs/modules/tools.md#health-fleet-leg
 FLEET_EXEMPTIONS: frozenset[str] = frozenset()
 
 # The mech-heavy project the determinism sub-leg ships twice. dune_buggy
 # is the largest multi-file mech system and realizes no byte-unstable
 # geometry (identity BOM rows), so all its artifacts are byte-comparable.
+# frob:doc docs/modules/tools.md#health-fleet-leg
 DETERMINISM_PROJECT = "dune_buggy"
 
 # The small project the `make check` health-smoke builds+ships (one
 # project only) -- timber_pavilion is the fastest fleet member (10
 # obligations, release_ok=true) so the smoke stays cheap.
+# frob:doc docs/modules/tools.md#health-fleet-leg
 SMOKE_PROJECT = "timber_pavilion"
 
 # Extensions whose bytes are NOT platform-stable (OCCT's STEP serializer,
 # WO-22 acceptance) -- excluded from the determinism byte-compare.
 _NONDETERMINISTIC_EXT: frozenset[str] = frozenset({".step", ".stp"})
 
+# frob:doc docs/modules/tools.md#health-fleet-leg
 CENSUS_GOLDEN = REPO_ROOT / "tests" / "golden" / "data" / "fleet_census.json"
 
 
+# frob:doc docs/modules/tools.md#health-fleet-leg
 class ProjectCensus(BaseModel):
     """One project's stable census row (the golden-compared shape).
 
@@ -106,6 +111,7 @@ class ProjectCensus(BaseModel):
     families: tuple[str, ...]
 
 
+# frob:doc docs/modules/tools.md#health-fleet-leg
 class ProjectResult(BaseModel):
     """A fleet project's full per-run outcome (cached, not all golden).
 
@@ -132,6 +138,7 @@ class ProjectResult(BaseModel):
     debug_profile_clean: bool = True
 
 
+# frob:doc docs/modules/tools.md#health-fleet-leg
 def discover_fleet() -> list[tuple[str, Path]]:
     """Every fleet project as ``(name, root)``, sorted, minus exemptions."""
     found: list[tuple[str, Path]] = []
@@ -453,6 +460,7 @@ def _determinism_ok(name: str, root: Path) -> bool:
     return _cross_dir_design_hash_ok(root)
 
 
+# frob:doc docs/modules/tools.md#health-fleet-leg
 def load_census_golden() -> dict[str, ProjectCensus]:
     """The committed per-project census golden (empty map if absent).
 
@@ -487,6 +495,7 @@ def _write_census_golden(rows: dict[str, ProjectCensus]) -> None:
     CENSUS_GOLDEN.write_text(json.dumps(payload, sort_keys=True, indent=2) + "\n")
 
 
+# frob:doc docs/modules/tools.md#health-fleet-leg
 def run(*, smoke: bool = False, update_golden: bool = False) -> LegSummary:
     """Run the fleet leg; return its standardized summary row.
 
@@ -626,6 +635,8 @@ def run(*, smoke: bool = False, update_golden: bool = False) -> LegSummary:
     return LegSummary(leg="fleet", ok=ok, counts=counts, evidence=evidence)
 
 
+# frob:doc docs/modules/tools.md#health-fleet-leg
+# frob:waive TEST001 reason="CLI entry pt driving full fleet rebuilds; see make health"
 def main(argv: list[str] | None = None) -> int:
     """Run the fleet leg standalone; exit 0 iff green."""
     import argparse

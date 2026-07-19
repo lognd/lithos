@@ -25,6 +25,7 @@ import * as path from "node:path";
 // only round-trips the JSON), so restating it as a quoted TS literal
 // would trip the "src/ never hard-codes a keyword string" guard for no
 // benefit -- the shape still matches calc.py's field for field.
+// frob:doc docs/modules/vscode-extension.md#artifacts
 export interface CalcInput {
   name: string;
   value: string;
@@ -33,6 +34,7 @@ export interface CalcInput {
   source: string;
 }
 
+// frob:doc docs/modules/vscode-extension.md#artifacts
 export interface EvidenceChain {
   sheet_digest: string;
   evidence_hash: string;
@@ -41,6 +43,7 @@ export interface EvidenceChain {
   record_pins: string[];
 }
 
+// frob:doc docs/modules/vscode-extension.md#artifacts
 export interface CalcSheet {
   sheet_id: string;
   claim_name: string;
@@ -60,8 +63,10 @@ export interface CalcSheet {
   chain: EvidenceChain;
 }
 
+// frob:doc docs/modules/vscode-extension.md#artifacts
 export type Disposition = "calc_sheet" | "accepted_deviation" | "deferred" | "violated";
 
+// frob:doc docs/modules/vscode-extension.md#artifacts
 export interface AuditRow {
   claim_name: string;
   subject_anchor: string;
@@ -70,6 +75,7 @@ export interface AuditRow {
   detail: string;
 }
 
+// frob:doc docs/modules/vscode-extension.md#artifacts
 export interface AuditSummary {
   obligations: number;
   discharged: number;
@@ -79,12 +85,14 @@ export interface AuditSummary {
   violated: number;
 }
 
+// frob:doc docs/modules/vscode-extension.md#artifacts
 export interface AuditIndex {
   project: string;
   summary: AuditSummary;
   rows: AuditRow[];
 }
 
+// frob:doc docs/modules/vscode-extension.md#artifacts
 export interface CalcBook {
   sheets: CalcSheet[];
   index: AuditIndex;
@@ -92,12 +100,14 @@ export interface CalcBook {
 
 /** Mirrors `calc.py::_safe_name`: any character outside `[A-Za-z0-9._-]`
  * becomes `_`, so a sheet id round-trips to its shipped filename. */
+// frob:doc docs/modules/vscode-extension.md#artifacts
 export function safeName(sheetId: string): string {
   return sheetId.replace(/[^A-Za-z0-9._-]/g, "_");
 }
 
 /** A discovered `dist/` package under the workspace: its root directory
  * and the parsed calc book, when `calc/calc_book.json` exists there. */
+// frob:doc docs/modules/vscode-extension.md#artifacts
 export interface DistProject {
   root: string;
   distDir: string;
@@ -110,6 +120,7 @@ export interface DistProject {
  * layout), then one level of immediate subdirectories (a fleet/
  * multi-project workspace, WO-105 layout). Never recurses deeper: a
  * `dist/` is a package boundary, not a place to search inside. */
+// frob:doc docs/modules/vscode-extension.md#artifacts
 export function findDistProjects(workspaceRoot: string): DistProject[] {
   const candidates: string[] = [workspaceRoot];
   try {
@@ -159,6 +170,7 @@ function normalize(s: string): string {
  * multiple shipped projects carrying the same claim name is a known,
  * accepted limitation (see WO-120 escalation note), not silently
  * resolved by guessing. */
+// frob:doc docs/modules/vscode-extension.md#artifacts
 export function findClaimRow(
   projects: DistProject[],
   needle: string,
@@ -178,6 +190,7 @@ export function findClaimRow(
   return undefined;
 }
 
+// frob:doc docs/modules/vscode-extension.md#artifacts
 export interface ArtifactTarget {
   label: string;
   filePath: string;
@@ -188,6 +201,7 @@ export interface ArtifactTarget {
  * files in the SAME dist package whose filename stem matches the
  * claim's subject anchor -- go-to-artifact never invents a path that
  * is not actually present on disk. */
+// frob:doc docs/modules/vscode-extension.md#artifacts
 export function resolveArtifacts(
   project: DistProject,
   row: AuditRow,

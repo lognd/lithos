@@ -30,10 +30,14 @@ from demos.harness import REPO_ROOT, DemoWriter, artifact_table
 
 _log = get_logger(__name__)
 
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 DEMO = "demo7_drawings_multiview"
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 SURFACE = "projected multi-view drawing sheets (mech + civil), charter 38 sec. 1.5"
 
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 MECH_PROJECT = REPO_ROOT / "examples" / "flagships" / "printer_k1"
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 CIVIL_PROJECT = REPO_ROOT / "examples" / "flagships" / "small_office"
 
 
@@ -75,6 +79,7 @@ def _ship(writer: DemoWriter, tag: str, project) -> list[str]:
     return emitted
 
 
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 def run() -> bool:
     """Emit the drawings-family proof pack; return True (this surface is live)."""
     writer = DemoWriter(DEMO, SURFACE)

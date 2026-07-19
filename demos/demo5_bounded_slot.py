@@ -40,11 +40,14 @@ from demos.harness import REPO_ROOT, DemoWriter, artifact_table, gap_proof
 
 _log = get_logger(__name__)
 
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 DEMO = "demo5_bounded_slot"
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 SURFACE = (
     "bounded sketch-segment slot sized by a real margin search "
     "(arm_a6 UpperArm, WO-97/D209)"
 )
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 PROJECT = REPO_ROOT / "examples" / "flagships" / "arm_a6"
 # The E1-named governing claim kind a bounded-slot part must reach for
 # the coupling to pin a genuine value (F126.1/D209).
@@ -128,6 +131,7 @@ def _upper_arm_slot(work_dir, limit_m: float):
     raise RuntimeError("UpperArm bounded slot not found in the arm_a6 payload")
 
 
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 def run() -> bool:
     """Emit the bounded-slot proof pack; return True iff live."""
     writer = DemoWriter(DEMO, SURFACE)
@@ -198,9 +202,14 @@ def run() -> bool:
     step_bytes = realized.danger_ok.step_bytes
     writer.emit("upper_arm_section.step", step_bytes)
     mesh = tessellate_step(step_bytes)
-    glb = write_glb((mesh,), (GlbNode(name="UpperArmSection", mesh=0),))
-    writer.emit("upper_arm_section.glb", glb)
-    writer.emit("upper_arm_section.viewer.html", viewer_html(glb, "UpperArmSection"))
+    if mesh is None:
+        _log.warning("demo5: OCP could not tessellate the winner; no GLB emitted")
+    else:
+        glb = write_glb((mesh,), (GlbNode(name="UpperArmSection", mesh=0),))
+        writer.emit("upper_arm_section.glb", glb)
+        writer.emit(
+            "upper_arm_section.viewer.html", viewer_html(glb, "UpperArmSection")
+        )
 
     # (c) the search-trace sheet -- every candidate width, feasibility,
     # and the winner, off the SAME trace object the coupling pinned from.

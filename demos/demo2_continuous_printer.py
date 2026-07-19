@@ -20,6 +20,7 @@ pinned `regolith.lock` with two `cause: optimize(...)` rows.
 from __future__ import annotations
 
 from regolith import core_version
+from regolith._schema.models import OptimizationTrace
 from regolith.backends.drawings.producers import opt_trace
 from regolith.backends.drawings.renderer import render_svg
 from regolith.backends.drawings.renderer_pdf import render_pdf
@@ -55,10 +56,13 @@ from demos.harness import DemoWriter, artifact_table
 
 _log = get_logger(__name__)
 
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 DEMO = "demo2_continuous_printer"
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 SURFACE = (
     "continuous golden-section over a realized-mass evaluator (printer_k1, WO-57/64)"
 )
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 AL_DENSITY_KG_M3 = 2700.0
 
 
@@ -85,7 +89,7 @@ def _mass_kg(program: FeatureProgram) -> tuple[float, bytes]:
     return volume_m3 * AL_DENSITY_KG_M3, realized.step_bytes
 
 
-def _search(program_at, bounds, store) -> tuple[object, float, str]:
+def _search(program_at, bounds, store) -> tuple[OptimizationTrace, float, str]:
     """Golden-section over `bounds`, realizing at each candidate; pin the winner."""
 
     def evaluator(assignment: tuple[float, ...]) -> EvalOutcome:
@@ -102,6 +106,7 @@ def _search(program_at, bounds, store) -> tuple[object, float, str]:
     trace = optimize_continuous_golden_section(
         bounds=bounds, evaluator=evaluator, budget_evals=40, tol=1e-5
     )
+    assert trace.winner is not None, "golden-section search found no feasible winner"
     winner = trace.candidates[trace.winner]
     winner_x = float({item.root[0]: item.root[1] for item in winner.assignment}["x"])
     digest = store_trace(store, trace)
@@ -120,6 +125,7 @@ def _emit_solid(writer: DemoWriter, name: str, step_bytes: bytes) -> None:
     writer.emit(f"{name}.viewer.html", viewer_html(glb, name))
 
 
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 def run() -> bool:
     """Emit the continuous proof pack; return True (this surface is live)."""
     writer = DemoWriter(DEMO, SURFACE)

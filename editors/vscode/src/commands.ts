@@ -57,6 +57,8 @@ async function runCliCommand(args: string[], status: LithosStatusItem): Promise<
   });
 }
 
+// frob:doc docs/modules/vscode-extension.md#commands
+// frob:waive TEST001 reason="VS Code command-registration host API surface (vscode.commands.registerCommand); requires a @vscode/test-electron host harness not wired in this repo, see FROBLEMS.md"
 export function registerCommands(
   context: vscode.ExtensionContext,
   status: LithosStatusItem,

@@ -25,7 +25,11 @@ from tools.health.report import HealthReport, LegSummary
 
 _log = get_logger(__name__)
 
+# frob:waive TEST003 reason="composes all four heavy legs; see make health"
 
+
+# frob:doc docs/modules/tools.md#health-main
+# frob:waive TEST001 reason="composes all four heavy legs; see make health integration"
 def run_all(*, smoke: bool = False) -> HealthReport:
     """Run every leg and return the composed report.
 
@@ -50,6 +54,8 @@ def run_all(*, smoke: bool = False) -> HealthReport:
     return HealthReport(legs=tuple(legs))
 
 
+# frob:doc docs/modules/tools.md#health-main
+# frob:waive TEST001 reason="CLI entry point; exercised via make health integration"
 def main(argv: list[str] | None = None) -> int:
     """Run ``make health`` (or the smoke subset); exit 0 iff green."""
     parser = argparse.ArgumentParser(description="The repo health gate (D219).")

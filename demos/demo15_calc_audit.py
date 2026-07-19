@@ -44,8 +44,11 @@ from demos.harness import REPO_ROOT, DemoWriter, artifact_table
 
 _log = get_logger(__name__)
 
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 DEMO = "demo15_calc_audit"
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 SURFACE = "calc book + audit index with real discharges, walked row by row (arm_a6)"
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 PROJECT = REPO_ROOT / "examples" / "flagships" / "arm_a6"
 
 # The body-field order calc.py's `_sheet_digest` hashes (its `body`
@@ -88,6 +91,7 @@ def _recompute_sheet_digest(sheet: dict) -> str:
     return "local-blake3:" + blake3.blake3(canonical).hexdigest()
 
 
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 def run() -> bool:
     """Emit the calc-audit proof pack; return True (this surface is live)."""
     writer = DemoWriter(DEMO, SURFACE)

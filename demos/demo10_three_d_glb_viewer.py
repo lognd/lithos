@@ -31,8 +31,11 @@ from demos.harness import REPO_ROOT, DemoWriter, artifact_table
 
 _log = get_logger(__name__)
 
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 DEMO = "demo10_three_d_glb_viewer"
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 SURFACE = "deterministic GLB + standalone offline viewer.html (charter 38 sec. 1.6)"
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 PROJECT = REPO_ROOT / "examples" / "flagships" / "cnc_router_r1"
 
 _EXTERNAL_REF = re.compile(
@@ -50,6 +53,7 @@ def _cli(*args: str) -> None:
         )
 
 
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 def run() -> bool:
     """Emit the 3D-family proof pack; return True (this surface is live)."""
     writer = DemoWriter(DEMO, SURFACE)

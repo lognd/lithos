@@ -2,6 +2,8 @@
 // language server (`regolith-ls`, WO-38) is a separate Rust binary this
 // module launches over stdio (AD-24: one front end, no logic here).
 
+// frob:waive TEST003 reason="21 real node:test unit tests exist under editors/vscode/test/ (progress/artifacts/server-path) and pass via `node --test`, but frob's TS test collector has no [[test.runner]] entry wired in frob.toml (same root-cause class as the documented crates/** cargo-collector gap, FROBLEMS.md); a package-level integration test would need the same collector wiring to be counted, not a real coverage gap -- see FROBLEMS.md"
+
 import * as vscode from "vscode";
 import {
   LanguageClient,
@@ -77,6 +79,8 @@ async function startClient(
   context.subscriptions.push({ dispose: () => void client?.stop() });
 }
 
+// frob:doc docs/modules/vscode-extension.md#extension
+// frob:waive TEST001 reason="VS Code extension activation host API surface (ExtensionContext, registerTreeDataProvider, LanguageClient.start); requires a @vscode/test-electron host harness not wired in this repo, see FROBLEMS.md"
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
   const channel = outputChannel();
   context.subscriptions.push(channel);
@@ -95,6 +99,8 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   await startClient(context, channel);
 }
 
+// frob:doc docs/modules/vscode-extension.md#extension
+// frob:waive TEST001 reason="VS Code extension deactivation host API surface (LanguageClient.stop); requires a @vscode/test-electron host harness not wired in this repo, see FROBLEMS.md"
 export async function deactivate(): Promise<void> {
   if (client) {
     await client.stop();

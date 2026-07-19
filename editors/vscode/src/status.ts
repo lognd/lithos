@@ -39,9 +39,12 @@ function readEvidenceSummary(workspaceRoot: string): EvidenceSummary | undefined
   }
 }
 
+// frob:doc docs/modules/vscode-extension.md#status
 export class LithosStatusItem implements vscode.Disposable {
   private readonly item: vscode.StatusBarItem;
 
+  // frob:doc docs/modules/vscode-extension.md#status
+  // frob:waive TEST001 reason="VS Code status-bar host API surface (vscode.window.createStatusBarItem); requires a @vscode/test-electron host harness not wired in this repo, see FROBLEMS.md"
   constructor() {
     this.item = vscode.window.createStatusBarItem(
       vscode.StatusBarAlignment.Right,
@@ -53,6 +56,8 @@ export class LithosStatusItem implements vscode.Disposable {
     this.item.show();
   }
 
+  // frob:doc docs/modules/vscode-extension.md#status
+  // frob:waive TEST001 reason="VS Code status-bar host API surface (vscode.workspace.workspaceFolders, StatusBarItem.text); requires a @vscode/test-electron host harness not wired in this repo, see FROBLEMS.md"
   refresh(): void {
     const folder = vscode.workspace.workspaceFolders?.[0];
     if (!folder) {
@@ -70,6 +75,8 @@ export class LithosStatusItem implements vscode.Disposable {
     this.item.tooltip = "Obligation status read from .regolith/ (click to re-check).";
   }
 
+  // frob:doc docs/modules/vscode-extension.md#status
+  // frob:waive TEST001 reason="trivial VS Code Disposable passthrough (StatusBarItem.dispose); VS Code host API contract method"
   dispose(): void {
     this.item.dispose();
   }

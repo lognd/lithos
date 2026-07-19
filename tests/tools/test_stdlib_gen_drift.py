@@ -15,6 +15,23 @@ from pathlib import Path
 from tools.stdlib.generate_all import generate_all
 
 
+# frob:tests tools/stdlib/generate_all.py::generate_all kind="unit"
+# frob:tests tools/stdlib/generate_all.py kind="integration"
+# frob:tests tools/stdlib/gen_civil_sections.py::generate kind="unit"
+# frob:tests tools/stdlib/gen_civil_sections.py kind="integration"
+# frob:tests tools/stdlib/gen_eseries.py::generate kind="unit"
+# frob:tests tools/stdlib/gen_eseries.py kind="integration"
+# frob:tests tools/stdlib/gen_fasteners.py::generate kind="unit"
+# frob:tests tools/stdlib/gen_fasteners.py kind="integration"
+# frob:tests tools/stdlib/gen_iapws_water.py::generate kind="unit"
+# frob:tests tools/stdlib/gen_iapws_water.py kind="integration"
+# frob:tests tools/stdlib/gen_nasa_glenn_cp.py::generate kind="unit"
+# frob:tests tools/stdlib/gen_nasa_glenn_cp.py kind="integration"
+# frob:tests tools/stdlib/gen_processors.py::generate kind="unit"
+# frob:tests tools/stdlib/gen_processors.py kind="integration"
+# frob:tests tools/stdlib/render.py::render_row kind="unit"
+# frob:tests tools/stdlib/render.py::render_records_file kind="unit"
+# frob:tests tools/stdlib/render.py kind="integration"
 def test_stdlib_generators_are_drift_free() -> None:
     mismatches: list[str] = []
     for path_str, expected in generate_all().items():

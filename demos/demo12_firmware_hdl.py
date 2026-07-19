@@ -61,10 +61,14 @@ from demos.harness import REPO_ROOT, DemoWriter, artifact_table
 
 _log = get_logger(__name__)
 
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 DEMO = "demo12_firmware_hdl"
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 SURFACE = "shipped firmware tree + HDL tier evidence (computer track)"
 
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 HDL_PROJECT = REPO_ROOT / "examples" / "flagships" / "riscv_hart_rv1"
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 FW_PROJECT = REPO_ROOT / "examples" / "flagships" / "espresso_machine"
 
 # examples/registry/stm32g0.cupr's own pin table, mirrored verbatim
@@ -160,6 +164,7 @@ def _firmware_artifact() -> tuple[FirmwareArtifact, tuple[str, ...]]:
     return FirmwareArtifact(tree=tree.danger_ok, toolchain=None), summary
 
 
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 def run() -> bool:
     """Emit the firmware+HDL proof pack; return True (live)."""
     writer = DemoWriter(DEMO, SURFACE)

@@ -83,11 +83,13 @@ function withTempDist(fn: (root: string) => void): void {
   }
 }
 
+// frob:tests editors/vscode/src/artifacts.ts::safeName kind="unit"
 test("safeName mirrors calc.py's _safe_name character class", () => {
   assert.equal(safeName("mass under_limit::abc123def456"), "mass_under_limit__abc123def456");
   assert.equal(safeName("a.b-c_D9"), "a.b-c_D9");
 });
 
+// frob:tests editors/vscode/src/artifacts.ts::findDistProjects kind="unit"
 test("findDistProjects reads calc_book.json from the workspace root", () => {
   withTempDist((root) => {
     fs.mkdirSync(path.join(root, "dist", "calc"), { recursive: true });
@@ -114,6 +116,7 @@ test("findDistProjects finds a fleet layout one level down and skips dist/ itsel
   });
 });
 
+// frob:tests editors/vscode/src/artifacts.ts::findClaimRow kind="unit"
 test("findClaimRow matches on normalized claim_name and resolves the discharging sheet", () => {
   withTempDist((root) => {
     fs.mkdirSync(path.join(root, "dist", "calc"), { recursive: true });
@@ -141,6 +144,7 @@ test("findClaimRow returns undefined for a claim never shipped", () => {
   });
 });
 
+// frob:tests editors/vscode/src/artifacts.ts::resolveArtifacts kind="unit"
 test("resolveArtifacts finds only files that actually exist on disk", () => {
   withTempDist((root) => {
     const distDir = path.join(root, "dist");

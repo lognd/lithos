@@ -31,6 +31,7 @@ _log = get_logger(__name__)
 # Ordered: the five WO-108 optimization surfaces, the fleet showcase,
 # then the WO-115/D222 feature proof packs (one per user-facing
 # artifact/feature family). Each names its module under `demos.`.
+# frob:doc docs/modules/demos.md#run-all
 DEMOS = (
     "demo1_select_ebi_decode",
     "demo2_continuous_printer",
@@ -52,6 +53,8 @@ DEMOS = (
 )
 
 
+# frob:doc docs/modules/demos.md#run-all
+# frob:waive TEST001 reason="thin CLI wrapper; see tests/test_wo108_demos.py"
 def main(argv: list[str] | None = None) -> int:
     """Run all demos; return a process exit code (0 green)."""
     parser = argparse.ArgumentParser(

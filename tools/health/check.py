@@ -18,7 +18,10 @@ from tools.health.report import REPO_ROOT, LegSummary
 
 _log = get_logger(__name__)
 
+# frob:waive TEST003 reason="shells to make check; see make health (not in-test)"
 
+
+# frob:doc docs/modules/tools.md#health-check-leg
 def run() -> LegSummary:
     """Run ``make check``; return its standardized summary row."""
     _log.info("check: running `make check`")
@@ -37,6 +40,8 @@ def run() -> LegSummary:
     )
 
 
+# frob:doc docs/modules/tools.md#health-check-leg
+# frob:waive TEST001 reason="CLI entry pt; see make health (not in-test, recurses)"
 def main(argv: list[str] | None = None) -> int:
     """Run the check leg standalone; exit 0 iff green."""
     summary = run()

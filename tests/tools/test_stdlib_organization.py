@@ -47,6 +47,7 @@ def fake_repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     return tmp_path
 
 
+# frob:tests tools/stdlib/organization.py::check_prefix_reservation kind="unit"
 def test_prefix_sweep_ignores_nested_worktrees_and_venvs(fake_repo: Path) -> None:
     check = organization.check_prefix_reservation()
     assert check.ok, check.note
@@ -144,6 +145,7 @@ def test_structured_citation_offenses_passes_a_complete_row() -> None:
     assert organization._structured_citation_offenses(block) == []
 
 
+# frob:tests tools/stdlib/organization.py::check_citations kind="unit"
 def test_ti_mcu_shaped_records_pass_the_full_citations_check(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -175,3 +177,19 @@ def test_ti_mcu_shaped_records_pass_the_full_citations_check(
     assert "0 uncited" in check.note
     # `.claude` alone (config, settings) is not the worktree pair.
     assert not organization.is_excluded(Path(".claude/settings.json"))
+
+
+# frob:tests tools/stdlib/organization.py::check_one_family_per_file kind="unit"
+# frob:tests tools/stdlib/organization.py::check_generated_drift kind="unit"
+# frob:tests tools/stdlib/organization.py::check_models_manifest kind="unit"
+# frob:tests tools/stdlib/organization.py::check_double_home kind="unit"
+# frob:tests tools/stdlib/organization.py::check_charter_cross_drift kind="unit"
+# frob:tests tools/stdlib/organization.py::run_all kind="unit"
+# frob:tests tools/stdlib/organization.py kind="integration"
+def test_run_all_sweeps_clean_on_real_tree() -> None:
+    """The whole `std.` organization sweep composition (WO-118, D227/AD-37,
+    charter 39 sec. 5.4) stays green over the real committed tree."""
+    checks = organization.run_all()
+    assert len(checks) == 7
+    for check in checks:
+        assert check.ok, f"{check.name}: {check.note}"

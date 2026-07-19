@@ -39,7 +39,9 @@ from regolith.logging_setup import get_logger
 
 _log = get_logger(__name__)
 
+# frob:doc docs/modules/tools.md#health-diag-codes
 REPO_ROOT = Path(__file__).resolve().parents[2]
+# frob:doc docs/modules/tools.md#health-diag-codes
 SWEEP_ROOT = REPO_ROOT / "python" / "regolith" / "backends"
 
 # The one Python-side error model this sweep polices (WO-131 scope:
@@ -48,9 +50,11 @@ SWEEP_ROOT = REPO_ROOT / "python" / "regolith" / "backends"
 # OrchestratorError, DocError, CoreFailure) are a separate surface,
 # out of this WO's literal "backends/gate/harness" scope -- see close-
 # out escalation F-WO131-3.
+# frob:doc docs/modules/tools.md#health-diag-codes
 ERROR_CLASS_NAMES = frozenset({"BackendError"})
 
 
+# frob:doc docs/modules/tools.md#health-diag-codes
 @dataclass(frozen=True)
 class BareKindViolation:
     """One `BackendError(kind="...")` bare-string call site."""
@@ -67,6 +71,7 @@ class BareKindViolation:
 # raised from more than one call site in a file (debug_taps.py), one
 # entry covers every such site: the deferral is of the KIND, not of a
 # particular line.
+# frob:doc docs/modules/tools.md#health-diag-codes
 EXEMPT: dict[tuple[str, str], str] = {
     # -- manifest.py: package signature/hash integrity verification.
     # Real user-facing failures; deferred (not backfilled by WO-131's
@@ -274,6 +279,8 @@ def _find_violations(
     return violations
 
 
+# frob:doc docs/modules/tools.md#health-diag-codes
+# frob:waive TEST001 reason="completeness sweep, see test_diag_codes_run_clean"
 def check_explain_completeness() -> tuple[bool, int, int]:
     """D247.4a: every registered code has an explain entry, and the STUB
     count is reported (never hidden -- the debt stays visible).
@@ -301,6 +308,7 @@ def check_explain_completeness() -> tuple[bool, int, int]:
     return not entryless, len(entryless), len(stubs)
 
 
+# frob:doc docs/modules/tools.md#health-diag-codes
 def run() -> tuple[bool, int, str]:
     """`(ok, violation_count, note)` -- the standardized sub-check shape.
 

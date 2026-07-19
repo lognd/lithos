@@ -38,7 +38,9 @@ from demos.harness import REPO_ROOT, DemoWriter, artifact_table
 
 _log = get_logger(__name__)
 
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 DEMO = "demo13_test_runner_cache"
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 SURFACE = "regolith test over a corpus net with cache-proven replay"
 
 _ROOTS = (
@@ -81,6 +83,7 @@ def _summary_bytes(payload: dict) -> bytes:
     return (json.dumps(payload, indent=2, sort_keys=True) + "\n").encode("ascii")
 
 
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 def run() -> bool:
     """Emit the test-runner proof pack; return True (this surface is live)."""
     writer = DemoWriter(DEMO, SURFACE)

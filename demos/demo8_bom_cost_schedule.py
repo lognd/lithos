@@ -40,10 +40,14 @@ from demos.harness import REPO_ROOT, DemoWriter, artifact_table
 
 _log = get_logger(__name__)
 
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 DEMO = "demo8_bom_cost_schedule"
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 SURFACE = "derived BOM v2 (real masses) + cost sheet + member schedule"
 
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 BOM_PROJECT = REPO_ROOT / "examples" / "flagships" / "cnc_router_r1"
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 CIVIL_PROJECT = REPO_ROOT / "examples" / "flagships" / "timber_pavilion"
 
 
@@ -90,6 +94,7 @@ def _emit_family(writer: DemoWriter, tag: str, family_dir: Path, prefix: str) ->
     return count
 
 
+# frob:doc docs/modules/demos.md#demo-proof-pack-shape
 def run() -> bool:
     """Emit the BOM/cost/schedule proof pack; return True (live)."""
     writer = DemoWriter(DEMO, SURFACE)

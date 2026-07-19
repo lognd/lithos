@@ -42,7 +42,9 @@ function newestSourceMtime(root: string): number {
   return newest;
 }
 
+// frob:doc docs/modules/vscode-extension.md#census
 class CensusItem extends vscode.TreeItem {
+  // frob:doc docs/modules/vscode-extension.md#census
   constructor(label: string, description: string, tooltip: string, stale: boolean) {
     super(label, vscode.TreeItemCollapsibleState.None);
     this.description = description;
@@ -53,20 +55,28 @@ class CensusItem extends vscode.TreeItem {
 
 /** WO-120 deliverable 3: per-project discharged/waived/deferred counts
  * in a tree view, sourced from each project's own shipped audit index. */
+// frob:doc docs/modules/vscode-extension.md#census
 export class CensusTreeProvider implements vscode.TreeDataProvider<CensusItem> {
   private readonly emitter = new vscode.EventEmitter<void>();
   readonly onDidChangeTreeData = this.emitter.event;
 
+  // frob:doc docs/modules/vscode-extension.md#census
   constructor(private readonly workspaceRoot: string | undefined) {}
 
+  // frob:doc docs/modules/vscode-extension.md#census
+  // frob:waive TEST001 reason="VS Code TreeDataProvider host API surface (EventEmitter.fire); requires a @vscode/test-electron host harness not wired in this repo, see FROBLEMS.md"
   refresh(): void {
     this.emitter.fire();
   }
 
+  // frob:doc docs/modules/vscode-extension.md#census
+  // frob:waive TEST001 reason="trivial TreeDataProvider passthrough (returns its argument); VS Code host API contract method"
   getTreeItem(element: CensusItem): vscode.TreeItem {
     return element;
   }
 
+  // frob:doc docs/modules/vscode-extension.md#census
+  // frob:waive TEST001 reason="VS Code TreeDataProvider host API surface, exercised transitively via findDistProjects (test/artifacts.test.ts); no host harness wired in this repo, see FROBLEMS.md"
   getChildren(): CensusItem[] {
     if (!this.workspaceRoot) return [];
     const projects = findDistProjects(this.workspaceRoot).filter((p) => p.calcBook);

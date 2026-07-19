@@ -14,6 +14,8 @@ function claimTextAt(editor: vscode.TextEditor): string {
   return editor.document.lineAt(editor.selection.active.line).text;
 }
 
+// frob:doc docs/modules/vscode-extension.md#goto-artifact
+// frob:waive TEST001 reason="VS Code active-editor/workspace host API surface (vscode.window.activeTextEditor); requires a @vscode/test-electron host harness not wired in this repo -- the read-only resolution logic it calls (findDistProjects/findClaimRow/resolveArtifacts) is unit-tested in test/artifacts.test.ts, see FROBLEMS.md"
 export async function goToArtifactCommand(): Promise<void> {
   const editor = vscode.window.activeTextEditor;
   const folder = vscode.workspace.workspaceFolders?.[0];
