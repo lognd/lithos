@@ -196,7 +196,7 @@ threat: null
 ```yaml
 id: T-0005
 title: 'WO-123: artifact presentation v2 -- remaining wave-1 residual'
-state: in-progress
+state: done
 kind: feature
 origin: agent
 created: '2026-07-18'
@@ -207,18 +207,25 @@ scope:
 - tests/**
 - docs/**
 - docs/spec/toolchain/**
-evidence: []
+evidence:
+- tests/backends/test_wo_frob_coverage.py::test_calc_package_files_refuses_a_sheet_that_fails_the_drafting_audit
 attachments: []
 acceptance:
 - see docs/workflow/work-orders/WO-123-artifact-presentation-v2.md
 threat: null
 ```
+## Done report
+
+Residual F141 LANDED (35a55622: audit refusal gates the ship; masked
+fixture defect caught). F140 -> T-0061; F142 -> folded into T-0056;
+F143 -> T-0062. Ticket closes on the landed slice with every
+still-blocked residual re-ticketed precisely.
 
 <!-- ticket:T-0006 -->
 ```yaml
 id: T-0006
 title: 'WO-124: complete board fab set -- remaining wave-1 residual'
-state: in-progress
+state: done
 kind: feature
 origin: agent
 created: '2026-07-18'
@@ -229,12 +236,19 @@ scope:
 - tests/**
 - docs/**
 - crates/regolith-lower/**
-evidence: []
+evidence:
+- tests/backends/test_wo_frob_coverage.py::test_calc_package_files_refuses_a_sheet_that_fails_the_drafting_audit
 attachments: []
 acceptance:
 - see docs/workflow/work-orders/WO-124-board-fab-completeness.md
 threat: null
 ```
+## Done report
+
+Residuals F136/F137 re-verified still schema-window-gated (no
+footprint registry, no revision field anywhere) -> T-0063 as the
+next-bump passenger ticket per D211 (cycle-38 bump spent, D272).
+Visual round 2 folds into T-0030. Nothing land-able remained here.
 
 <!-- ticket:T-0007 -->
 ```yaml
@@ -1733,6 +1747,10 @@ attachments: []
 acceptance: []
 threat: null
 ```
+### Note (2026-07-19)
+
+WO-123's F142 (layered-diagram label-lane collisions) is the same
+layout-engine surface -- fold its fix into this generalization.
 
 <!-- ticket:T-0057 -->
 ```yaml
@@ -1802,6 +1820,58 @@ threat: null
 ```yaml
 id: T-0060
 title: small_office coil k_factor params (post feldspar hx_segment support)
+state: queued
+kind: feature
+origin: agent
+created: '2026-07-19'
+blocked_by: []
+parent: null
+scope: []
+evidence: []
+attachments: []
+acceptance: []
+threat: null
+```
+
+<!-- ticket:T-0061 -->
+```yaml
+id: T-0061
+title: 'style-pack record home: hash-pinned std.style pack (F140)'
+state: queued
+kind: feature
+origin: agent
+created: '2026-07-19'
+blocked_by: []
+parent: null
+scope: []
+evidence: []
+attachments: []
+acceptance: []
+threat: null
+```
+
+<!-- ticket:T-0062 -->
+```yaml
+id: T-0062
+title: calc-sheet continuation/page-split on overflow (F143)
+state: queued
+kind: feature
+origin: agent
+created: '2026-07-19'
+blocked_by: []
+parent: null
+scope: []
+evidence: []
+attachments: []
+acceptance: []
+threat: null
+```
+
+<!-- ticket:T-0063 -->
+```yaml
+id: T-0063
+title: 'next-bump passengers: Placement pad-stack/courtyard (F136) + design revision
+  field (F137)'
 state: queued
 kind: feature
 origin: agent
