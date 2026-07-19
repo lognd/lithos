@@ -1597,7 +1597,6 @@ acceptance:
 - see docs/workflow/work-orders/WO-171-process-population-wave3.md
 threat: null
 ```
-
 ### Progress (2026-07-19)
 
 Wave 3 landed (44 records, 6 families complete). Coverage 66/100;
@@ -1744,5 +1743,26 @@ scope: []
 evidence: []
 attachments: []
 acceptance: []
+threat: null
+```
+
+<!-- ticket:T-0059 -->
+```yaml
+id: T-0059
+title: resolve geom_extract edge params into flownet payloads (feldspar T-0025 counterpart)
+state: queued
+kind: feature
+origin: agent
+created: '2026-07-19'
+blocked_by: []
+parent: null
+scope:
+- python/regolith/orchestrator/**
+- crates/regolith-lower/**
+- tests/**
+evidence: []
+attachments: []
+acceptance:
+- 'feldspar T-0025 names the observed gap: hydronics-corpus geom_extract edge params carry empty WO-31 placeholder digests; the lithos side must resolve real digests into the flownet payload (or lower a coded refusal) so feldspar can either solve or refuse with a named reason instead of unresolved_digest'
 threat: null
 ```
