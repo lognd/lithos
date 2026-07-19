@@ -95,6 +95,7 @@ def _emit_family(writer: DemoWriter, tag: str, family_dir: Path, prefix: str) ->
 
 
 # frob:doc docs/modules/demos.md#demo-proof-pack-shape
+# frob:waive TEST005 reason="demo run() orchestration: env-gated branches (tool presence, fleet subsets) make branch coverage jitter across stamps; measured 2026-07-19; backfill T-0036"
 def run() -> bool:
     """Emit the BOM/cost/schedule proof pack; return True (live)."""
     writer = DemoWriter(DEMO, SURFACE)

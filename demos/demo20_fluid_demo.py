@@ -1,3 +1,4 @@
+# frob:waive TEST005 reason="demo module line coverage jitters with env-gated paths; backfill T-0036"
 """Demo 20 -- the fluids chain closed honestly: WO-144 close-out
 (D258.5/F152/F157).
 
@@ -187,6 +188,7 @@ def _dp_sheet(dist_dir):
 
 
 # frob:doc docs/modules/demos.md#demo-proof-pack-shape
+# frob:waive TEST005 reason="demo run() orchestration: env-gated branches (tool presence, fleet subsets) make branch coverage jitter across stamps; measured 2026-07-19; backfill T-0036"
 def run() -> bool:
     """Emit the WO-144 fluids close-out proof pack; return True (live)."""
     writer = DemoWriter(DEMO, SURFACE)

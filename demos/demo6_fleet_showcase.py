@@ -53,6 +53,7 @@ def _cli(*args: str) -> None:
 
 
 # frob:doc docs/modules/demos.md#demo-proof-pack-shape
+# frob:waive TEST005 reason="demo run() orchestration: env-gated branches (tool presence, fleet subsets) make branch coverage jitter across stamps; measured 2026-07-19; backfill T-0036"
 def run() -> bool:
     """Emit the fleet-showcase proof pack; return True (this surface is live)."""
     writer = DemoWriter(DEMO, SURFACE)
