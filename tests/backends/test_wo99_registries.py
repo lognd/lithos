@@ -66,13 +66,13 @@ def _empty_inputs() -> BackendInputs:
 # -- producer registry ---------------------------------------------------
 
 
-# frob:tests python/regolith/backends/registry.py::default_producer_registry kind="unit"
 def _unused_produce(
     subject: str, inputs: BackendInputs
 ) -> Result[DrawingModel, BackendError]:
     raise NotImplementedError("never invoked; registration-error path only")
 
 
+# frob:tests python/regolith/backends/registry.py::default_producer_registry kind="unit"
 def test_producer_registry_duplicate_kind_is_loud() -> None:
     """A second registration of the same kind is an `Err`, never a shadow."""
     registry = default_producer_registry()

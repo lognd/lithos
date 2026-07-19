@@ -122,9 +122,7 @@ class _BuiltinMarkerBackend:
         return Ok((OutputFile.of("builtin.txt", b"builtin backend output"),))
 
 
-# frob:tests python/regolith/backends/plugin.py::load_backend_plugins
-
-
+# frob:tests python/regolith/backends/plugin.py::load_backend_plugins kind="unit"
 def test_backend_plugin_composes_alongside_builtins() -> None:
     """Acceptance: a `kind=backend` plugin adds a named backend, builtins kept."""
     manifest = PluginManifest(
