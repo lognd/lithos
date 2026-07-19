@@ -74,6 +74,32 @@ regolith-oblig (146/-), regolith-diag (115/-), regolith-qty (105/23),
 regolith-sem (93/30), regolith-ir (64/17), regolith-ls (55/24),
 regolith-api (32/-), regolith-util (5/-).
 
+LANE L2b (2026-07-18) picked this back up: a re-run of `frob check --only
+gates` shows the true current crates/** surface is much larger than the
+snapshot above (COV001 4618 total: regolith-lower 502, regolith-syntax
+370, regolith-oblig 292, regolith-diag 230, regolith-qty 210,
+regolith-sem 186, regolith-ir 128, regolith-ls 110, regolith-api 64;
+TEST001 1534 total with the same crate ranking; TEST003 still 1 per
+crate, 9 crates outstanding under crates/**) -- the earlier numbers were
+either stale or measured under a narrower check_type. Given the surface
+size, L2b closed ONLY `crates/regolith-lower/src/lib.rs` this pass (the
+crate's 6 top-level pipeline entry points: join_physical_lines,
+parse_sources, lower, lower_with_lint_config, lower_and_discharge,
+lower_and_discharge_with_lint_config) as a fully-real slice: new
+docs/modules/regolith-lower.md (anchors per symbol, linked from
+docs/modules/README.md), frob:doc edges on all 6, frob:tests bindings on
+3 existing unit tests plus 2 new small unit tests written for the two
+previously-untested lint-config wrapper functions, and a new
+crates/regolith-lower/tests/integration.rs (TEST003). cargo fmt/clippy/
+test all clean for regolith-lower after the change. The REST of
+regolith-lower (38 more files, ~496 COV001/~440 TEST001 remaining in
+that crate alone) and every crate after it in the stated order (syntax,
+oblig, diag, qty, sem, ir, ls, api) are UNSTARTED -- this ticket stays
+in-progress; do not close it. Per FROBLEMS.md, TEST001/TEST003 bindings
+in this crate are correctly-scoped but cannot validate against the rust
+test collector until the upstream frob fix lands; re-check counts after
+any frob binary upgrade before assuming a binding is dead.
+
 Add frob:doc edges backed by new docs/modules/<crate>.md module-contract
 docs (linked from docs/index.md, keeping DOC001 at 0), and frob:tests
 bindings on existing or new unit/integration tests, crate by crate, until

@@ -60,6 +60,7 @@ pub use regolith_oblig::EvidenceCache;
 /// incomplete net). ONE home for the join so every such scanner shares
 /// it (NO DUPLICATION) instead of re-deriving its own truncating
 /// first-line cut.
+// frob:doc docs/modules/regolith-lower.md#join-physical-lines
 #[must_use]
 pub(crate) fn join_physical_lines(text: &str) -> String {
     text.lines()
@@ -71,6 +72,7 @@ pub(crate) fn join_physical_lines(text: &str) -> String {
 /// Parse every source file into a [`ParsedFile`], preserving the
 /// caller's order (the caller -- `Session::discover_files` -- already
 /// sorts for determinism, AD-6; this pass does not re-sort).
+// frob:doc docs/modules/regolith-lower.md#parse-sources
 #[must_use]
 pub fn parse_sources(sources: &[SourceFile]) -> Vec<ParsedFile> {
     let span = tracing::info_span!("parse", files = sources.len());
@@ -103,6 +105,7 @@ pub fn parse_sources(sources: &[SourceFile]) -> Vec<ParsedFile> {
 /// deferred `GeomExtract` selector). `lower` stays pure: resolving a
 /// digest against the WO-30 store is the caller's IO, done before this
 /// function is ever called (AD-17).
+// frob:doc docs/modules/regolith-lower.md#lower
 #[must_use]
 pub fn lower(
     sources: &[SourceFile],
@@ -115,6 +118,7 @@ pub fn lower(
 /// per `lint_config` (WO-40 deliverable 4: `magnetite.toml [lints]`,
 /// `deny` -> `Error`) at the very end of the batch, in the ONE place
 /// (`regolith_diag::apply_lint_config`) severity changes.
+// frob:doc docs/modules/regolith-lower.md#lower-with-lint-config
 #[must_use]
 pub fn lower_with_lint_config(
     sources: &[SourceFile],
@@ -270,6 +274,7 @@ pub fn lower_with_lint_config(
 /// `registry_version` is the harness model-registry version (Python-side,
 /// AD-1), folded into every evidence-cache key so a model upgrade forces
 /// re-verification (BE-1/INV-1).
+// frob:doc docs/modules/regolith-lower.md#lower-and-discharge
 #[must_use]
 pub fn lower_and_discharge(
     sources: &[SourceFile],
@@ -288,6 +293,7 @@ pub fn lower_and_discharge(
 
 /// Same as [`lower_and_discharge`], with the WO-40 `[lints]` promotion
 /// step (see [`lower_with_lint_config`]).
+// frob:doc docs/modules/regolith-lower.md#lower-and-discharge-with-lint-config
 #[must_use]
 pub fn lower_and_discharge_with_lint_config(
     sources: &[SourceFile],
@@ -535,10 +541,14 @@ fn run_statics_feed(
 
 #[cfg(test)]
 mod tests {
-    use super::{lower, lower_and_discharge, parse_sources, RealizedInputs, SourceFile};
+    use super::{
+        lower, lower_and_discharge, lower_and_discharge_with_lint_config, lower_with_lint_config,
+        parse_sources, RealizedInputs, SourceFile,
+    };
     use camino::Utf8PathBuf;
     use regolith_oblig::{EvidenceCache, Status};
 
+    // frob:tests crates/regolith-lower/src/lib.rs::lower kind="unit"
     #[test]
     fn lower_populates_flownets_from_a_fluid_source() {
         // WO-32 deliverable 4b: `LowerOutput.flownets` is the seam
@@ -567,6 +577,14 @@ mod tests {
         );
     }
 
+    // frob:tests crates/regolith-lower/src/lib.rs::join_physical_lines kind="unit"
+    #[test]
+    fn join_physical_lines_strips_comments_and_joins_with_a_space() {
+        let text = "a: 1  # comment one\nb: 2 # comment two\nc: 3";
+        assert_eq!(super::join_physical_lines(text), "a: 1   b: 2  c: 3");
+    }
+
+    // frob:tests crates/regolith-lower/src/lib.rs::parse_sources kind="unit"
     #[test]
     fn parse_sources_preserves_caller_order() {
         let sources = vec![
@@ -584,6 +602,7 @@ mod tests {
         assert_eq!(parsed[1].path, Utf8PathBuf::from("a.hema"));
     }
 
+    // frob:tests crates/regolith-lower/src/lib.rs::lower_and_discharge kind="unit"
     #[test]
     fn stiffness_tier_discharges_end_to_end_from_source() {
         // WO-23: the L2 stiffness tier through the REAL pipeline --
@@ -613,5 +632,57 @@ mod tests {
             .collect();
         assert_eq!(ev.len(), 1, "evidence: {:?}", out.evidence);
         assert_eq!(ev[0].status, Status::Discharged);
+    }
+
+    // frob:tests crates/regolith-lower/src/lib.rs::lower_with_lint_config kind="unit"
+    #[test]
+    fn lower_with_lint_config_matches_lower_on_default_config() {
+        // Default (empty) LintConfig promotes/silences nothing, so this
+        // must agree with `lower`'s own diagnostic count on the same
+        // source (the WO-40 promotion step is a no-op at the default).
+        let src = "part B:\n";
+        let sources = vec![SourceFile {
+            path: Utf8PathBuf::from("b.hema"),
+            text: src.to_string(),
+        }];
+        let realized_inputs = RealizedInputs::new();
+        let default_out = lower(&sources, &realized_inputs);
+        let explicit_out = lower_with_lint_config(
+            &sources,
+            &realized_inputs,
+            &regolith_diag::LintConfig::new(),
+        );
+        assert_eq!(
+            default_out.diagnostics.len(),
+            explicit_out.diagnostics.len(),
+            "empty LintConfig must not change the diagnostic batch"
+        );
+    }
+
+    // frob:tests crates/regolith-lower/src/lib.rs::lower_and_discharge_with_lint_config kind="unit"
+    #[test]
+    fn lower_and_discharge_with_lint_config_matches_lower_and_discharge_on_default_config() {
+        let src = "part B:\n";
+        let sources = vec![SourceFile {
+            path: Utf8PathBuf::from("b.hema"),
+            text: src.to_string(),
+        }];
+        let realized_inputs = RealizedInputs::new();
+        let mut cache_a = EvidenceCache::new();
+        let mut cache_b = EvidenceCache::new();
+        let default_out =
+            lower_and_discharge(&sources, &mut cache_a, "registry@1", &realized_inputs);
+        let explicit_out = lower_and_discharge_with_lint_config(
+            &sources,
+            &mut cache_b,
+            "registry@1",
+            &realized_inputs,
+            &regolith_diag::LintConfig::new(),
+        );
+        assert_eq!(
+            default_out.diagnostics.len(),
+            explicit_out.diagnostics.len(),
+            "empty LintConfig must not change the diagnostic batch"
+        );
     }
 }

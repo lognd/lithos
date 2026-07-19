@@ -11,6 +11,9 @@ architecture these expand on).
 
 - [regolith-util](regolith-util.md) -- bottom-of-layering primitives
   (canonical CBOR, content addressing, hashing).
+- [regolith-lower](regolith-lower.md) -- the pass-pipeline driver
+  (AD-17); currently covers the crate's top-level entry points only,
+  per-pass submodules are in progress.
 
 More crates are added to this index as their module contract docs are
 written (see `tickets.md` T-0002 for the in-progress crates/** sweep).
