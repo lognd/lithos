@@ -110,10 +110,7 @@ def test_fixed_twin_renders_zero_diagnostics() -> None:
     obligations (cap distance, probe clearance, the .where filter)."""
     payload = _check(_PACKS, _FIXED)
     assert payload["diagnostics"] == [], payload["diagnostics"]
-    deferred = {
-        o["claim"]["name"]
-        for o in payload["obligations"]
-    }
+    deferred = {o["claim"]["name"] for o in payload["obligations"]}
     assert deferred == {
         "erc(pdn_decoupling.shunt_cap_placement)",
         "erc(interface_protection.vbus_inrush_protection)",
@@ -170,9 +167,7 @@ def test_mainboard_mx_forms_and_evaluates_board_correctness() -> None:
     bc = [n for n in names if any(f"({f}." in n for f in _FAMILIES)]
     assert bc, f"no board-correctness obligation formed: {names}"
     violations = [
-        d["message"]
-        for d in payload["diagnostics"]
-        if "violated" in d["message"]
+        d["message"] for d in payload["diagnostics"] if "violated" in d["message"]
     ]
     assert violations == [], violations
 

@@ -60,7 +60,12 @@ _STIFFNESS_FLOOR = 250.0
 
 
 def _check_fixture() -> dict:
-    out = compiler.check((_FIXTURE, _PACK,))
+    out = compiler.check(
+        (
+            _FIXTURE,
+            _PACK,
+        )
+    )
     assert out.is_ok, out
     return json.loads(out.danger_ok.payload_json)
 
@@ -244,7 +249,12 @@ def test_dfm_rows_fire_on_an_infeasible_literal_twin(tmp_path) -> None:
         "        then:\n"
         "            lightening = Ribs(count=6, pitch=6mm, thickness=1mm)\n"
     )
-    out = compiler.check((str(twin), _PACK,))
+    out = compiler.check(
+        (
+            str(twin),
+            _PACK,
+        )
+    )
     assert out.is_ok, out
     payload = json.loads(out.danger_ok.payload_json)
     messages = [d["message"] for d in payload["diagnostics"]]
@@ -261,7 +271,12 @@ def test_promotion_honesty_across_the_four_families(caplog) -> None:
     """WO-77 d3: literal PocketGrid/Shell parts promote and REALIZE with
     no hand-authored program; the bounded-Ribs part and the Lattice
     part stay pending with NAMED reasons (never guessed geometry)."""
-    out = compiler.check((_FIXTURE, _PACK,))
+    out = compiler.check(
+        (
+            _FIXTURE,
+            _PACK,
+        )
+    )
     assert out.is_ok, out
     with caplog.at_level(logging.INFO, logger="regolith.orchestrator.programs"):
         programs = emitted_realizer_programs(out.danger_ok.payload_json)

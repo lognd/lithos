@@ -395,6 +395,7 @@ def _render_table(
                 cy += style.body_text_height_mm + 0.5
     return y + layout.total_h + style.content_gap_mm
 
+
 # frob:waive PERF003 reason="O(1) check against a fixed small set, not nested"
 def _render_chart(
     chart: ChartGeometry,

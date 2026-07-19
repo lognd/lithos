@@ -92,7 +92,9 @@ def test_orchestrator_stores_the_graph_for_resolution(tmp_path: Path) -> None:
     obligations = tuple(Obligation.model_validate(o) for o in payload["obligations"])
     store = PayloadStore(str(tmp_path))
     _put_converter_graph_payloads(store, payload, obligations)
-    ref = next(r for o in obligations for r in (o.payloads or ()) if r.kind == GRAPH_KIND)
+    ref = next(
+        r for o in obligations for r in (o.payloads or ()) if r.kind == GRAPH_KIND
+    )
     resolved = store.resolve(ref.digest)
     assert resolved.is_ok, resolved
     graph = ConverterGraph.model_validate_json(resolved.danger_ok)

@@ -69,9 +69,9 @@ def test_row_hash_is_stable_and_order_independent() -> None:
 def test_load_toml_records_parses_array_of_tables(tmp_path) -> None:
     toml_path = tmp_path / "materials.toml"
     toml_path.write_text(
-        '[[material]]\n'
+        "[[material]]\n"
         'key = "al6061"\n'
-        '[material.evidence]\n'
+        "[material.evidence]\n"
         'method = "catalog"\n'
         'trust_tier = "T1"\n'
         'reference = "MMPDS"\n'
@@ -95,10 +95,7 @@ def test_component_field_rows_reads_scalar_fields(tmp_path) -> None:
     pkg_dir = tmp_path / "mcu" / "records"
     pkg_dir.mkdir(parents=True)
     (pkg_dir / "parts.toml").write_text(
-        '[[component]]\n'
-        'key = "stm32g474"\n'
-        'executor = 25000000.0\n'
-        'dma_capable = true\n'
+        '[[component]]\nkey = "stm32g474"\nexecutor = 25000000.0\ndma_capable = true\n'
     )
     rows = component_field_rows((str(tmp_path),))
     assert rows["stm32g474"]["executor"] == "25000000"

@@ -64,9 +64,7 @@ def test_alternate_function_table_pins_for_returns_sorted_matches() -> None:
             PinOption(pin="PA2", functions=("uart.tx",)),
             PinOption(pin="PB0", functions=("adc.in0",)),
         ),
-        instances=(
-            FunctionInstance(id="uart.tx", kind="uart.tx", capabilities=()),
-        ),
+        instances=(FunctionInstance(id="uart.tx", kind="uart.tx", capabilities=()),),
     )
     assert table.pins_for("uart.tx") == ("PA2", "PA9")
     assert table.pins_for("no_such_instance") == ()

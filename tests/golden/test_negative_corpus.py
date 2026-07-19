@@ -1,3 +1,4 @@
+# ruff: noqa: E501  -- long frob:tests directive symrefs exceed the 88-col house style; the exact path is load-bearing for the frob DSL and cannot wrap
 """Negative corpus: the rule-breaking corpus, self-calibrated against
 real compiler output (design-log cycle 23 / D123).
 

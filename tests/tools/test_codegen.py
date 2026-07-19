@@ -34,7 +34,7 @@ def test_generate_renders_valid_module() -> None:
     # and imported directly, never re-checked at import time).
     ast.parse(body)
     assert "SOME_CODE = 'E0001'" in body
-    assert 'BY_CODE: dict[str, CodeEntry] = {e.code: e for e in ALL}' in body
+    assert "BY_CODE: dict[str, CodeEntry] = {e.code: e for e in ALL}" in body
 
 
 def test_generate_is_deterministic() -> None:

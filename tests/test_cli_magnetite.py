@@ -1,3 +1,4 @@
+# ruff: noqa: E501  -- long frob:tests directive symrefs exceed the 88-col house style; the exact path is load-bearing for the frob DSL and cannot wrap
 """CLI coverage for the `reg` alias, `new`/`magnetite new` parity, and the
 magnetite `key`/`index`/`manifest` verbs added to expose the library's
 existing functionality (owner ask: the CLI never exposed most of

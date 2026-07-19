@@ -69,7 +69,10 @@ def test_inputs_from_claim_kwargs_reads_numeric_kwargs_with_units() -> None:
 # frob:tests python/regolith/backends/calc.py::unit_from_claim kind="unit"
 def test_unit_from_claim_reads_the_rhs_literal_suffix() -> None:
     claim = Claim(
-        forall=[], form=ClaimForm1(form=Form.comparison, lhs="life", op=">=", rhs="20000hr"), hints=[], name="c"
+        forall=[],
+        form=ClaimForm1(form=Form.comparison, lhs="life", op=">=", rhs="20000hr"),
+        hints=[],
+        name="c",
     )
     assert unit_from_claim(claim) == "hr"
 
@@ -168,9 +171,7 @@ def test_material_record_set_density_of_looks_up_by_key() -> None:
 
 def _bom_model() -> BomModel:
     return BomModel(
-        rows=(
-            BomRow(subject="bracket", kind="part", quantity=2, part_number="P-1"),
-        ),
+        rows=(BomRow(subject="bracket", kind="part", quantity=2, part_number="P-1"),),
         currency="USD",
     )
 
@@ -369,7 +370,9 @@ def test_fit_text_shrinks_when_the_wrapped_block_overflows() -> None:
 
 # frob:tests python/regolith/backends/drawings/renderer.py::TitleBlockField.row_height kind="unit"
 def test_title_block_field_row_height_scales_with_wrapped_line_count() -> None:
-    field = TitleBlockField("NAME", "a very long value that wraps", 0.0, 0.0, 30.0, NEUTRAL_STYLE)
+    field = TitleBlockField(
+        "NAME", "a very long value that wraps", 0.0, 0.0, 30.0, NEUTRAL_STYLE
+    )
     assert field.row_height == len(field.value_lines) * field.value_line_h
 
 

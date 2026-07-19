@@ -124,6 +124,7 @@ class _BuiltinMarkerBackend:
 
 # frob:tests python/regolith/backends/plugin.py::load_backend_plugins
 
+
 def test_backend_plugin_composes_alongside_builtins() -> None:
     """Acceptance: a `kind=backend` plugin adds a named backend, builtins kept."""
     manifest = PluginManifest(
