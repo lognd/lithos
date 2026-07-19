@@ -14,6 +14,7 @@ from regolith.harness.models.material_state import (
 from regolith.harness.models.dfm.process_seeds import QUENCH_TEMPER_RECORD
 
 
+# frob:tests python/regolith/harness/models/material_state.py::check_heat_treat_transition kind="unit"
 def test_as_rolled_state_takes_no_extra_fields() -> None:
     state = HeatTreatState(kind="as_rolled")
     assert state.temper_temp_c is None

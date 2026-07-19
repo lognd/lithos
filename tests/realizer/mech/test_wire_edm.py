@@ -33,6 +33,7 @@ def _square_profile(
     )
 
 
+# frob:tests python/regolith/realizer/mech/wire_edm.py::realize_wire_edm_profile kind="unit"
 def test_realize_passes_for_a_well_formed_profile() -> None:
     result = realize_wire_edm_profile(_square_profile())
     assert result.is_ok

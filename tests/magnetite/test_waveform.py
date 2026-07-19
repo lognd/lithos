@@ -36,6 +36,9 @@ def _evidence() -> WaveformEvidence:
     )
 
 
+# frob:tests python/regolith/magnetite/waveform.py::WaveformMaskRecord.construct_authored kind="unit"
+# frob:tests python/regolith/magnetite/waveform.py::WaveformMaskRecord.construct_measured kind="unit"
+# frob:tests python/regolith/magnetite/waveform.py::WaveformMaskRecord.construct_model_derived kind="unit"
 def test_waveform_record_authored_construction_succeeds() -> None:
     record = WaveformMaskRecord.construct_authored(
         package="p",

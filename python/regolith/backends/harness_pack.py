@@ -52,6 +52,7 @@ _log = get_logger(__name__)
 # string now, backfilled to the real `DiagCode` later with NO
 # grandfathering, exactly like `EXPECTATION_PROVENANCE_UNRESOLVED`'s
 # own pre-D247.2 history above.
+# frob:doc docs/modules/py-backends.md#backends-harness-pack
 BRINGUP_EXPECTATION_AUTHORED_POSTURE = "bringup_expectation_authored_posture"
 
 # charter 40 sec. 2 ranking, reused for bring-up ordering (safety-relevant

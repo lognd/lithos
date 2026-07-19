@@ -75,6 +75,7 @@ SURFACE = (
 )
 # frob:doc docs/modules/demos.md#demo-proof-pack-shape
 SUBJECT_PUNCH = "die_set_punch_plate"
+# frob:doc docs/modules/demos.md#the-proof-pack-demo-shape-every-demon_py
 SUBJECT_DIE = "die_set_die_plate"
 
 # A small two-station blank-and-pierce strip part: a 20x10mm rectangular

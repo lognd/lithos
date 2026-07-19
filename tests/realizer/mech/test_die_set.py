@@ -55,6 +55,15 @@ def _assembly() -> DieSetAssembly:
     )
 
 
+# frob:tests python/regolith/realizer/mech/die_set.py::required_tonnage_blanking_n kind="unit"
+# frob:tests python/regolith/realizer/mech/die_set.py::newtons_to_us_tons kind="unit"
+# frob:tests python/regolith/realizer/mech/die_set.py::shut_height_mm kind="unit"
+# frob:tests python/regolith/realizer/mech/die_set.py::check_die_set_shut_height kind="unit"
+# frob:tests python/regolith/realizer/mech/die_set.py::guide_pin_alignment_tolerance_stack_mm kind="unit"
+# frob:tests python/regolith/realizer/mech/die_set.py::check_die_set_alignment kind="unit"
+# frob:tests python/regolith/realizer/mech/die_set.py::check_die_set_press_tonnage kind="unit"
+# frob:tests python/regolith/realizer/mech/die_set.py::check_die_set_punch_die_clearance kind="unit"
+# frob:tests python/regolith/realizer/mech/die_set.py::check_die_set_shot_peen_remediation kind="unit"
 def test_shut_height_sums_plate_thicknesses() -> None:
     assert shut_height_mm(_assembly()) == 57.0
 
