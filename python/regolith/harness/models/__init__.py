@@ -33,6 +33,15 @@ from regolith.harness.models.link_budget import LinkBudgetModel
 from regolith.harness.models.lumped_thermal import LumpedThermalModel
 from regolith.harness.models.npsh_margin import NpshMarginModel
 from regolith.harness.models.post_embedment import PostEmbedmentModel
+from regolith.harness.models.power import (
+    AmpacityModel,
+    DemandLoadModel,
+    MotorStartDipModel,
+    PowerFactorModel,
+    TransformerFaultCurrentScreeningModel,
+    TransformerLoadingModel,
+    VoltageDropModel,
+)
 from regolith.harness.models.shaft_torsion import ShaftTorsionModel
 from regolith.harness.models.sheet_bend import SheetBendModel
 from regolith.harness.models.tolerance_stack import ToleranceStackModel
@@ -118,6 +127,22 @@ def register_all(registry: ModelRegistry) -> None:
     # WO-110 deliverable 3 (F130 Class C): uniform-shaft angle of twist
     # -- the `twist:` claims' registered channel.
     registry.register(ShaftTorsionModel())
+    # WO-135 (D248.3/AD-42): the lithos closed-form half of the facility
+    # power-distribution charter -- NEC 220 demand load, conductor
+    # voltage drop, NEC 310.15 ampacity derating, transformer %Z
+    # single-source fault-current SCREENING estimate, motor-starting
+    # voltage dip, transformer loading, power factor. The certified/
+    # numeric half (load flow, IEC 60909/ANSI short circuit with motor
+    # contribution, IEEE 1584 arc flash, coordination, IEEE 519
+    # harmonics) is feldspar's, in its own repo (AD-37's boundary rule);
+    # this pack registers no model for those claim kinds (D250.4).
+    registry.register(DemandLoadModel())
+    registry.register(VoltageDropModel())
+    registry.register(AmpacityModel())
+    registry.register(TransformerFaultCurrentScreeningModel())
+    registry.register(MotorStartDipModel())
+    registry.register(TransformerLoadingModel())
+    registry.register(PowerFactorModel())
 
 
 __all__ = [
@@ -145,5 +170,12 @@ __all__ = [
     "SheetBendModel",
     "ToleranceStackModel",
     "WorkloadRealizationModel",
+    "AmpacityModel",
+    "DemandLoadModel",
+    "MotorStartDipModel",
+    "PowerFactorModel",
+    "TransformerFaultCurrentScreeningModel",
+    "TransformerLoadingModel",
+    "VoltageDropModel",
     "register_all",
 ]

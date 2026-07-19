@@ -293,12 +293,11 @@ route targets must exist before routing can be honest.
 ```yaml
 id: T-0009
 title: 'WO-135: power models -- closed-form built-ins + certified solvers'
-state: planned
+state: in-progress
 kind: feature
 origin: agent
 created: '2026-07-18'
-blocked_by:
-- T-0008
+blocked_by: []
 parent: null
 scope:
 - python/regolith/stdlib/**

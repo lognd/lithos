@@ -162,6 +162,27 @@ duplicating per-file prose (WO-1xx model-pack work orders and
 `docs/spec/toolchain/00-architecture.md` cover the harness
 model-authoring contract these all follow).
 
+`power.py` (WO-135, `docs/spec/toolchain/43-power-distribution.md`
+sec. 3/5, AD-42/D248.3) is the lithos closed-form half of the facility
+power-distribution charter: NEC Art. 220 demand load, conductor
+voltage drop, NEC 310.15 ampacity derating, transformer %Z
+single-source fault-current SCREENING estimate, motor-starting
+voltage dip, transformer loading, and power factor -- seven `Model`
+subclasses (`elec.power.*` claim kinds), each citing its governing
+standard/edition (D250.1) and requiring every safety-critical input
+(nameplate %Z, locked-rotor kVA, ...) as a plain required signature
+port with no fallback anywhere in the module: an author who has not
+declared a real value for one simply cannot supply that port, so the
+shared `Model.discharge` path refuses with a named `InputError`
+(D250.3 -- an unverifiable input is a named absence, never a default).
+The certified/numeric half of the charter (load flow, IEC 60909/ANSI
+short circuit with motor contribution, IEEE 1584 arc flash,
+protective-device coordination, IEEE 519 harmonics) is feldspar's, in
+its own repo (AD-37's boundary rule); this module registers no model
+for `elec.power.arc_flash`/`coordination`/`harmonics` so those claims
+cannot reach release trust through a lithos built-in (D250.4,
+verified by `tests/harness/test_power_models.py`).
+
 ## harness/models/cam
 
 <a id="models-cam"></a>
