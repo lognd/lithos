@@ -27,13 +27,13 @@ truth to consume.
 
 Reading order:
 
-1. `01-overview.md`  -- scope, personas, seams, non-goals
-2. `02-language.md`  -- media, fluid ports, components, flownets,
+1. [01-overview.md](01-overview.md)  -- scope, personas, seams, non-goals
+2. [02-language.md](02-language.md)  -- media, fluid ports, components, flownets,
                         states, claims
-3. `03-lowering.md`  -- elaboration rules, obligation shapes, the
+3. [03-lowering.md](03-lowering.md)  -- elaboration rules, obligation shapes, the
                         flownet payload, feldspar/harness seam,
                         cross-track couplings
-4. `04-open-questions.md` -- FOPEN ledger (all deferred items carry
+4. [04-open-questions.md](04-open-questions.md) -- FOPEN ledger (all deferred items carry
                         reopen criteria; the open queue is empty,
                         F90 discipline)
 

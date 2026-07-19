@@ -132,6 +132,8 @@ Run `make help` for the full list.
 
 ## Repository layout
 
+Full doc index (spec, workflow, guide): [docs/index.md](docs/index.md).
+
 ```
 docs/
   spec/            technical truth: regolith/ (shared abstract layer,
