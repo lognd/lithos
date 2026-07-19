@@ -107,6 +107,70 @@ class BoardSide2(StrEnum):
     bottom = "bottom"
 
 
+class BranchKind1(StrEnum):
+    """
+    A utility point of delivery.
+    """
+
+    service = "service"
+
+
+class BranchKind2(StrEnum):
+    """
+    An on-site generator.
+    """
+
+    generator = "generator"
+
+
+class BranchKind3(StrEnum):
+    """
+    A transformer (kVA/%Z/vector-group/taps -- see [`Transformer`]).
+    """
+
+    transformer = "transformer"
+
+
+class BranchKind4(StrEnum):
+    """
+    A conductor run (size/length/raceway -- see [`Feeder`]).
+    """
+
+    feeder = "feeder"
+
+
+class BranchKind5(StrEnum):
+    """
+    A busway run.
+    """
+
+    busway = "busway"
+
+
+class BranchKind6(StrEnum):
+    """
+    A protective device (breaker/fuse/relay -- see [`ProtectiveDevice`]).
+    """
+
+    protective_device = "protective_device"
+
+
+class Apparatus(StrEnum):
+    source = "source"
+
+
+class Apparatus1(StrEnum):
+    transformer = "transformer"
+
+
+class Apparatus2(StrEnum):
+    feeder = "feeder"
+
+
+class Apparatus3(StrEnum):
+    protective_device = "protective_device"
+
+
 class AssignmentItem(RootModel[list[str]]):
     root: Annotated[list[str], Field(max_length=2, min_length=2)]
 
@@ -399,6 +463,25 @@ class ClaimForm7(FrozenModel):
             description="The dotted quantity-kind path (e.g. `thermo.wall_temperature`)."
         ),
     ]
+
+
+class ClaimTarget(FrozenModel):
+    """
+    Which claim (and which role within a multi-path network) a discharge result over this payload answers (D272 passenger, the WO-141 escalation carried on the cycle-38 bump): retires the prior 0.0/1.0 presence-flag direction encoding that had been folded into an existing numeric field -- a flag value doing double duty as a direction AND a presence signal is exactly the "two meanings, one representation" the project's naming/schema discipline forbids elsewhere. `None` means the request is not claim-scoped (the whole-network solve case, e.g. `fluids.network.hardy_cross`'s table output); a caller answering ONE named claim/role sets it instead of overloading a numeric input.
+    """
+
+    claim_kind: Annotated[
+        str,
+        Field(
+            description='The dotted claim kind this discharge answers (e.g. `"fluids.mdot"`, `"fluids.flow_imbalance"`).'
+        ),
+    ]
+    role: Annotated[
+        str | None,
+        Field(
+            description="The role within a multi-path network the claim names, when the claim kind is ambiguous without one (e.g. which branch's flow imbalance is being asked about). `None` when the claim kind alone disambiguates the target."
+        ),
+    ] = None
 
 
 class ContractEdge(FrozenModel):
@@ -1467,6 +1550,30 @@ class SnapshotRecord(FrozenModel):
     ]
 
 
+class StandardFamily1(StrEnum):
+    """
+    IEC (60909 short-circuit, 60364 installation practice, ...).
+    """
+
+    iec = "iec"
+
+
+class StandardFamily2(StrEnum):
+    """
+    NEC (NFPA 70 conductor/ampacity/demand-load practice).
+    """
+
+    nec = "nec"
+
+
+class StandardFamily3(StrEnum):
+    """
+    ANSI/NEMA (switchgear ratings, motor code letters, ...).
+    """
+
+    ansi_nema = "ansi_nema"
+
+
 class StateDomain(FrozenModel):
     """
     A symbolic state domain: either an edge parameter or a net-level state variable, left symbolic for the ONE-swept-obligation rule (regolith/07 sec. 2) rather than enumerated into obligation copies.
@@ -1963,6 +2070,157 @@ class BlockRequirement(FrozenModel):
             description="The owning `architecture for <owner>:` target (the computer this block belongs to, `FlightCore`): grouping + traceability."
         ),
     ]
+
+
+class BranchParams1(FrozenModel):
+    """
+    A utility service or generator (charter 43 sec. 2's source apparatus): the [`SourceParams`] D250.3 option set.
+    """
+
+    apparatus: Apparatus
+    available_fault_current: Annotated[
+        ScalarInterval | None,
+        Field(
+            description="The available fault current at the point of delivery, when a real source (utility letter, generator datasheet) declares it."
+        ),
+    ] = None
+    voltage: Annotated[
+        ScalarInterval | None,
+        Field(
+            description="The source's nominal voltage, when declared (may duplicate the adjoining bus's `nominal_voltage`; kept here so a source's own declared value is distinguishable from the bus's)."
+        ),
+    ] = None
+    x_over_r: Annotated[
+        ScalarInterval | None,
+        Field(description="The source's X/R ratio, when declared."),
+    ] = None
+
+
+class BranchParams2(FrozenModel):
+    """
+    A transformer (nameplate parameters, [`Transformer`]).
+    """
+
+    apparatus: Apparatus1
+    kva: Annotated[ScalarInterval, Field(description="The transformer's kVA rating.")]
+    pct_z: Annotated[
+        ScalarInterval | None,
+        Field(
+            description="The percent impedance, when declared from a nameplate/datasheet."
+        ),
+    ] = None
+    standard_family: Annotated[
+        StandardFamily1 | StandardFamily2 | StandardFamily3 | None,
+        Field(
+            description="The standard family this nameplate was authored against (D255)."
+        ),
+    ] = None
+    taps: Annotated[
+        list[float],
+        Field(
+            description="Declared tap positions (percent, e.g. `[-5.0, 0.0, 5.0]`), when the transformer has taps."
+        ),
+    ]
+    vector_group: Annotated[
+        str | None,
+        Field(description='The vector group (e.g. `"Dyn11"`), when declared.'),
+    ] = None
+    x_over_r: Annotated[
+        ScalarInterval | None, Field(description="The X/R ratio, when declared.")
+    ] = None
+
+
+class BranchParams3(FrozenModel):
+    """
+    A feeder or busway conductor run ([`Feeder`]).
+    """
+
+    ambient: Annotated[
+        ScalarInterval | None,
+        Field(description="The declared ambient temperature, when declared."),
+    ] = None
+    apparatus: Apparatus2
+    conductor: Annotated[
+        RecordRef,
+        Field(
+            description="The hash-pinned conductor record (size, insulation, ampacity table row)."
+        ),
+    ]
+    grouping: Annotated[
+        int | None,
+        Field(
+            description="The declared count of current-carrying conductors grouped with this run (adjustment-factor derating), when declared.",
+            ge=0,
+        ),
+    ] = None
+    length: Annotated[ScalarInterval, Field(description="The run length.")]
+    raceway: Annotated[
+        str | None,
+        Field(
+            description='The declared raceway kind (e.g. `"conduit"`, `"cable_tray"`, `"free_air"`), when declared -- ampacity derating (NEC 310.15) needs it; absent, the ampacity claim defers by name.'
+        ),
+    ] = None
+    standard_family: Annotated[
+        StandardFamily1 | StandardFamily2 | StandardFamily3 | None,
+        Field(
+            description="The standard family this conductor record was authored against (D255)."
+        ),
+    ] = None
+
+
+class BranchParams4(FrozenModel):
+    """
+    A breaker/fuse/relay ([`ProtectiveDevice`]).
+    """
+
+    apparatus: Apparatus3
+    curve: Annotated[
+        RecordRef | None,
+        Field(
+            description="The hash-pinned time-current curve record, when declared (coordination claims defer by name without one)."
+        ),
+    ] = None
+    frame: Annotated[ScalarInterval, Field(description="The device frame rating.")]
+    interrupting_rating: Annotated[
+        ScalarInterval | None,
+        Field(description="The device's interrupting rating, when declared."),
+    ] = None
+    standard_family: Annotated[
+        StandardFamily1 | StandardFamily2 | StandardFamily3 | None,
+        Field(
+            description="The standard family this device's rating was authored against (D255)."
+        ),
+    ] = None
+    trip: Annotated[
+        ScalarInterval | None,
+        Field(
+            description="The device trip setting, when declared (a fixed-trip device carries `None`)."
+        ),
+    ] = None
+
+
+class Bus(FrozenModel):
+    """
+    One bus: a power-discipline node (charter 43 sec. 1) with its nominal voltage and phase count.
+    """
+
+    id: Annotated[str, Field(description="The stable bus id (elaboration-assigned).")]
+    nominal_voltage: Annotated[
+        ScalarInterval, Field(description="The bus's nominal voltage interval.")
+    ]
+    phases: Annotated[
+        int,
+        Field(
+            description="The number of phases (1 or 3; charter 43 sec. 2 vocabulary).",
+            ge=0,
+        ),
+    ]
+    standard_family: Annotated[
+        StandardFamily1 | StandardFamily2 | StandardFamily3 | None,
+        Field(
+            description="The standard family this bus's rating was authored against (D255), when declared."
+        ),
+    ] = None
 
 
 class ClaimForm2(FrozenModel):
@@ -2522,6 +2780,31 @@ class MediumRef(FrozenModel):
     ]
 
 
+class MotorFields(FrozenModel):
+    """
+    A motor load's nameplate fields (charter 43 sec. 2's motor vocabulary), present only when a `load` declares itself a motor.
+    """
+
+    code_letter: Annotated[
+        str | None,
+        Field(
+            description="The NEMA/IEC locked-rotor code letter, when declared (motor- start voltage-dip claims defer by name without one)."
+        ),
+    ] = None
+    efficiency: Annotated[
+        float | None, Field(description="The efficiency, when declared.")
+    ] = None
+    hp_kw: Annotated[
+        ScalarInterval, Field(description="The motor's horsepower/kW rating.")
+    ]
+    power_factor: Annotated[
+        float | None, Field(description="The power factor, when declared.")
+    ] = None
+    service_factor: Annotated[
+        float | None, Field(description="The service factor, when declared.")
+    ] = None
+
+
 class OptimizationTrace(FrozenModel):
     """
     The full search trail (charter sec. 1.4): checkpoint, audit surface, and `--resume` input in one content-addressed value.
@@ -2993,6 +3276,35 @@ class WalkPromotion1(FrozenModel):
     promoted: SketchClosure
 
 
+class Branch(FrozenModel):
+    """
+    One power branch: a directed (positive-sense `a -> b`, the declared feed direction, charter 43 sec. 1) apparatus edge between two buses.
+    """
+
+    a: Annotated[
+        str, Field(description="The positive-sense (feed-direction) tail bus.")
+    ]
+    b: Annotated[
+        str, Field(description="The positive-sense (feed-direction) head bus.")
+    ]
+    id: Annotated[
+        str, Field(description="The stable branch id (elaboration-assigned).")
+    ]
+    kind: Annotated[
+        BranchKind1
+        | BranchKind2
+        | BranchKind3
+        | BranchKind4
+        | BranchKind5
+        | BranchKind6,
+        Field(description="The constructor kind."),
+    ]
+    params: Annotated[
+        BranchParams1 | BranchParams2 | BranchParams3 | BranchParams4,
+        Field(description="The apparatus-specific parameters."),
+    ]
+
+
 class Claim(FrozenModel):
     """
     A single named claim inside a `require` group.
@@ -3187,6 +3499,12 @@ class FlownetPayload(FrozenModel):
     The serialized flownet payload (fluorite/03 sec. 2, verbatim): a content-addressed record carrying the medium, topology, datum, edges, and symbolic state domains a solver pack needs to solve the network.
     """
 
+    claim_target: Annotated[
+        ClaimTarget | None,
+        Field(
+            description="Which claim/role this payload's discharge answers, when the request is claim-scoped (D272 passenger; the WO-141 escalation)."
+        ),
+    ] = None
     edges: Annotated[
         list[FlowEdge],
         Field(description="Every flow edge (elaboration-sorted for determinism)."),
@@ -3221,6 +3539,37 @@ class Joint(FrozenModel):
     id: Annotated[str, Field(description="The stable joint id.")]
 
 
+class Load(FrozenModel):
+    """
+    A declared load (charter 43 sec. 2): connected demand at a bus.
+    """
+
+    bus: Annotated[str, Field(description="The bus this load is connected to.")]
+    class_: Annotated[
+        str | None,
+        Field(
+            alias="class",
+            description='The declared load class (e.g. `"lighting"`, `"motor"`, `"receptacle"`), when declared.',
+        ),
+    ] = None
+    connected_kva: Annotated[ScalarInterval, Field(description="The connected kVA.")]
+    continuous: Annotated[
+        bool,
+        Field(description="Whether the load is continuous (NEC 220/210 125% posture)."),
+    ]
+    demand_factor: Annotated[
+        float | None,
+        Field(
+            description="The demand factor, when declared (NEC 220 demand-load claims defer by name without one)."
+        ),
+    ] = None
+    id: Annotated[str, Field(description="The stable load id (elaboration-assigned).")]
+    motor: Annotated[
+        MotorFields | None,
+        Field(description="The motor nameplate fields, when this load is a motor."),
+    ] = None
+
+
 class Obligation(FrozenModel):
     """
     A self-contained verification obligation.
@@ -3248,6 +3597,27 @@ class Obligation(FrozenModel):
         SweepDomain | None,
         Field(description="The sweep domain this obligation instance carries, if any."),
     ] = None
+
+
+class PowerNetPayload(FrozenModel):
+    """
+    The serialized power net payload (charter 43 secs. 1-3, verbatim): a content-addressed record carrying every bus/branch/load a power model needs to discharge an `elec.power.*` claim.
+    """
+
+    branches: Annotated[
+        list[Branch],
+        Field(description="Every branch (elaboration-sorted for determinism)."),
+    ]
+    buses: Annotated[
+        list[Bus],
+        Field(
+            description="Every bus in the network (elaboration-sorted for determinism)."
+        ),
+    ]
+    loads: Annotated[
+        list[Load],
+        Field(description="Every declared load (elaboration-sorted for determinism)."),
+    ]
 
 
 class RealizedGeometry(FrozenModel):

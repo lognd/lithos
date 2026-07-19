@@ -132,6 +132,11 @@ lowers to an ordinary obligation carrying a `PayloadRef { kind:
 consume the payload and solve the network entirely pack-side. Nodes,
 edges (`FlowEdge`/`EdgeKind`/`EdgeParams`/`Compliance`), state domains,
 and scalar intervals are all defined here as wire shapes only.
+`FlownetPayload.claim_target: Option<ClaimTarget>` (D272, the WO-141
+escalation carried on the cycle-38 schema bump) names which claim (and
+which role within a multi-path network) a discharge result answers,
+retiring the prior 0.0/1.0 presence-flag direction encoding that had
+been folded into an existing numeric field.
 
 ## frame
 
@@ -233,6 +238,24 @@ plans -- so an external pack can compete across a fidelity hierarchy
 without a new payload schema per kind. Refs are by digest only, never
 inline bytes; resolution is an orchestrator-owned content-addressed
 store (`orchestrator/payload_store.py`), never a pack's own IO.
+
+## power
+
+`PowerNetPayload`: the cuprite facility-power distribution payload
+(charter toolchain/43-power-distribution.md secs. 1-3, D248/AD-42,
+D272 the cycle-38 schema bump). One schema-versioned, Rust-sourced
+record mirroring `flownet.rs`'s idiom (kind string `power`): buses are
+nodes, branches (sources/transformers/feeders/protective devices) are
+edges, current (kVA) is the conserved flow, voltage is the potential.
+Elaboration (WO-133 deliverable 2) turns a declared cuprite `power` net
+into this serialized, content-addressed record, and every
+`elec.power.*` claim lowers to an obligation carrying a
+`PayloadRef { kind: "power", .. }`. D250.3 (safety honesty): every
+field a model needs but an author has not declared from a real source
+(`available_fault_current`, `pct_z`, ...) is `Option::None`, never a
+default. D255 (the cross-standard guard): every apparatus record
+carries its declared `StandardFamily` (IEC/NEC/ANSI-NEMA) so a claim
+crossing families can be named, never silently converted.
 
 ## signature
 

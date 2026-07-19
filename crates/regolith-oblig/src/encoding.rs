@@ -85,6 +85,13 @@ pub fn export_schemas() -> String {
     // carries it directly (the `harness` payload kind) -- so it needs
     // its own root export to reach `_schema/models.py`.
     generator.subschema_for::<crate::harness::HarnessPayload>();
+    // WO-133 deliverable 1 (D272, charter toolchain/43-power-distribution.md
+    // secs. 1-3): the cuprite facility-power distribution payload. Like
+    // `FlownetPayload`, not reached from any other Rust boundary type --
+    // the Python orchestrator's build payload carries it directly (the
+    // `power` payload kind) -- so it needs its own root export to reach
+    // `_schema/models.py`.
+    generator.subschema_for::<crate::power::PowerNetPayload>();
     generator.subschema_for::<crate::attestation::SignatureAlgorithm>();
     generator.subschema_for::<crate::attestation::Attestation>();
     generator.subschema_for::<crate::signature::Signature>();

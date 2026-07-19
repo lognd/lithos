@@ -437,6 +437,10 @@ fn elaborate_one(
         reference,
         edges,
         states,
+        // D272: this pass elaborates the whole-network shape; it is
+        // never itself scoped to one claim, so `claim_target` stays
+        // `None` here (a later claim-routing pass sets it per request).
+        claim_target: None,
     };
     report.flownets.push(ElaboratedFlownet {
         name,

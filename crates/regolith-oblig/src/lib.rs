@@ -26,6 +26,7 @@ pub mod layout;
 pub mod obligation;
 pub mod optimize;
 pub mod payload;
+pub mod power;
 pub mod signature;
 pub mod solver;
 pub mod waiver;
@@ -51,8 +52,8 @@ pub use evidence::{
 };
 pub use field::FieldDatum;
 pub use flownet::{
-    Compliance, EdgeKind, EdgeParams, FlowEdge, FlownetPayload, MediumRef, NodeId, RecordRef,
-    Reference, ScalarInterval, StateDomain, FLOWNET_DOMAIN_TAG,
+    ClaimTarget, Compliance, EdgeKind, EdgeParams, FlowEdge, FlownetPayload, MediumRef, NodeId,
+    RecordRef, Reference, ScalarInterval, StateDomain, FLOWNET_DOMAIN_TAG,
 };
 pub use frame::{
     Datum, FrameLoad, FrameMember, FramePayload, FrameTransfer, Joint, JointAt, JointId, LoadKind,
@@ -73,6 +74,10 @@ pub use optimize::{
     CHOICE_POINT_DOMAIN_TAG, OPTIMIZATION_TRACE_DOMAIN_TAG,
 };
 pub use payload::PayloadRef;
+pub use power::{
+    Branch, BranchKind, BranchParams, Bus, BusId, Feeder, Load, MotorFields, PowerNetPayload,
+    ProtectiveDevice, SourceParams, StandardFamily, Transformer, POWER_DOMAIN_TAG,
+};
 pub use signature::{ImplRecord, Signature, SignatureRegistry};
 pub use solver::SolverResponse;
 pub use waiver::{LedgerEntry, WaiveLedger, Waiver, WaiverKind, WaiverRecord};
@@ -169,6 +174,14 @@ mod tests {
         // `ConverterGraph` root schema now crosses the FFI on
         // `BuildPayload.converter_graphs`.
         // Bumped 29 -> 30 by the WO-116 remainder (D231): `ArcGeometry.radius`.
-        assert_eq!(super::SCHEMA_VERSION, 30);
+        // Bumped 30 -> 31 by WO-133 (D272, the cycle-38 single bump,
+        // owner adjudicated after WO-147's cycle-37 bump never landed):
+        // the `PowerNetPayload` schema (buses/branches/loads, charter
+        // toolchain/43-power-distribution.md secs. 1-3), the `power`
+        // payload/domain-tag kind, carrying ONE named passenger --
+        // `FlownetPayload.claim_target: Option<ClaimTarget>` (the
+        // WO-141 escalation), retiring the prior 0.0/1.0 presence-flag
+        // direction encoding.
+        assert_eq!(super::SCHEMA_VERSION, 31);
     }
 }

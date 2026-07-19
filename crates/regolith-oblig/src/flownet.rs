@@ -210,6 +210,30 @@ pub struct StateDomain {
     pub domain: String,
 }
 
+/// Which claim (and which role within a multi-path network) a
+/// discharge result over this payload answers (D272 passenger, the
+/// WO-141 escalation carried on the cycle-38 bump): retires the prior
+/// 0.0/1.0 presence-flag direction encoding that had been folded into
+/// an existing numeric field -- a flag value doing double duty as a
+/// direction AND a presence signal is exactly the "two meanings, one
+/// representation" the project's naming/schema discipline forbids
+/// elsewhere. `None` means the request is not claim-scoped (the
+/// whole-network solve case, e.g. `fluids.network.hardy_cross`'s table
+/// output); a caller answering ONE named claim/role sets it instead of
+/// overloading a numeric input.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#flownet
+pub struct ClaimTarget {
+    /// The dotted claim kind this discharge answers (e.g.
+    /// `"fluids.mdot"`, `"fluids.flow_imbalance"`).
+    pub claim_kind: String,
+    /// The role within a multi-path network the claim names, when the
+    /// claim kind is ambiguous without one (e.g. which branch's flow
+    /// imbalance is being asked about). `None` when the claim kind alone
+    /// disambiguates the target.
+    pub role: Option<String>,
+}
+
 /// The serialized flownet payload (fluorite/03 sec. 2, verbatim): a
 /// content-addressed record carrying the medium, topology, datum, edges,
 /// and symbolic state domains a solver pack needs to solve the network.
@@ -226,6 +250,10 @@ pub struct FlownetPayload {
     pub edges: Vec<FlowEdge>,
     /// Symbolic edge-parameter and net-level state domains.
     pub states: Vec<StateDomain>,
+    /// Which claim/role this payload's discharge answers, when the
+    /// request is claim-scoped (D272 passenger; the WO-141 escalation).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub claim_target: Option<ClaimTarget>,
 }
 
 impl FlownetPayload {
@@ -288,6 +316,7 @@ mod tests {
                 curves: vec![],
             }],
             states: vec![],
+            claim_target: None,
         }
     }
 
@@ -348,6 +377,37 @@ mod tests {
             json["outlet"]["records"][0]["name"],
             "gn2_rp1_saturated_ullage"
         );
+    }
+
+    /// D272: a `claim_target` is optional and, when absent, serializes
+    /// to nothing at all (the un-scoped whole-network-solve case stays
+    /// byte-identical to the pre-D272 wire shape); when present, it
+    /// changes the content digest -- two payloads that differ only in
+    /// which claim they answer must not collide.
+    #[test]
+    fn claim_target_is_optional_and_digest_sensitive() {
+        let mut payload = sample();
+        let json = serde_json::to_value(&payload).unwrap();
+        assert!(
+            json.get("claim_target").is_none(),
+            "absent claim_target must not appear on the wire: {json:?}"
+        );
+        let d_absent = payload.content_digest().unwrap();
+
+        payload.claim_target = Some(ClaimTarget {
+            claim_kind: "fluids.mdot".to_string(),
+            role: None,
+        });
+        let d_present = payload.content_digest().unwrap();
+        assert_ne!(
+            d_absent, d_present,
+            "a set claim_target must change the digest"
+        );
+
+        let json2 = serde_json::to_value(&payload).unwrap();
+        assert_eq!(json2["claim_target"]["claim_kind"], "fluids.mdot");
+        let back: FlownetPayload = serde_json::from_value(json2).unwrap();
+        assert_eq!(back, payload);
     }
 
     /// A `FlowEdge` with `EdgeKind::Mixer` changes the payload digest

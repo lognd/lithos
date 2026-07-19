@@ -135,7 +135,7 @@ use serde::Serialize;
 /// needs; the cycle's single granted bump (D225), scoped to this
 /// field alone.
 // frob:doc docs/modules/regolith-util.md#schema-version
-pub const SCHEMA_VERSION: u32 = 30;
+pub const SCHEMA_VERSION: u32 = 31;
 
 /// Canonically encode a value to CBOR bytes: deterministic key order,
 /// no floating NaN/non-finite. The ONLY hash input encoder (AD-6).
