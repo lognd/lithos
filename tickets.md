@@ -282,7 +282,6 @@ acceptance:
 - see docs/workflow/work-orders/WO-133-power-lowering.md
 threat: null
 ```
-
 ### Progress (2026-07-19)
 
 Schema slice LANDED (see the SCHEMA_VERSION-31 commit): PowerNetPayload
@@ -290,12 +289,11 @@ types + claim_target passenger per D272. Remainder (lowering, claim
 routing, census, D255 diagnostic) waits on T-0009/WO-135 landing --
 route targets must exist before routing can be honest.
 
-
 <!-- ticket:T-0009 -->
 ```yaml
 id: T-0009
 title: 'WO-135: power models -- closed-form built-ins + certified solvers'
-state: queued
+state: planned
 kind: feature
 origin: agent
 created: '2026-07-18'
