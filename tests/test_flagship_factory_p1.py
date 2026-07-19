@@ -82,6 +82,7 @@ def test_fault_current_both_honest_paths() -> None:
     assert not any("'MainBus'" in d and "pct_z" not in d for d in reasons)
 
 
+# frob:waive PERF004 reason="false positive: assert's message arg (sorted(reasons)) is lazily evaluated by Python -- built only on assertion FAILURE, never once per passing loop iteration -- and reasons is a handful-of-entries dict regardless; no hoist changes anything"
 def test_certified_tier_claims_never_discharge_by_screening_estimate() -> None:
     """D250.4 (this WO's named acceptance test): `arc_flash` and its
     four certified-tier siblings (`withstand`/`coordination`/

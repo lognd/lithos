@@ -69,7 +69,12 @@ _CLASS_B = re.compile(r"D195(?!\.3).*window|conformance window")
 # citation or wall: an F/D/WO number, the F126.1 model-gap phrasing, or
 # one of the enumerated machinery walls the design log dispositioned.
 _CLASS_C = re.compile(
-    r"F1\d\d(\.\d)?|WO-?\d+|WO\d+-F\d+|D10[23]|D19[45]|D21[56]"
+    # Citation forms: F-numbers, WO-numbers, design-log D-numbers (any --
+    # the enumeration predated D250-era entries), and frob ticket ids
+    # (T-0060 style -- the WO system's successor per the cycle-38
+    # conversion; a ticket id IS a named citation under D220.2's own
+    # "named citation or wall" rule).
+    r"F1\d\d(\.\d)?|WO-?\d+|WO\d+-F\d+|D\d{2,3}(\.\d)?|T-\d{4}"
     r"|model gap|translate\(\) wall|machinery residual|machinery escalation"
     r"|record chain|realizes no geometry|non_scalar|indeterminate.chain"
     r"|rule-pack deferral|no engine input|lowering surface|lowering drops"

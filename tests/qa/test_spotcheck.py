@@ -108,6 +108,42 @@ _INPUT_ORACLES = {
         "Erickson & Maksimovic 2e sec. 2.3/ch. 4 (CCM inductor ripple "
         "+ capacitor charge, ESR neglected)",
     ),
+    # F154/F155: factory_p1 joined the fleet and made the 8 WO-135/136
+    # facility power-distribution families discharge fleet-wide with no
+    # D226 oracle -- each is a fresh hand-transcription of the model
+    # docstring's own cited standard, never a call into the model.
+    "elec_power_demand_load": (
+        cfe.demand_load_kva,
+        "NFPA 70 (NEC), 2023 ed., Art. 220 (demand = connected * factor)",
+    ),
+    "elec_power_voltage_drop": (
+        cfe.voltage_drop_v,
+        "IEEE Std 141-1993 ch. 3 (conductor voltage drop)",
+    ),
+    "elec_power_ampacity": (
+        cfe.ampacity_derated_a,
+        "NFPA 70 (NEC), 2023 ed., sec. 310.15(B)/(C) (ampacity derating)",
+    ),
+    "elec_power_fault_current_screening": (
+        cfe.fault_current_screening_a,
+        "IEEE Std 242-2001 sec. 4 (single-source %Z fault screening)",
+    ),
+    "elec_power_motor_start_dip": (
+        cfe.motor_start_dip_pct,
+        "IEEE Std 141-1993 ch. 5 (motor-starting voltage-dip divider)",
+    ),
+    "elec_power_transformer_loading": (
+        cfe.transformer_loading_pct,
+        "IEEE Std C57.91-2011 sec. 1 (percent-of-nameplate loading)",
+    ),
+    "elec_power_power_factor": (
+        cfe.power_factor_ratio,
+        "IEEE Std 141-1993 ch. 2 (power factor)",
+    ),
+    "elec_power_working_clearance": (
+        cfe.working_clearance_available_m,
+        "NFPA 70 (NEC), 2023 ed., Art. 110.26 (working clearance)",
+    ),
     "workload_realization_identity": (
         structural.workload_identity,
         "cuprite/05 sec. 1 rule 3 (verbatim demand copy)",

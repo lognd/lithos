@@ -98,6 +98,23 @@
       "d": 3
     }
   },
+  "factory_p1": {
+    "accepted_deviation": 12,
+    "deferred": 13,
+    "discharged": 14,
+    "families": [
+      "calc",
+      "drawings"
+    ],
+    "obligations": 27,
+    "violated": 0,
+    "waived_by_class": {
+      "a": 4,
+      "b": 0,
+      "c": 2,
+      "d": 7
+    }
+  },
   "hydro_press_h30": {
     "accepted_deviation": 15,
     "deferred": 17,
@@ -263,8 +280,8 @@
     "waived_by_class": {
       "a": 5,
       "b": 0,
-      "c": 11,
-      "d": 1
+      "c": 10,
+      "d": 2
     }
   },
   "timber_pavilion": {

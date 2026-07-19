@@ -304,6 +304,7 @@ def claim_text(claim: Claim) -> str:
     rhs = getattr(form, "rhs", None)
     if lhs is not None and op is not None and rhs is not None:
         return f"{lhs} {op} {rhs}"
+    # frob:waive TEST005 reason="measured 0.0% branch on 2026-07-19; no ClaimForm in the schema carries lhs+op with no rhs today -- backfill T-0036 if one is ever added"
     if lhs is not None and op is not None:
         return f"{lhs} {op}"
     # Non-comparison forms (temporal/containment): name + any op.
@@ -803,6 +804,7 @@ def build_calc_book(
         summary.deferred,
         summary.violated,
     )
+    # frob:waive TEST005 reason="measured 0.0% branch on 2026-07-19; the loop above routes every obligation to exactly one bucket by construction, so this guard is unreachable absent a genuine accounting bug -- backfill T-0036"
     if not summary.balanced():
         _log.error(
             "calc book: %s audit index does NOT balance (%d != %d) -- "

@@ -544,6 +544,7 @@ def check_bringup_expectation_authored_posture(
             # on a ref that DID resolve.
             continue
         posture = resolved.danger_ok.provenance.posture
+        # frob:waive TEST005 reason="measured 50.0% branch on 2026-07-19; the non-authored (measured/model_derived) pass-through needs a full resolvable record fixture with real trace/hash provenance beyond this file's synthetic masks.toml -- backfill T-0036"
         if posture == "authored":
             refused.append(
                 f"channel {row.get('channel')}: record ref {ref!r} is "

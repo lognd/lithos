@@ -1,6 +1,6 @@
 """Independent closed-form oracles: footing bearing pressure, fluid
 pressure drop, lumped-thermal, SI series termination, buck output
-ripple (D226).
+ripple, and the WO-135/136 facility power-distribution family (D226).
 
 Every formula here is written fresh from its cited source -- none of
 these functions import or call the corresponding
@@ -10,6 +10,7 @@ these functions import or call the corresponding
 from __future__ import annotations
 
 import itertools
+import math
 from collections.abc import Mapping
 
 
@@ -95,3 +96,128 @@ def si_series_termination_rs(inputs: Mapping[str, tuple[float, float]]) -> float
         worst = rs if worst is None else min(worst, rs)
     assert worst is not None
     return worst
+
+
+# ---------------------------------------------------------------------------
+# WO-135/136 facility power-distribution family (D226; F154/F155 made the
+# 8 elec_power_* families fleet-reachable via factory_p1 with no oracle).
+# Each formula below is hand-transcribed fresh from the model docstring's
+# own cited standard (NEC 220/310.15/110.26, IEEE 141, IEEE 242,
+# IEEE C57.91) -- never by calling ``regolith.harness.models.power``.
+# ---------------------------------------------------------------------------
+
+
+def demand_load_kva(inputs: Mapping[str, tuple[float, float]]) -> float:
+    """NEC Art. 220: ``demand_kva = connected_kva * demand_factor``.
+
+    Upper bound, both factors increasing -> the high corner of each
+    (connected_kva.hi * demand_factor.hi).
+    """
+    connected = inputs["connected_kva"]
+    factor = inputs["demand_factor"]
+    return max(connected) * max(factor)
+
+
+def voltage_drop_v(inputs: Mapping[str, tuple[float, float]]) -> float:
+    """IEEE Std 141-1993 ch. 3 conductor voltage drop:
+
+        vd = phase_multiplier * I * L * (R * pf + X * sqrt(1 - pf**2))
+
+    Upper bound: I/L/R/X/multiplier all push the drop up (their HI
+    corner); power_factor is not monotone over its interval, so both
+    endpoints are evaluated and the larger drop kept.
+    """
+    current = max(inputs["current_a"])
+    length = max(inputs["length_m"])
+    resistance = max(inputs["resistance_ohm_per_m"])
+    reactance = max(inputs["reactance_ohm_per_m"])
+    multiplier = max(inputs["phase_multiplier"])
+    pf_lo, pf_hi = inputs["power_factor"]
+    worst = None
+    for pf in (pf_lo, pf_hi):
+        sin_phi = math.sqrt(max(0.0, 1.0 - pf * pf))
+        drop = multiplier * current * length * (resistance * pf + reactance * sin_phi)
+        worst = drop if worst is None else max(worst, drop)
+    assert worst is not None
+    return worst
+
+
+def ampacity_derated_a(inputs: Mapping[str, tuple[float, float]]) -> float:
+    """NEC 310.15(B)/(C) derated ampacity:
+
+        derated = base_ampacity_a * temperature_correction_factor *
+                  fill_adjustment_factor
+
+    Lower bound (available capacity vs a required load current):
+    derating only ever reduces capacity, so the worst corner is the
+    MIN of all three factors.
+    """
+    base = min(inputs["base_ampacity_a"])
+    temp_factor = min(inputs["temperature_correction_factor"])
+    fill_factor = min(inputs["fill_adjustment_factor"])
+    return base * temp_factor * fill_factor
+
+
+def fault_current_screening_a(inputs: Mapping[str, tuple[float, float]]) -> float:
+    """IEEE Std 242-2001 sec. 4 single-source transformer %Z screening:
+
+        I_full_load = (kva * 1000) / (sqrt(3) * v_secondary)
+        I_fault     = I_full_load / (pct_z / 100)
+
+    Upper bound: worst corner is max kVA, MIN %Z (a stiffer
+    transformer trips higher fault current), MIN secondary voltage.
+    """
+    kva = max(inputs["transformer_kva"])
+    pct_z = min(inputs["pct_z"])
+    voltage = min(inputs["secondary_voltage_v"])
+    full_load_current = (kva * 1000.0) / (math.sqrt(3.0) * voltage)
+    return full_load_current / (pct_z / 100.0)
+
+
+def motor_start_dip_pct(inputs: Mapping[str, tuple[float, float]]) -> float:
+    """IEEE Std 141-1993 ch. 5 motor-starting voltage-dip divider:
+
+        dip_pct = 100 * lra_kva / (lra_kva + source_available_kva)
+
+    Upper bound: dip grows with LRA (its HI corner) and shrinks with
+    more available source capacity (its LO corner).
+    """
+    lra = max(inputs["motor_locked_rotor_kva"])
+    source = min(inputs["source_available_kva"])
+    return 100.0 * lra / (lra + source)
+
+
+def transformer_loading_pct(inputs: Mapping[str, tuple[float, float]]) -> float:
+    """IEEE Std C57.91-2011 sec. 1 percent-of-nameplate loading:
+
+        loading_pct = 100 * actual_kva / rated_kva
+
+    Upper bound: worst corner is max actual_kva over min rated_kva.
+    """
+    actual = max(inputs["actual_kva"])
+    rated = min(inputs["rated_kva"])
+    return 100.0 * actual / rated
+
+
+def power_factor_ratio(inputs: Mapping[str, tuple[float, float]]) -> float:
+    """IEEE Std 141-1993 ch. 2: ``pf = real_power_kw / apparent_power_kva``.
+
+    Lower bound (pf vs a minimum tariff threshold): worst corner is
+    min real_power_kw over max apparent_power_kva.
+    """
+    real = min(inputs["real_power_kw"])
+    apparent = max(inputs["apparent_power_kva"])
+    return real / apparent
+
+
+def working_clearance_available_m(inputs: Mapping[str, tuple[float, float]]) -> float:
+    """NEC 110.26 available working clearance:
+
+        available_m = room_dim_m - footprint_dim_m
+
+    Lower bound (available vs a required minimum): worst corner is
+    min room_dim_m minus max footprint_dim_m.
+    """
+    room = min(inputs["room_dim_m"])
+    footprint = max(inputs["footprint_dim_m"])
+    return room - footprint

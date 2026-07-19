@@ -10,19 +10,27 @@ from __future__ import annotations
 from regolith._schema.models import (
     Claim,
     ClaimForm1,
+    ClaimForm3,
     Form,
+    Form2,
     Given,
     Material,
     Obligation,
     Ref,
+    Window1,
 )
 from regolith.backends.calc import (
     UNCITED,
+    _deviation_for_hash,
+    _quantity_cell,
     _safe_name,
+    _split_value_unit,
     build_calc_book,
     claim_text,
+    inputs_from_claim_kwargs,
     inputs_from_given,
     subject_anchor,
+    unit_from_claim,
 )
 from regolith.harness.attest import Unsigned
 from regolith.harness.evidence import build_evidence
@@ -301,3 +309,67 @@ class TestBuildCalcBook:
             "accepted_deviation": 0,
             "violated": 0,
         }
+
+    def test_deferral_free_indeterminate_evidence_is_a_named_deferral(self) -> None:
+        """No deferral, no accepted waiver, evidence not discharged
+        (an unmatched model pin on a non-release build): a deferred row,
+        never a fabricated calc sheet (TEST005 backfill T-0036)."""
+        ob = _obligation("s1")
+        res = ObligationResult(
+            key="k",
+            subject_ref="s1",
+            content_hash="cX",
+            evidence=None,
+            deferral=None,
+            attestation=Unsigned(kind="unsigned"),
+        )
+        book = build_calc_book(
+            "p", (ob,), (res,), AcceptanceOutcome(), snapshots={}, citations={},
+            tier="release",
+        )
+        assert not book.sheets
+        row = book.index.rows[0]
+        assert row.disposition == "deferred"
+        assert "indeterminate evidence" in row.detail
+        assert book.index.summary.deferred == 1
+
+
+class TestQuantityCellAndUnits:
+    # frob:tests python/regolith/backends/calc.py::_quantity_cell
+    def test_non_quantity_cell_renders_unchanged(self) -> None:
+        assert _quantity_cell("dgb_6006", "N", is_quantity=False) == "dgb_6006"
+
+    # frob:tests python/regolith/backends/calc.py::inputs_from_claim_kwargs
+    def test_duplicate_kwarg_name_keeps_first_occurrence_only(self) -> None:
+        inputs = inputs_from_claim_kwargs("f(c_rating=13200, c_rating=9400)")
+        assert len(inputs) == 1
+        assert inputs[0].source == "c_rating=13200"
+
+    # frob:tests python/regolith/backends/calc.py::unit_from_claim
+    def test_unit_from_claim_is_empty_for_a_non_comparison_form(self) -> None:
+        claim = Claim(
+            forall=[],
+            form=ClaimForm3(
+                form=Form2.settles,
+                signal="x",
+                tol="0.1",
+                window=Window1(during="startup"),
+            ),
+            hints=[],
+            name="settle",
+        )
+        assert unit_from_claim(claim) == ""
+
+    # frob:tests python/regolith/backends/calc.py::_split_value_unit
+    def test_lone_star_unit_factor_strips_its_leading_star(self) -> None:
+        """``"9.4*m"`` -> ``("9.4", "m")`` -- a lone ``*<unit>`` factor with
+        no attached prefix unit names one unit, not a product of two."""
+        assert _split_value_unit("9.4*m") == ("9.4", "m")
+
+    # frob:tests python/regolith/backends/calc.py::_deviation_for_hash
+    def test_deviation_for_hash_absent_falls_back_to_ledger_note(self) -> None:
+        """A hash the ledger's ``accepted_hashes`` names but no listed
+        deviation actually claims (a stale/summary-only ledger entry):
+        the cross-link degrades to the honest ledger pointer, never a
+        crash or a fabricated deviation."""
+        assert _deviation_for_hash("cAcc", AcceptanceOutcome()) is None
