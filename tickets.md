@@ -236,7 +236,7 @@ threat: null
 ```yaml
 id: T-0007
 title: 'WO-132: power net discipline + cuprite power vocabulary'
-state: in-progress
+state: done
 kind: feature
 origin: agent
 created: '2026-07-18'
@@ -245,12 +245,22 @@ parent: null
 scope:
 - docs/spec/cuprite/**
 - crates/regolith-syntax/**
-evidence: []
+evidence:
+- tests/golden/test_negative_corpus.py::test_negative_fixture[73_cupr_power_subnet_unsourced.cupr]
+- tests/golden/test_negative_corpus.py::test_negative_fixture[74_cupr_power_undeclared_parallel_path.cupr]
 attachments: []
 acceptance:
 - see docs/workflow/work-orders/WO-132-power-front-end.md
 threat: null
 ```
+## Done report
+
+WO-132 landed (15a62ecf): PowerDiscipline + E0212-E0215 + contextual
+power declarator (13 apparatus words zero new grammar) + corpus
+73-76 + power_plant_main positive + cuprite spec 10-power-layer.
+Workspace green (879+ rust tests); negative corpus green post make
+install. Stash-ban violation during its verification confessed and
+recovered; stash list verified empty at merge.
 
 <!-- ticket:T-0008 -->
 ```yaml
@@ -1387,7 +1397,7 @@ See docs/workflow/work-orders/WO-168-process-record-schema.md. D269 item 1. Sche
 id: T-0049
 title: 'WO-169: process population wave 1 -- EDM + heat-treat + stamping + grinding
   + shot-peen'
-state: in-progress
+state: done
 kind: feature
 origin: human
 created: '2026-07-19'
@@ -1396,12 +1406,20 @@ blocked_by:
 parent: null
 scope:
 - stdlib/std.process/**
-evidence: []
+evidence:
+- tests/harness/test_process_seeds_wave1.py::test_die_set_fixture_fires_wire_edm_and_punch_die_checks_together
 attachments: []
 acceptance:
 - see docs/workflow/work-orders/WO-169-process-population-wave1.md
 threat: null
 ```
+## Done report
+
+WO-169 landed (7e30e8fe): 13 records + 10 check callables, dossier
+provenance preserved, die-set fixture fires the priority checks.
+301/301 harness tests. Named gaps route to T-0038/T-0018 per the
+dossiers.
+
 See docs/workflow/work-orders/WO-169-process-population-wave1.md. D269 item 4 population order: this wave first (the die-set program's consumers). Feeds WO-166 (T-0046)'s die-set capability registration.
 
 <!-- ticket:T-0050 -->
