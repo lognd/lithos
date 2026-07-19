@@ -14,6 +14,7 @@ use serde::{Deserialize, Serialize};
 
 /// A compile session over a project root or explicit file set. Opening
 /// a session does no work; `check`/`compile` do.
+// frob:doc docs/modules/regolith-api.md#session-opening-and-running-a-build
 #[derive(Debug, Clone)]
 pub struct Session {
     roots: Vec<Utf8PathBuf>,
@@ -21,6 +22,7 @@ pub struct Session {
 
 impl Session {
     /// Open a session over a project root directory.
+    // frob:doc docs/modules/regolith-api.md#session-opening-and-running-a-build
     #[must_use]
     pub fn open_root(root: impl Into<Utf8PathBuf>) -> Session {
         Session {
@@ -29,6 +31,7 @@ impl Session {
     }
 
     /// Open a session over an explicit set of source files.
+    // frob:doc docs/modules/regolith-api.md#session-opening-and-running-a-build
     #[must_use]
     pub fn open_files(files: impl IntoIterator<Item = Utf8PathBuf>) -> Session {
         Session {
@@ -53,6 +56,7 @@ impl Session {
     /// # Errors
     /// Returns [`CoreError`] only for infrastructure failures (unreadable
     /// file, cache corruption) -- never for a failing check.
+    // frob:doc docs/modules/regolith-api.md#session-opening-and-running-a-build
     pub fn check(
         &self,
         realized_inputs: &regolith_lower::RealizedInputs,
@@ -67,6 +71,7 @@ impl Session {
     ///
     /// # Errors
     /// Same as [`Session::check`].
+    // frob:doc docs/modules/regolith-api.md#session-opening-and-running-a-build
     pub fn check_with_lints(
         &self,
         realized_inputs: &regolith_lower::RealizedInputs,
@@ -93,6 +98,7 @@ impl Session {
     /// # Errors
     /// Returns [`CoreError`] only for infrastructure failures (unreadable
     /// source, corrupt cache).
+    // frob:doc docs/modules/regolith-api.md#session-opening-and-running-a-build
     pub fn compile(
         &self,
         registry_version: &str,
@@ -110,6 +116,7 @@ impl Session {
     ///
     /// # Errors
     /// Same as [`Session::compile`].
+    // frob:doc docs/modules/regolith-api.md#session-opening-and-running-a-build
     pub fn compile_with_lints(
         &self,
         registry_version: &str,
@@ -215,6 +222,7 @@ impl Session {
     }
 
     /// The source roots this session covers.
+    // frob:doc docs/modules/regolith-api.md#session-opening-and-running-a-build
     #[must_use]
     pub fn roots(&self) -> &[Utf8PathBuf] {
         &self.roots
@@ -258,6 +266,7 @@ fn discover_one(root: &Utf8Path, out: &mut Vec<Utf8PathBuf>) -> Result<(), CoreE
 /// The structured payloads a build emits, serialized to JSON for the
 /// boundary (these mirror the generated pydantic models, AD-5). Every
 /// field is a typed core value now that the WO-19 pipeline populates it.
+// frob:doc docs/modules/regolith-api.md#build-output-and-payload
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct BuildPayload {
     /// The batch of diagnostics (structured form).
@@ -370,6 +379,7 @@ fn build_output(
 
 /// The result of a build: pre-rendered diagnostics, structured payload,
 /// and scalar verdicts. Handed across the FFI as one object.
+// frob:doc docs/modules/regolith-api.md#build-output-and-payload
 #[derive(Debug, Clone)]
 pub struct BuildOutput {
     payload: BuildPayload,
@@ -380,6 +390,7 @@ pub struct BuildOutput {
 impl BuildOutput {
     /// Construct a build output from its parts (the pipeline builds
     /// this; tests build it directly).
+    // frob:doc docs/modules/regolith-api.md#build-output-and-payload
     #[must_use]
     pub fn new(
         payload: BuildPayload,
@@ -395,6 +406,7 @@ impl BuildOutput {
 
     /// The diagnostics rendered to text (the ONE renderer, AD-7). Python
     /// prints this verbatim.
+    // frob:doc docs/modules/regolith-api.md#build-output-and-payload
     #[must_use]
     pub fn rendered(&self, ansi: bool) -> &str {
         if ansi {
@@ -410,6 +422,7 @@ impl BuildOutput {
     /// # Panics
     /// Never in practice: the payload holds only our own JSON-safe
     /// types (a serialization failure would be a programmer bug).
+    // frob:doc docs/modules/regolith-api.md#build-output-and-payload
     #[must_use]
     pub fn payload_json(&self) -> Vec<u8> {
         // The payload is composed only of our own JSON-safe types
@@ -420,6 +433,7 @@ impl BuildOutput {
     }
 
     /// True when the build succeeded (no error-severity diagnostics).
+    // frob:doc docs/modules/regolith-api.md#build-output-and-payload
     #[must_use]
     pub fn ok(&self) -> bool {
         !self
@@ -430,6 +444,7 @@ impl BuildOutput {
     }
 
     /// Number of diagnostics.
+    // frob:doc docs/modules/regolith-api.md#build-output-and-payload
     #[must_use]
     pub fn diagnostic_count(&self) -> usize {
         self.payload.diagnostics.len()
@@ -438,6 +453,7 @@ impl BuildOutput {
 
 /// An infrastructure error at the API boundary (NOT a failing build).
 /// Crosses the FFI as a `regolith.CoreError` exception (AD-4).
+// frob:doc docs/modules/regolith-api.md#core-error
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum CoreError {
     /// A source file or root could not be read.
@@ -453,6 +469,7 @@ pub enum CoreError {
 
 impl CoreError {
     /// The path this error concerns, if any.
+    // frob:doc docs/modules/regolith-api.md#core-error
     #[must_use]
     pub fn path(&self) -> Option<&Utf8Path> {
         match self {
@@ -474,12 +491,15 @@ mod tests {
         manifest.join("../../examples").join(rel)
     }
 
+    // frob:tests crates/regolith-api/src/session.rs::Session.open_root kind="unit"
     #[test]
     fn session_records_roots() {
         let s = Session::open_root("examples/flagships/cubesat");
         assert_eq!(s.roots().len(), 1);
     }
 
+    // frob:tests crates/regolith-api/src/session.rs::BuildOutput.rendered kind="unit"
+    // frob:tests crates/regolith-api/src/session.rs::BuildOutput.diagnostic_count kind="unit"
     #[test]
     fn build_output_exposes_rendered_and_count() {
         let out = BuildOutput::new(
@@ -492,6 +512,8 @@ mod tests {
         assert_eq!(out.diagnostic_count(), 0);
     }
 
+    // frob:tests crates/regolith-api/src/session.rs::Session.check_with_lints kind="unit"
+    // frob:tests crates/regolith-api/src/session.rs::BuildOutput.ok kind="unit"
     #[test]
     fn check_over_a_real_directory_finds_only_recognized_extensions() {
         let session = Session::open_root(examples_dir("flagships/cubesat"));
@@ -546,6 +568,7 @@ mod tests {
         );
     }
 
+    // frob:tests crates/regolith-api/src/session.rs::Session.compile_with_lints kind="unit"
     #[test]
     fn compile_in_tempdir_is_deterministic_and_persists_cache() {
         // Compile writes an evidence cache under `.regolith/`; run it in a

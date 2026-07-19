@@ -20,12 +20,13 @@ use camino::Utf8Path;
 
 /// Format source `text` into its canonical spelling (the boundary
 /// `format(text) -> text`, AD-4). Thin delegation to the one formatter.
+// frob:doc docs/modules/regolith-api.md#format-and-unit-literal-reduction
 #[must_use]
 pub fn format(text: &str) -> String {
     regolith_syntax::formatter::format(text, &camino::Utf8PathBuf::from("<stdin>"))
 }
 
-/// Reduce `magnitude` in `unit_symbol` (`mrad`, `rpm`, `N/m`) to its SI
+/// Reduce `magnitude` in `unit_symbol` (`mrad`, `N/m`) to its SI
 /// base magnitude (WO-122, F132.2: the bound-text truncation hazard).
 /// `unit_symbol` is parsed through `regolith_qty::Unit::parse_expr` --
 /// the SAME unit table L1 quantity literals resolve through (AD-1's
@@ -34,6 +35,7 @@ pub fn format(text: &str) -> String {
 /// a unit this table knows (dB/dBc/dBm and other log-ratio spellings
 /// are NOT linear SI units and are the honest `None` case here; the
 /// caller defers by name rather than guessing).
+// frob:doc docs/modules/regolith-api.md#format-and-unit-literal-reduction
 #[must_use]
 pub fn reduce_unit_literal(magnitude: f64, unit_symbol: &str) -> Option<f64> {
     let unit = regolith_qty::Unit::parse_expr(unit_symbol).ok()?;
@@ -50,6 +52,7 @@ pub fn reduce_unit_literal(magnitude: f64, unit_symbol: &str) -> Option<f64> {
 /// Panics if `stage` is not one of `tokens`/`cst`/`ast` -- an invalid
 /// stage name is a caller (programmer) bug, not a user error, and
 /// crosses the FFI as `CoreBug` (AD-4).
+// frob:doc docs/modules/regolith-api.md#debug-dump-and-debug-ir
 pub fn debug_dump(stage: &str, path: &Utf8Path) -> Result<String, CoreError> {
     // An unknown stage name is a caller (programmer) bug, not a user
     // error -- it never reaches CoreError; it panics, which crosses the
@@ -89,6 +92,7 @@ pub fn debug_dump(stage: &str, path: &Utf8Path) -> Result<String, CoreError> {
 /// Never in practice: `BuildOutput::payload_json` always emits our own
 /// JSON-safe `BuildPayload` shape, so re-parsing it back can only fail
 /// on a programmer bug (a payload/schema drift), worth a panic here.
+// frob:doc docs/modules/regolith-api.md#debug-dump-and-debug-ir
 pub fn debug_ir(
     paths: &[&Utf8Path],
     realized_inputs: &regolith_lower::RealizedInputs,
@@ -125,7 +129,8 @@ pub fn debug_ir(
 }
 
 /// Every `on <event>:` trigger name declared per subject, across the
-/// sources at `paths` (WO-37 close-out follow-up, `TODO.md`): the
+/// sources at `paths` (WO-37 close-out follow-up, the repo's queue
+/// file): the
 /// firmware realizer's typed event surface, replacing
 /// `EventDecl`'s forward-authored placeholder (AD-22) with real
 /// `OnBlock` CST data. Thin parse-and-delegate, matching
@@ -134,6 +139,7 @@ pub fn debug_ir(
 ///
 /// # Errors
 /// Returns [`CoreError`] if a source file cannot be read.
+// frob:doc docs/modules/regolith-api.md#event-surface-extraction
 pub fn on_events(paths: &[&Utf8Path]) -> Result<Vec<(String, String)>, CoreError> {
     let mut files = Vec::with_capacity(paths.len());
     for path in paths {
@@ -168,6 +174,7 @@ pub fn on_events(paths: &[&Utf8Path]) -> Result<Vec<(String, String)>, CoreError
 ///
 /// # Errors
 /// Returns [`CoreError::Io`] if a source file cannot be read.
+// frob:doc docs/modules/regolith-api.md#extrusion-outline-resolution
 pub fn resolve_extrusion_outline(
     paths: &[&Utf8Path],
     profile: &str,
@@ -216,6 +223,7 @@ pub fn resolve_extrusion_outline(
 
 /// The compiler core version -- the workspace package version, the one
 /// truth the Python `regolith.core_version()` smoke test reads back.
+// frob:doc docs/modules/regolith-api.md#version-and-extension-registry-accessors
 #[must_use]
 pub fn core_version() -> &'static str {
     let version = env!("CARGO_PKG_VERSION");
@@ -225,6 +233,7 @@ pub fn core_version() -> &'static str {
 
 /// The serialized-schema version the boundary is speaking (AD-5). The
 /// facade asserts this against the generated pydantic models at import.
+// frob:doc docs/modules/regolith-api.md#version-and-extension-registry-accessors
 #[must_use]
 pub fn schema_version() -> u32 {
     regolith_oblig::SCHEMA_VERSION
@@ -235,6 +244,7 @@ pub fn schema_version() -> u32 {
 /// `magnetite new` never hard-codes an extension string (WO-41's
 /// tripwire). `language` is the lower-case variant name (`"hematite"`,
 /// `"cuprite"`, `"fluorite"`).
+// frob:doc docs/modules/regolith-api.md#version-and-extension-registry-accessors
 #[must_use]
 pub fn extensions() -> Vec<(&'static str, &'static str)> {
     regolith_syntax::EXTENSIONS
@@ -268,6 +278,7 @@ pub fn extensions() -> Vec<(&'static str, &'static str)> {
 /// valid `Vec<Obligation>` -- a boundary-contract violation by the
 /// caller (the payload it passes is always core-produced), surfaced as
 /// a value rather than a panic.
+// frob:doc docs/modules/regolith-api.md#obligation-content-hashes
 pub fn obligation_content_hashes(obligations_json: &str) -> Result<Vec<String>, CoreError> {
     let obligations: Vec<regolith_oblig::Obligation> = serde_json::from_str(obligations_json)
         .map_err(|e| CoreError::CacheCorrupt(format!("obligations JSON: {e}")))?;
@@ -294,8 +305,107 @@ mod tests {
         );
     }
 
+    /// `reduce_unit_literal` reduces a recognized unit to its SI base
+    /// magnitude through the ONE unit engine, and honestly returns
+    /// `None` for a symbol the table does not know (a log-ratio unit
+    /// like dBm is not a linear SI unit, never a guessed reduction).
+    // frob:tests crates/regolith-api/src/lib.rs::reduce_unit_literal kind="unit"
+    #[test]
+    fn reduce_unit_literal_reduces_known_unit_and_honestly_skips_unknown() {
+        let rad = super::reduce_unit_literal(500.0, "mrad").unwrap();
+        assert!((rad - 0.5).abs() < 1e-12);
+        assert_eq!(super::reduce_unit_literal(1.0, "dBm"), None);
+    }
+
+    /// `debug_dump` thinly delegates to the syntax crate's own stage
+    /// dumper (AD-13): a real `.hema` source's `tokens` stage dumps a
+    /// non-empty text report and reads back the source content.
+    // frob:tests crates/regolith-api/src/lib.rs::debug_dump kind="unit"
+    #[test]
+    fn debug_dump_dumps_the_tokens_stage_for_real_source() {
+        let dir = std::env::temp_dir().join(format!("regolith-wo01-dump-{}", std::process::id()));
+        let dir = Utf8PathBuf::from_path_buf(dir).unwrap();
+        std::fs::create_dir_all(&dir).unwrap();
+        let file = dir.join("m.hema");
+        std::fs::write(&file, "part Widget:\n  mass: 5 g\n").unwrap();
+
+        let text = super::debug_dump("tokens", file.as_path()).unwrap();
+        assert!(!text.is_empty());
+        assert!(text.contains("Widget"));
+
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    /// `resolve_extrusion_outline` is an honest `Ok(None)` skip -- never
+    /// a guess -- when the named profile does not exist in the source
+    /// (F123/D231/WO116-F1's missing-profile case).
+    // frob:tests crates/regolith-api/src/lib.rs::resolve_extrusion_outline kind="unit"
+    #[test]
+    fn resolve_extrusion_outline_honestly_skips_a_missing_profile() {
+        let dir = std::env::temp_dir().join(format!("regolith-wo116-extr-{}", std::process::id()));
+        let dir = Utf8PathBuf::from_path_buf(dir).unwrap();
+        std::fs::create_dir_all(&dir).unwrap();
+        let file = dir.join("m.hema");
+        std::fs::write(&file, "part Widget:\n  mass: 5 g\n").unwrap();
+
+        let out = super::resolve_extrusion_outline(&[file.as_path()], "NoSuchProfile").unwrap();
+        assert_eq!(out, None);
+
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    /// `obligation_content_hashes` hashes a JSON array of real
+    /// `Obligation` values in array order, and the ONE encoder is
+    /// deterministic across repeated calls over the same input (AD-18).
+    // frob:tests crates/regolith-api/src/lib.rs::obligation_content_hashes kind="unit"
+    #[test]
+    fn obligation_content_hashes_hashes_a_json_array_of_obligations() {
+        use regolith_oblig::{Claim, ClaimForm, Given, Obligation};
+
+        let obligation = Obligation {
+            claim: Claim {
+                name: Some("wall_temp".to_string()),
+                form: ClaimForm::Compute {
+                    quantity_kind: "thermo.wall_temperature".to_string(),
+                    over: "liner.zones".to_string(),
+                },
+                forall: vec![],
+                sf: None,
+                scatter_factor: None,
+                trust_floor: None,
+                hints: vec![],
+                model_pin: None,
+            },
+            subject_ref: "blake3:subject".to_string(),
+            given: Given {
+                materials: vec![],
+                loads: vec![],
+                backing: vec![],
+                refs: vec![],
+            },
+            hints: vec![],
+            sweep: None,
+            payloads: vec![],
+        };
+        let json = serde_json::to_string(std::slice::from_ref(&obligation)).unwrap();
+
+        let hashes = super::obligation_content_hashes(&json).unwrap();
+        assert_eq!(hashes, vec![obligation.content_hash()]);
+
+        let hashes_again = super::obligation_content_hashes(&json).unwrap();
+        assert_eq!(hashes, hashes_again, "AD-18 hashing is deterministic");
+    }
+
+    /// Malformed input is a `CoreError::CacheCorrupt` value, never a
+    /// panic -- a boundary-contract violation surfaced as data (AD-7).
+    #[test]
+    fn obligation_content_hashes_reports_malformed_json_as_an_error() {
+        assert!(super::obligation_content_hashes("not json").is_err());
+    }
+
     /// WO-42 deliverable 3: `debug ir` lists no realized IRs when none
     /// were supplied (the D128 placeholder path stays honest about it).
+    // frob:tests crates/regolith-api/src/session.rs::Session.open_files kind="unit"
     #[test]
     fn debug_ir_reports_no_realized_inputs_when_none_supplied() {
         let dir = std::env::temp_dir().join(format!("regolith-wo42-dbg-{}", std::process::id()));
@@ -314,6 +424,7 @@ mod tests {
     /// WO-37 close-out follow-up: `on_events` reads real `.cupr` source
     /// and returns the typed `on <event>:` trigger names, not a
     /// hand-authored placeholder.
+    // frob:tests crates/regolith-api/src/lib.rs::on_events kind="unit"
     #[test]
     fn on_events_reads_real_on_block_cst() {
         let dir = std::env::temp_dir().join(format!("regolith-wo37-events-{}", std::process::id()));

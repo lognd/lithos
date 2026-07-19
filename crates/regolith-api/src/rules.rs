@@ -96,6 +96,7 @@ fn read_sources(paths: &[Utf8PathBuf]) -> Result<Vec<SourceFile>, CoreError> {
 ///
 /// # Panics
 /// Never in practice: serializing our own report shape cannot fail.
+// frob:doc docs/modules/regolith-api.md#rule-pack-test-and-try-verbs
 pub fn rules_test(paths: &[Utf8PathBuf]) -> Result<String, CoreError> {
     let span = tracing::info_span!("rules.test", files = paths.len());
     let _enter = span.enter();
@@ -158,6 +159,7 @@ pub fn rules_test(paths: &[Utf8PathBuf]) -> Result<String, CoreError> {
 ///
 /// # Panics
 /// Never in practice: serializing our own report shape cannot fail.
+// frob:doc docs/modules/regolith-api.md#rule-pack-test-and-try-verbs
 pub fn rules_try(pack_path: &Utf8Path, design_path: &Utf8Path) -> Result<String, CoreError> {
     let span = tracing::info_span!("rules.try", pack = %pack_path, design = %design_path);
     let _enter = span.enter();
@@ -255,6 +257,7 @@ mod tests {
         Utf8PathBuf::from_path_buf(path).unwrap()
     }
 
+    // frob:tests crates/regolith-api/src/rules.rs::rules_test kind="unit"
     #[test]
     fn rules_test_reports_green_fixtures() {
         let path = write_temp("pack_green.hema", PACK);

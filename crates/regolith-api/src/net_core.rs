@@ -32,6 +32,7 @@ struct WireNet {
 /// The elec single-driver check's result: `None` when every net is
 /// clean, `Some` naming the first offending net (fail-fast, matching
 /// the historical Python behavior byte-for-byte).
+// frob:doc docs/modules/regolith-api.md#elec-net-core-marshalling
 #[derive(Debug, Serialize, PartialEq, Eq)]
 pub struct ElecViolation {
     /// The offending net's name.
@@ -50,6 +51,7 @@ pub struct ElecViolation {
 /// Returns a `serde_json` error message when `nets_json` does not parse
 /// as the expected wire shape -- an infrastructure/programmer-facing
 /// failure, not a design error (those are `Ok(Some(..))`).
+// frob:doc docs/modules/regolith-api.md#elec-net-core-marshalling
 pub fn check_elec_single_driver(nets_json: &str) -> Result<Option<ElecViolation>, String> {
     let wire_nets: Vec<WireNet> =
         serde_json::from_str(nets_json).map_err(|e| format!("invalid net JSON: {e}"))?;
@@ -81,6 +83,7 @@ pub fn check_elec_single_driver(nets_json: &str) -> Result<Option<ElecViolation>
 mod tests {
     use super::check_elec_single_driver;
 
+    // frob:tests crates/regolith-api/src/net_core.rs::check_elec_single_driver kind="unit"
     #[test]
     fn clean_nets_pass() {
         let json = r#"[{"name":"VCC","pins":[{"component":"u1","pin":"vdd","is_driver":true}]}]"#;

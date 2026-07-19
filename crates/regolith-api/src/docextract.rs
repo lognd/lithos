@@ -29,6 +29,7 @@ use crate::CoreError;
 ///
 /// # Errors
 /// Returns [`CoreError`] if the source file cannot be read.
+// frob:doc docs/modules/regolith-api.md#public-surface-doc-extraction
 pub fn doc_extract(path: &Utf8Path) -> Result<String, CoreError> {
     let source = std::fs::read_to_string(path).map_err(|e| CoreError::Io {
         path: path.to_path_buf(),
@@ -222,11 +223,37 @@ fn require_decl_json(require: &RequireDecl) -> Value {
 
 #[cfg(test)]
 mod tests {
-    use super::doc_extract_source;
+    use super::{doc_extract, doc_extract_source};
     use camino::Utf8PathBuf;
 
     fn path() -> Utf8PathBuf {
         Utf8PathBuf::from("t.hema")
+    }
+
+    /// `doc_extract` (the filesystem-reading public entry) matches the
+    /// in-memory extractor over the same text -- it is a thin IO
+    /// wrapper, not a second implementation (NO DUPLICATION).
+    // frob:tests crates/regolith-api/src/docextract.rs::doc_extract kind="unit"
+    #[test]
+    fn doc_extract_reads_a_real_file_and_matches_the_in_memory_extractor() {
+        let src = "part Rail:\n    material: AL7075_T6\n";
+        let dir = std::env::temp_dir().join(format!("regolith-docextract-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let file = Utf8PathBuf::from_path_buf(dir.join("t.hema")).unwrap();
+        std::fs::write(&file, src).unwrap();
+
+        let from_file = doc_extract(&file).unwrap();
+        let from_memory = doc_extract_source(src, &path());
+        assert_eq!(from_file, from_memory);
+
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    /// An unreadable path is a `CoreError`, never a panic (AD-7).
+    #[test]
+    fn doc_extract_reports_unreadable_path_as_an_error() {
+        let missing = Utf8PathBuf::from("/nonexistent/definitely/not/here.hema");
+        assert!(doc_extract(&missing).is_err());
     }
 
     #[test]
