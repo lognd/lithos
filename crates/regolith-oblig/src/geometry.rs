@@ -41,6 +41,7 @@ use serde::{Deserialize, Serialize};
 /// Domain tag folded into every realized-geometry content address
 /// (AD-18): keeps a geometry digest from colliding with any other
 /// payload kind even if the canonical CBOR bytes happened to coincide.
+// frob:doc docs/modules/regolith-oblig.md#geometry
 pub const GEOMETRY_DOMAIN_TAG: &str = "geometry.realized";
 
 /// A platform-portable summary of a realized solid's shape (AD-6),
@@ -49,6 +50,7 @@ pub const GEOMETRY_DOMAIN_TAG: &str = "geometry.realized";
 /// stable cross-platform/version, WO-22 acceptance) -- this is the
 /// cross-platform determinism golden.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#geometry
 pub struct TopologySummary {
     /// Number of solids in the realized body.
     pub num_solids: u32,
@@ -74,11 +76,13 @@ pub struct TopologySummary {
 /// every resolved measure on a [`PathSegment`] uses (D131: soundness,
 /// realized dimensions carry process capability; a v1 producer may emit
 /// a degenerate point interval).
+// frob:doc docs/modules/regolith-oblig.md#geometry
 pub type Bounds = [f64; 2];
 
 /// A bend within a routed segment: turn angle (rad) and centreline
 /// radius (m), each an `[lo, hi]` interval.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#geometry
 pub struct Bend {
     /// Turn angle interval, rad.
     pub angle: Bounds,
@@ -91,6 +95,7 @@ pub struct Bend {
 /// compliance and the Korteweg wave speed (D93), each an `[lo, hi]`
 /// interval.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#geometry
 pub struct Wall {
     /// Young's modulus interval, Pa.
     pub youngs_modulus: Bounds,
@@ -105,6 +110,7 @@ pub struct Wall {
 /// `EdgeParams::GeomExtract` selector (D131 -- the seam's field list
 /// verbatim).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#geometry
 pub struct PathSegment {
     /// Per-segment environment slot name (shared with WO-34 wire runs).
     pub role: String,
@@ -132,6 +138,7 @@ pub struct PathSegment {
 /// selector in [`RealizedGeometry::paths`]; the pinned convention for
 /// mech-emitted paths is `<stage_name>.wetted` (D130).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#geometry
 pub struct RoutedPath {
     /// The path's segments, in order.
     pub segments: Vec<PathSegment>,
@@ -142,6 +149,7 @@ pub struct RoutedPath {
 /// consumed shape): one realized part's STEP content hash, mass/topology
 /// summary, and selector-keyed routed paths.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#geometry
 pub struct RealizedGeometry {
     /// The content hash of the `FeatureProgram` this geometry was
     /// realized from (provenance; the G42 anti-staleness citation).
@@ -170,6 +178,7 @@ impl RealizedGeometry {
     /// Propagates [`regolith_util::canon::EncodeError`] from the
     /// canonical encoder (only a non-finite float or a serializer
     /// failure -- an upstream bug).
+    // frob:doc docs/modules/regolith-oblig.md#geometry
     pub fn content_digest(&self) -> Result<String, regolith_util::canon::EncodeError> {
         regolith_util::canon::content_address(GEOMETRY_DOMAIN_TAG, self)
     }
@@ -217,6 +226,7 @@ mod tests {
         }
     }
 
+    // frob:tests crates/regolith-oblig/src/geometry.rs::RealizedGeometry.content_digest kind="unit"
     #[test]
     fn content_digest_is_stable_and_field_sensitive() {
         let payload = sample();

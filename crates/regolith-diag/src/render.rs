@@ -16,6 +16,7 @@ use crate::Severity;
 
 /// Whether to emit ANSI colour codes.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+// frob:doc docs/modules/regolith-diag.md#render
 pub enum ColorMode {
     /// Plain text (goldens, `--json` neighbours, non-tty).
     Plain,
@@ -30,6 +31,7 @@ pub enum ColorMode {
 /// the spans out of it. Returned string is the exact bytes printed --
 /// the Python side never re-renders (AD-7).
 #[must_use]
+// frob:doc docs/modules/regolith-diag.md#render
 pub fn render(
     diagnostic: &Diagnostic,
     color: ColorMode,
@@ -137,6 +139,7 @@ fn styled_renderer() -> Renderer {
 /// Render a whole batch (already ordered by the sink) into one string,
 /// diagnostics separated by a blank line.
 #[must_use]
+// frob:doc docs/modules/regolith-diag.md#render
 pub fn render_batch(
     diagnostics: &[Diagnostic],
     color: ColorMode,
@@ -159,6 +162,7 @@ mod tests {
     // The acceptance snapshot: three cross-referenced diagnostics
     // rendered as the spec's "edit blast radius at once" shape. Wired
     // now, un-ignored once render() lands (insta snapshot in WO-06).
+    // frob:tests crates/regolith-diag/src/render.rs::render_batch kind="unit"
     #[test]
     fn three_cross_referenced_diagnostics_render() {
         let src = "supply v(3.3V)\nborrow rail\nborrow rail\n";

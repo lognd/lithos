@@ -26,9 +26,11 @@ use regolith_util::canon::{content_address, EncodeError};
 /// Domain tag folded into every `OptimizationTrace` content address
 /// (AD-18): keeps a trace digest from colliding with any other payload
 /// kind even if the canonical CBOR bytes happened to coincide.
+// frob:doc docs/modules/regolith-oblig.md#optimize
 pub const OPTIMIZATION_TRACE_DOMAIN_TAG: &str = "optimize.trace";
 
 /// Domain tag folded into every `ChoicePoint` content address (AD-18).
+// frob:doc docs/modules/regolith-oblig.md#optimize
 pub const CHOICE_POINT_DOMAIN_TAG: &str = "optimize.choice";
 
 /// How a search run ended (charter sec. 1.8, D162): never silently
@@ -37,6 +39,7 @@ pub const CHOICE_POINT_DOMAIN_TAG: &str = "optimize.choice";
 /// engine reports the best candidate FOUND within budget").
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
+// frob:doc docs/modules/regolith-oblig.md#optimize
 pub enum TerminationStatus {
     /// The driver reached a fixpoint (discrete: no candidate improves on
     /// the incumbent and the domain is exhausted; continuous: the
@@ -60,6 +63,7 @@ pub enum TerminationStatus {
 /// re-sortable set.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
+// frob:doc docs/modules/regolith-oblig.md#optimize
 pub enum ObjectiveDirection {
     /// Lower is better.
     Minimize,
@@ -73,6 +77,7 @@ pub enum ObjectiveDirection {
 /// digests the discharge pass produced -- the audit trail linking a
 /// trace entry back to the real evidence store rows that justify it.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#optimize
 pub struct CandidateEntry {
     /// The proposed assignment: `(slot, value)` pairs in the order the
     /// strategy/driver assigned them (never a `HashMap` -- AD-6).
@@ -96,6 +101,7 @@ pub struct CandidateEntry {
 /// The full search trail (charter sec. 1.4): checkpoint, audit surface,
 /// and `--resume` input in one content-addressed value.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#optimize
 pub struct OptimizationTrace {
     /// The driver's identity (`"optimize_discrete"`, `"optimize_continuous.
     /// golden_section"`, `"optimize_continuous.nelder_mead"`, ...).
@@ -140,6 +146,7 @@ impl OptimizationTrace {
     /// # Errors
     /// Propagates [`EncodeError`] from the canonical encoder (only a
     /// non-finite float or a serializer failure -- an upstream bug).
+    // frob:doc docs/modules/regolith-oblig.md#optimize
     pub fn content_digest(&self) -> Result<String, EncodeError> {
         content_address(OPTIMIZATION_TRACE_DOMAIN_TAG, self)
     }
@@ -151,6 +158,7 @@ impl OptimizationTrace {
 /// to order/cut exploration. WO-56 lowers `impl ... by select(...)` onto
 /// this shape; this crate only defines the wire shape.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#optimize
 pub struct ChoicePoint {
     /// The subject (part/block/interface) this choice resolves.
     pub subject_id: String,
@@ -168,6 +176,7 @@ impl ChoicePoint {
     ///
     /// # Errors
     /// Propagates [`EncodeError`] from the canonical encoder.
+    // frob:doc docs/modules/regolith-oblig.md#optimize
     pub fn content_digest(&self) -> Result<String, EncodeError> {
         content_address(CHOICE_POINT_DOMAIN_TAG, self)
     }
@@ -206,6 +215,8 @@ mod tests {
         assert_eq!(back, trace);
     }
 
+    // frob:tests crates/regolith-oblig/src/optimize.rs::ChoicePoint.content_digest kind="unit"
+    // frob:tests crates/regolith-oblig/src/optimize.rs::OptimizationTrace.content_digest kind="unit"
     #[test]
     fn content_digest_is_stable_and_field_sensitive() {
         let trace = sample_trace();

@@ -17,6 +17,7 @@ use serde::{Deserialize, Serialize};
 /// error, not a silently-accepted unknown.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
+// frob:doc docs/modules/regolith-oblig.md#attestation
 pub enum SignatureAlgorithm {
     /// Ed25519 (RFC 8032) -- the only algorithm implemented in v1.
     Ed25519,
@@ -30,6 +31,7 @@ pub enum SignatureAlgorithm {
 /// the result) alongside the signature bytes, and nothing here is a
 /// hash input for `Evidence` itself.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#attestation
 pub struct Attestation {
     /// The discharging model's id (matches `Evidence::model_id`).
     pub model_id: String,

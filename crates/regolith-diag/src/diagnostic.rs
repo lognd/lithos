@@ -15,6 +15,7 @@ use crate::Severity;
 /// One entity that a failing query matched, shown in the diagnostic's
 /// matched-entity table: where it came from and what it measures.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-diag.md#diagnostic
 pub struct MatchedEntity {
     /// Human origin of the entity ("declared in eps.cupr:12", a path).
     pub origin: String,
@@ -25,6 +26,7 @@ pub struct MatchedEntity {
 /// A structured (not prose) fix suggestion. The renderer turns it into
 /// a "help:" line; a future LSP turns it into a code action.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-diag.md#diagnostic
 pub struct Fix {
     /// One-line description of the suggested change.
     pub message: String,
@@ -34,6 +36,7 @@ pub struct Fix {
 
 /// A concrete textual edit backing a [`Fix`].
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-diag.md#diagnostic
 pub struct Replacement {
     /// The span to replace.
     pub span: Span,
@@ -44,6 +47,7 @@ pub struct Replacement {
 /// A cross-reference to another diagnostic in the same batch (the
 /// "edit blast radius" links, `check --explain`).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-diag.md#diagnostic
 pub struct RelatedRef {
     /// The related diagnostic's code.
     pub code: DiagCode,
@@ -55,6 +59,7 @@ pub struct RelatedRef {
 
 /// A single constructive diagnostic.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-diag.md#diagnostic
 pub struct Diagnostic {
     /// The stable code (family + offset).
     pub code: DiagCode,
@@ -76,6 +81,7 @@ impl Diagnostic {
     /// Start an error diagnostic with a code and primary message.
     /// Builder methods add spans, matches, fixes, and relations.
     #[must_use]
+    // frob:doc docs/modules/regolith-diag.md#diagnostic
     pub fn error(code: DiagCode, message: impl Into<String>) -> Diagnostic {
         Diagnostic {
             code,
@@ -90,6 +96,7 @@ impl Diagnostic {
 
     /// Start a warning diagnostic.
     #[must_use]
+    // frob:doc docs/modules/regolith-diag.md#diagnostic
     pub fn warning(code: DiagCode, message: impl Into<String>) -> Diagnostic {
         Diagnostic {
             severity: Severity::Warning,
@@ -99,6 +106,7 @@ impl Diagnostic {
 
     /// Attach a labelled span (builder).
     #[must_use]
+    // frob:doc docs/modules/regolith-diag.md#diagnostic
     pub fn with_span(mut self, span: LabeledSpan) -> Diagnostic {
         self.spans.push(span);
         self
@@ -106,6 +114,7 @@ impl Diagnostic {
 
     /// Attach a matched entity row (builder).
     #[must_use]
+    // frob:doc docs/modules/regolith-diag.md#diagnostic
     pub fn with_match(mut self, entity: MatchedEntity) -> Diagnostic {
         self.matched.push(entity);
         self
@@ -113,6 +122,7 @@ impl Diagnostic {
 
     /// Attach a fix suggestion (builder).
     #[must_use]
+    // frob:doc docs/modules/regolith-diag.md#diagnostic
     pub fn with_fix(mut self, fix: Fix) -> Diagnostic {
         self.fixes.push(fix);
         self
@@ -120,6 +130,7 @@ impl Diagnostic {
 
     /// Attach a cross-reference to a related diagnostic (builder).
     #[must_use]
+    // frob:doc docs/modules/regolith-diag.md#diagnostic
     pub fn with_related(mut self, related: RelatedRef) -> Diagnostic {
         self.related.push(related);
         self
@@ -128,6 +139,7 @@ impl Diagnostic {
     /// The primary span (first attached), if any -- the anchor used for
     /// ordering in the sink.
     #[must_use]
+    // frob:doc docs/modules/regolith-diag.md#diagnostic
     pub fn primary_span(&self) -> Option<&Span> {
         self.spans.first().map(|s| &s.span)
     }
@@ -135,11 +147,15 @@ impl Diagnostic {
 
 #[cfg(test)]
 mod tests {
-    use super::{Diagnostic, Fix, MatchedEntity};
+    use super::{Diagnostic, Fix, MatchedEntity, RelatedRef};
     use crate::code::codes;
     use crate::span::{LabeledSpan, Span};
     use crate::Severity;
 
+    // frob:tests crates/regolith-diag/src/diagnostic.rs::Diagnostic.primary_span kind="unit"
+    // frob:tests crates/regolith-diag/src/diagnostic.rs::Diagnostic.with_fix kind="unit"
+    // frob:tests crates/regolith-diag/src/diagnostic.rs::Diagnostic.with_match kind="unit"
+    // frob:tests crates/regolith-diag/src/diagnostic.rs::Diagnostic.with_span kind="unit"
     #[test]
     fn builder_assembles_a_full_diagnostic() {
         let d = Diagnostic::error(codes::AMBIGUOUS_SELECTION, "query matched 2 entities")
@@ -164,5 +180,18 @@ mod tests {
         let json = serde_json::to_string(&d).unwrap();
         let back: Diagnostic = serde_json::from_str(&json).unwrap();
         assert_eq!(back, d);
+    }
+
+    // frob:tests crates/regolith-diag/src/diagnostic.rs::Diagnostic.with_related kind="unit"
+    #[test]
+    fn with_related_attaches_a_cross_reference() {
+        let d =
+            Diagnostic::error(codes::AMBIGUOUS_SELECTION, "ambiguous").with_related(RelatedRef {
+                code: codes::EQUALITY_ON_CONTINUOUS,
+                note: "this borrow conflicts with the one above".to_string(),
+                span: Span::new("eps.cupr", 20, 24),
+            });
+        assert_eq!(d.related.len(), 1);
+        assert_eq!(d.related[0].code, codes::EQUALITY_ON_CONTINUOUS);
     }
 }

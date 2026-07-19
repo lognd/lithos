@@ -17,6 +17,7 @@ use crate::{Diagnostic, Severity};
 /// One `[lints]` table entry's configured action.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
+// frob:doc docs/modules/regolith-diag.md#lints
 pub enum LintAction {
     /// Silence the code entirely (removed from the emitted batch).
     Allow,
@@ -31,6 +32,7 @@ impl LintAction {
     /// Anything else is not this type's job to reject -- the config
     /// loader names the code and value in its own diagnostic.
     #[must_use]
+    // frob:doc docs/modules/regolith-diag.md#lints
     pub fn parse(value: &str) -> Option<LintAction> {
         match value {
             "allow" => Some(LintAction::Allow),
@@ -46,6 +48,7 @@ impl LintAction {
 /// Built Python-side from `magnetite.toml` (WO-16's manifest reader)
 /// and threaded through the FFI boundary as plain string pairs (AD-4);
 /// this type is the Rust-side resolved form.
+// frob:doc docs/modules/regolith-diag.md#lints
 pub type LintConfig = BTreeMap<String, LintAction>;
 
 /// Promote/silence lint-family diagnostics per `config`, in place, at
@@ -54,6 +57,7 @@ pub type LintConfig = BTreeMap<String, LintAction>;
 /// entry only ever names a lint code; `waive` cannot name one at all,
 /// enforced where the manifest is validated, not here).
 #[must_use]
+// frob:doc docs/modules/regolith-diag.md#lints
 pub fn apply_lint_config(diagnostics: Vec<Diagnostic>, config: &LintConfig) -> Vec<Diagnostic> {
     diagnostics
         .into_iter()
@@ -80,6 +84,7 @@ pub fn apply_lint_config(diagnostics: Vec<Diagnostic>, config: &LintConfig) -> V
 /// (WO-40 deliverable 4 names codes by their `Lxxxx` spelling; a
 /// family-glob form is a documented reopen, not v1).
 #[must_use]
+// frob:doc docs/modules/regolith-diag.md#lints
 pub fn lint_code_name(diagnostic: &Diagnostic) -> String {
     diagnostic.code.to_string().to_lowercase()
 }
@@ -90,6 +95,7 @@ mod tests {
     use crate::code::codes;
     use crate::{Diagnostic, Severity};
 
+    // frob:tests crates/regolith-diag/src/lints.rs::apply_lint_config kind="unit"
     #[test]
     fn deny_promotes_to_error() {
         let mut config: LintConfig = LintConfig::new();
@@ -122,5 +128,13 @@ mod tests {
         let diags = vec![Diagnostic::error(codes::AMBIGUOUS_SELECTION, "ambiguous")];
         let out = apply_lint_config(diags, &config);
         assert_eq!(out[0].severity, Severity::Error);
+    }
+
+    // frob:tests crates/regolith-diag/src/lints.rs::lint_code_name kind="unit"
+    #[test]
+    fn lint_code_name_is_the_lowercased_rendered_code() {
+        use super::lint_code_name;
+        let d = Diagnostic::warning(codes::UNUSED_IMPORT, "unused import x");
+        assert_eq!(lint_code_name(&d), d.code.to_string().to_lowercase());
     }
 }

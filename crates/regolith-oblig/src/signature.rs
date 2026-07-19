@@ -13,6 +13,7 @@ use serde::{Deserialize, Serialize};
 
 /// A physics-model signature: a typed input/output contract.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#signature
 pub struct Signature {
     /// Signature name (`bolted_joint_state`).
     pub name: String,
@@ -27,6 +28,7 @@ pub struct Signature {
 /// A harness impl record for a signature (data only; the code lives in
 /// the Python harness).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#signature
 pub struct ImplRecord {
     /// The signature this implements.
     pub signature: String,
@@ -43,6 +45,7 @@ pub struct ImplRecord {
 /// The signature + impl registry the orchestrator matches discharge
 /// against.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#signature
 pub struct SignatureRegistry {
     signatures: IndexMap<String, Signature>,
     impls: Vec<ImplRecord>,
@@ -51,6 +54,7 @@ pub struct SignatureRegistry {
 impl SignatureRegistry {
     /// An empty registry.
     #[must_use]
+    // frob:doc docs/modules/regolith-oblig.md#signature
     pub fn new() -> SignatureRegistry {
         SignatureRegistry {
             signatures: IndexMap::new(),
@@ -59,17 +63,20 @@ impl SignatureRegistry {
     }
 
     /// Register a signature.
+    // frob:doc docs/modules/regolith-oblig.md#signature
     pub fn add_signature(&mut self, sig: Signature) {
         self.signatures.insert(sig.name.clone(), sig);
     }
 
     /// Register an impl record.
+    // frob:doc docs/modules/regolith-oblig.md#signature
     pub fn add_impl(&mut self, imp: ImplRecord) {
         self.impls.push(imp);
     }
 
     /// The impls implementing `signature`, cheapest first.
     #[must_use]
+    // frob:doc docs/modules/regolith-oblig.md#signature
     pub fn impls_for(&self, signature: &str) -> Vec<&ImplRecord> {
         let mut matching: Vec<&ImplRecord> = self
             .impls
@@ -84,8 +91,9 @@ impl SignatureRegistry {
 
 #[cfg(test)]
 mod tests {
-    use super::{Signature, SignatureRegistry};
+    use super::{ImplRecord, Signature, SignatureRegistry};
 
+    // frob:tests crates/regolith-oblig/src/signature.rs::SignatureRegistry.add_signature kind="unit"
     #[test]
     fn registry_round_trips_json() {
         let mut reg = SignatureRegistry::new();
@@ -98,5 +106,41 @@ mod tests {
         let json = serde_json::to_string(&reg).unwrap();
         let back: SignatureRegistry = serde_json::from_str(&json).unwrap();
         assert_eq!(back, reg);
+    }
+
+    // frob:tests crates/regolith-oblig/src/signature.rs::SignatureRegistry.add_impl kind="unit"
+    // frob:tests crates/regolith-oblig/src/signature.rs::SignatureRegistry.impls_for kind="unit"
+    #[test]
+    fn impls_for_sorts_cheapest_first_and_ignores_other_signatures() {
+        let mut reg = SignatureRegistry::new();
+        reg.add_impl(ImplRecord {
+            signature: "bolted_joint_state".to_string(),
+            name: "vdi_2230_full".to_string(),
+            cost: 5,
+            error_model: "conservative".to_string(),
+            domain: vec!["clamped".to_string()],
+        });
+        reg.add_impl(ImplRecord {
+            signature: "bolted_joint_state".to_string(),
+            name: "vdi_2230_simplified".to_string(),
+            cost: 1,
+            error_model: "conservative".to_string(),
+            domain: vec!["linear".to_string()],
+        });
+        reg.add_impl(ImplRecord {
+            signature: "bearing_life".to_string(),
+            name: "l10_basic".to_string(),
+            cost: 1,
+            error_model: "conservative".to_string(),
+            domain: vec!["clamped".to_string()],
+        });
+
+        let matches = reg.impls_for("bolted_joint_state");
+        assert_eq!(matches.len(), 2, "the unrelated signature must be excluded");
+        assert_eq!(
+            matches[0].name, "vdi_2230_simplified",
+            "cheapest impl first"
+        );
+        assert_eq!(matches[1].name, "vdi_2230_full");
     }
 }

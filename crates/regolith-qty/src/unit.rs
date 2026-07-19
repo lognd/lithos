@@ -14,6 +14,7 @@ use crate::BASE_DIMENSIONS;
 
 /// An exact conversion factor to SI base units. Rational so unit
 /// algebra is closed and drift-free (AD-9).
+// frob:doc docs/modules/regolith-qty.md#unit
 pub type Scale = Ratio<i64>;
 
 /// Exact-rational scale to `f64`, the ONE conversion every crate that
@@ -25,6 +26,7 @@ pub type Scale = Ratio<i64>;
               representable in f64's 52-bit mantissa"
 )]
 #[must_use]
+// frob:doc docs/modules/regolith-qty.md#unit
 pub fn ratio_to_f64(r: Scale) -> f64 {
     *r.numer() as f64 / *r.denom() as f64
 }
@@ -38,6 +40,7 @@ pub fn ratio_to_f64(r: Scale) -> f64 {
 /// is comparable because a unit is a discrete descriptor, not a
 /// continuous quantity (the `==` ban lives on `Qty`).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-qty.md#unit
 pub struct Unit {
     /// ASCII spelling as written in source (`mm`, `N/m`, `degC`).
     pub symbol: String,
@@ -70,6 +73,7 @@ impl schemars::JsonSchema for Unit {
 
 /// Failure parsing or composing a unit expression.
 #[derive(Debug, Clone, PartialEq, Eq, Error)]
+// frob:doc docs/modules/regolith-qty.md#unit
 pub enum UnitError {
     /// The base-unit symbol (after stripping any SI prefix) is not in
     /// the unit table.
@@ -200,6 +204,7 @@ fn prefix_scale(exponent: i32) -> Scale {
 impl Unit {
     /// A dimensionless unit of unit scale (a pure number / ratio).
     #[must_use]
+    // frob:doc docs/modules/regolith-qty.md#unit
     pub fn dimensionless() -> Unit {
         Unit {
             symbol: "1".to_string(),
@@ -211,6 +216,7 @@ impl Unit {
 
     /// True when this unit has a nonzero additive offset (`degC`).
     #[must_use]
+    // frob:doc docs/modules/regolith-qty.md#unit
     pub fn is_offset(&self) -> bool {
         self.offset != Scale::from_integer(0)
     }
@@ -230,6 +236,7 @@ impl Unit {
                   52-bit mantissa is exact for every value this crate's unit table \
                   produces (same precedent as quantity.rs's ratio_to_f64)"
     )]
+    // frob:doc docs/modules/regolith-qty.md#unit
     pub fn si_magnitude(&self, magnitude: f64) -> f64 {
         let scale = (*self.scale.numer() as f64) / (*self.scale.denom() as f64);
         let offset = (*self.offset.numer() as f64) / (*self.offset.denom() as f64);
@@ -248,6 +255,7 @@ impl Unit {
     /// suffix rather than fabricate a spelling this crate would not
     /// itself accept back as input.
     #[must_use]
+    // frob:doc docs/modules/regolith-qty.md#unit
     pub fn base_symbol(&self) -> String {
         for (name, exps, scale, offset) in UNIT_TABLE {
             if *scale != (1, 1) || *offset != (0, 1) {
@@ -274,6 +282,7 @@ impl Unit {
     /// # Errors
     /// Returns [`UnitError`] when the symbol is unknown or an offset
     /// unit is prefixed.
+    // frob:doc docs/modules/regolith-qty.md#unit
     pub fn parse_atom(symbol: &str) -> Result<Unit, UnitError> {
         // Trailing integer exponent suffix (`m2`, `s2`, `mm3`): the atom
         // is its base symbol raised to that integer power (AD-9 rational
@@ -354,6 +363,7 @@ impl Unit {
     /// # Errors
     /// Returns [`UnitError`] on any unknown atom or misuse of offset
     /// units in algebra.
+    // frob:doc docs/modules/regolith-qty.md#unit
     pub fn parse_expr(expr: &str) -> Result<Unit, UnitError> {
         // WO-02 scope: at most one binary operator (`/` or `.`); the
         // full precedence/parenthesized grammar is the WO-05 hook.
@@ -376,6 +386,7 @@ impl Unit {
     /// # Errors
     /// Returns [`UnitError::OffsetInAlgebra`] if either operand is an
     /// offset unit.
+    // frob:doc docs/modules/regolith-qty.md#unit
     pub fn mul(&self, other: &Unit) -> Result<Unit, UnitError> {
         if self.is_offset() {
             return Err(UnitError::OffsetInAlgebra(self.symbol.clone()));
@@ -396,6 +407,7 @@ impl Unit {
     /// # Errors
     /// Returns [`UnitError::OffsetInAlgebra`] if either operand is an
     /// offset unit.
+    // frob:doc docs/modules/regolith-qty.md#unit
     pub fn div(&self, other: &Unit) -> Result<Unit, UnitError> {
         if self.is_offset() {
             return Err(UnitError::OffsetInAlgebra(self.symbol.clone()));
@@ -416,6 +428,7 @@ impl Unit {
 /// ASCII spellings only: `u` is micro (no Greek), per the spec's
 /// ASCII-only rule.
 #[must_use]
+// frob:doc docs/modules/regolith-qty.md#unit
 pub fn si_prefix_exponent(prefix: &str) -> Option<i32> {
     let exp = match prefix {
         "T" => 12,
@@ -438,9 +451,20 @@ pub fn si_prefix_exponent(prefix: &str) -> Option<i32> {
 
 #[cfg(test)]
 mod tests {
-    use super::{base_unit, si_prefix_exponent, Unit, UnitError, MAX_UNIT_EXPONENT};
+    use super::{
+        base_unit, ratio_to_f64, si_prefix_exponent, Scale, Unit, UnitError, MAX_UNIT_EXPONENT,
+    };
     use crate::dimension::{BaseDimension, Dimension, Exponent};
     use num_rational::Ratio;
+
+    // frob:tests crates/regolith-qty/src/unit.rs::ratio_to_f64 kind="unit"
+    #[test]
+    fn ratio_to_f64_divides_exactly_for_small_si_prefix_scales() {
+        let quarter: Scale = Ratio::new(1, 4);
+        assert!((ratio_to_f64(quarter) - 0.25).abs() < f64::EPSILON);
+        let milli: Scale = Ratio::new(1, 1000);
+        assert!((ratio_to_f64(milli) - 0.001).abs() < 1e-15);
+    }
 
     fn newton() -> Unit {
         Unit {
@@ -475,6 +499,7 @@ mod tests {
         }
     }
 
+    // frob:tests crates/regolith-qty/src/unit.rs::si_prefix_exponent kind="unit"
     #[test]
     fn prefixes_are_ascii_powers_of_ten() {
         assert_eq!(si_prefix_exponent("k"), Some(3));
@@ -483,6 +508,8 @@ mod tests {
         assert_eq!(si_prefix_exponent("x"), None);
     }
 
+    // frob:tests crates/regolith-qty/src/unit.rs::Unit.div kind="unit"
+    // frob:tests crates/regolith-qty/src/unit.rs::Unit.mul kind="unit"
     #[test]
     fn newton_per_metre_has_stiffness_dimension() {
         let stiffness = newton().div(&metre()).unwrap();
@@ -491,6 +518,7 @@ mod tests {
         assert_eq!(back.dimension, newton().dimension);
     }
 
+    // frob:tests crates/regolith-qty/src/unit.rs::Unit.is_offset kind="unit"
     #[test]
     fn offset_units_reject_algebra() {
         assert_eq!(
@@ -509,6 +537,7 @@ mod tests {
         assert_eq!(n, back);
     }
 
+    // frob:tests crates/regolith-qty/src/unit.rs::Unit.parse_atom kind="unit"
     #[test]
     fn parses_prefixed_atoms() {
         assert_eq!(
@@ -519,6 +548,7 @@ mod tests {
         assert!(Unit::parse_atom("mohm").is_ok());
     }
 
+    // frob:tests crates/regolith-qty/src/unit.rs::Unit.base_symbol kind="unit"
     #[test]
     fn base_symbol_names_the_unprefixed_form() {
         // D256: re-attaching a unit token to an SI-reduced magnitude
@@ -529,6 +559,7 @@ mod tests {
         assert_eq!(Unit::parse_atom("kN").unwrap().base_symbol(), "N");
     }
 
+    // frob:tests crates/regolith-qty/src/unit.rs::Unit.parse_expr kind="unit"
     #[test]
     fn base_symbol_is_empty_for_an_uncatalogued_compound_dimension() {
         // `N/m` composes a dimension no single table row names; the
@@ -537,6 +568,7 @@ mod tests {
         assert_eq!(n_per_m.base_symbol(), "");
     }
 
+    // frob:tests crates/regolith-qty/src/unit.rs::Unit.si_magnitude kind="unit"
     #[test]
     fn radian_is_dimensionless_and_mrad_reduces_exactly() {
         // WO-122 (F132.2): `rad` is the dimensionless SI angle unit at

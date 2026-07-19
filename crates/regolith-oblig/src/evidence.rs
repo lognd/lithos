@@ -15,6 +15,7 @@ use serde::{Deserialize, Serialize};
 /// G43/COPEN-7 demand (valve line-ups, failure states, range selections).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
+// frob:doc docs/modules/regolith-oblig.md#evidence
 pub enum CoverageDomain {
     /// A continuous domain, as text (e.g. `"[300K, 400K]"`).
     Interval(String),
@@ -28,6 +29,7 @@ pub enum CoverageDomain {
 /// How one coverage axis was swept.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
+// frob:doc docs/modules/regolith-oblig.md#evidence
 pub enum CoverageMethod {
     /// Corner-only sampling.
     Corners,
@@ -54,6 +56,7 @@ pub enum CoverageMethod {
 /// One axis of structured coverage: the swept variable, its domain,
 /// and the method used to cover it (D95, sec. 8.2).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#evidence
 pub struct CoverageAxis {
     /// The swept axis name.
     pub axis: String,
@@ -68,6 +71,7 @@ pub struct CoverageAxis {
 /// consumers -- `fraction` must never overstate what `axes` states.
 /// `Evidence`/`SolverResponse` carry this instead of a bare float.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#evidence
 pub struct Coverage {
     /// The per-axis coverage record (empty for a closed-form/full claim).
     pub axes: Vec<CoverageAxis>,
@@ -79,6 +83,7 @@ impl Coverage {
     /// Full coverage with no swept axes: the closed-form precedent
     /// (`Coverage::full()` = no axes + fraction 1.0).
     #[must_use]
+    // frob:doc docs/modules/regolith-oblig.md#evidence
     pub fn full() -> Coverage {
         Coverage {
             axes: Vec::new(),
@@ -89,6 +94,7 @@ impl Coverage {
     /// Coverage of `fraction` with no per-axis detail (the bare-float
     /// precedent, kept for callers not yet stating axes).
     #[must_use]
+    // frob:doc docs/modules/regolith-oblig.md#evidence
     pub fn from_fraction(fraction: f64) -> Coverage {
         Coverage {
             axes: Vec::new(),
@@ -98,6 +104,7 @@ impl Coverage {
 
     /// The scalar fraction as an `f64` (the conservative collapse).
     #[must_use]
+    // frob:doc docs/modules/regolith-oblig.md#evidence
     pub fn fraction(&self) -> f64 {
         f64::from_bits(self.fraction_bits)
     }
@@ -107,6 +114,7 @@ impl Coverage {
 /// `Indeterminate` (no adequate model / coverage) is not `Violated`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
+// frob:doc docs/modules/regolith-oblig.md#evidence
 pub enum Status {
     /// The claim holds with margin after the model's error.
     Discharged,
@@ -119,6 +127,7 @@ pub enum Status {
 
 /// The evidence produced by discharging one obligation.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#evidence
 pub struct Evidence {
     /// The discharge status.
     pub status: Status,
@@ -143,6 +152,7 @@ pub struct Evidence {
 /// `value + eps <= limit` -> discharged; provable `>` -> violated;
 /// otherwise indeterminate. This is the ONE place the rule lives.
 #[must_use]
+// frob:doc docs/modules/regolith-oblig.md#evidence
 pub fn decide_margin(value: f64, eps: f64, limit: f64) -> Status {
     if value + eps <= limit {
         Status::Discharged
@@ -156,6 +166,7 @@ pub fn decide_margin(value: f64, eps: f64, limit: f64) -> Status {
 /// A cache of evidence keyed on (subject, contract, registry versions),
 /// so a second run is a hit.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#evidence
 pub struct EvidenceCache {
     entries: regolith_util::IndexMap<String, Evidence>,
 }
@@ -163,6 +174,7 @@ pub struct EvidenceCache {
 impl EvidenceCache {
     /// An empty cache.
     #[must_use]
+    // frob:doc docs/modules/regolith-oblig.md#evidence
     pub fn new() -> EvidenceCache {
         EvidenceCache {
             entries: regolith_util::IndexMap::new(),
@@ -171,11 +183,13 @@ impl EvidenceCache {
 
     /// Look up evidence by its content-addressed cache key.
     #[must_use]
+    // frob:doc docs/modules/regolith-oblig.md#evidence
     pub fn get(&self, key: &str) -> Option<&Evidence> {
         self.entries.get(key)
     }
 
     /// Insert evidence under its cache key.
+    // frob:doc docs/modules/regolith-oblig.md#evidence
     pub fn insert(&mut self, key: String, evidence: Evidence) {
         self.entries.insert(key, evidence);
     }
@@ -192,6 +206,7 @@ mod tests {
         assert_ne!(Status::Indeterminate, Status::Violated);
     }
 
+    // frob:tests crates/regolith-oblig/src/evidence.rs::EvidenceCache.insert kind="unit"
     #[test]
     fn cache_round_trips_and_hits() {
         let ev = Evidence {
@@ -237,5 +252,25 @@ mod tests {
         let back: Coverage = serde_json::from_str(&json).unwrap();
         assert_eq!(back, coverage);
         assert_eq!(back.fraction().to_bits(), 1.0_f64.to_bits());
+    }
+
+    // frob:tests crates/regolith-oblig/src/evidence.rs::Coverage.from_fraction kind="unit"
+    #[test]
+    fn from_fraction_carries_no_per_axis_detail() {
+        let coverage = Coverage::from_fraction(0.75);
+        assert!(
+            coverage.axes.is_empty(),
+            "the bare-float precedent states no axes"
+        );
+        assert!((coverage.fraction() - 0.75).abs() < f64::EPSILON);
+    }
+
+    // frob:tests crates/regolith-oblig/src/evidence.rs::decide_margin kind="unit"
+    #[test]
+    fn decide_margin_covers_all_three_states() {
+        use super::decide_margin;
+        assert_eq!(decide_margin(90.0, 2.0, 100.0), Status::Discharged);
+        assert_eq!(decide_margin(150.0, 1.0, 100.0), Status::Violated);
+        assert_eq!(decide_margin(99.0, 5.0, 100.0), Status::Indeterminate);
     }
 }

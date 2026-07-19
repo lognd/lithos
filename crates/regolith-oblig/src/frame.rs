@@ -32,11 +32,13 @@ use regolith_util::canon::{content_address, EncodeError};
 /// Domain tag folded into every frame content address (AD-18): keeps a
 /// frame digest from colliding with any other payload kind even if the
 /// canonical CBOR bytes happened to coincide.
+// frob:doc docs/modules/regolith-oblig.md#frame
 pub const FRAME_DOMAIN_TAG: &str = "frame";
 
 /// A joint identifier within a frame (a stable elaboration-assigned
 /// name, either a coalesced member-anchor key or a `support:<name>`
 /// synthetic id for a support with no resolved anchor of its own).
+// frob:doc docs/modules/regolith-oblig.md#frame
 pub type JointId = String;
 
 /// A joint's datum reference: either a named `level` (the ordinary
@@ -59,6 +61,7 @@ pub type JointId = String;
 // `DatumKind` pool instead.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case", tag = "datum_kind", content = "value")]
+// frob:doc docs/modules/regolith-oblig.md#frame
 pub enum Datum {
     /// A named `level` declaration ref.
     Level(String),
@@ -72,6 +75,7 @@ pub enum Datum {
 /// end (the AD-25 GeomExtract placeholder idiom, applied to position
 /// rather than geometry: honestly indeterminate, not fabricated).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#frame
 pub struct JointAt {
     /// The grid refs naming this joint's plan position (e.g. `["A"]`
     /// or `["A", "2"]`), in the order they appeared in the member
@@ -87,6 +91,7 @@ pub struct JointAt {
 /// with no member anchor of its own gets a distinct joint with `at:
 /// None`.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#frame
 pub struct Joint {
     /// The stable joint id.
     pub id: JointId,
@@ -99,6 +104,7 @@ pub struct Joint {
 /// schema does not yet enumerate -- never a parse failure.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
+// frob:doc docs/modules/regolith-oblig.md#frame
 pub enum MemberRole {
     /// A beam (primarily flexural member).
     Beam,
@@ -122,6 +128,7 @@ impl MemberRole {
     /// into its typed [`MemberRole`], falling back to [`MemberRole::Other`]
     /// for a role word outside the calcite/02 sec. 4 vocabulary.
     #[must_use]
+    // frob:doc docs/modules/regolith-oblig.md#frame
     pub fn parse(word: &str) -> Self {
         match word {
             "beam" => Self::Beam,
@@ -142,6 +149,7 @@ impl MemberRole {
 /// slice's deliverable (WO-48 std.civil authoring); this schema carries
 /// the field honestly empty rather than fabricating a release set.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#frame
 pub struct Releases {
     /// Kept DOF codes at the member's `a` end.
     pub a: Vec<String>,
@@ -153,6 +161,7 @@ pub struct Releases {
 /// (derived from grid/level datums), resolved section/material, and
 /// end releases.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#frame
 pub struct FrameMember {
     /// The member's declared name.
     pub id: String,
@@ -192,6 +201,7 @@ pub struct FrameMember {
 /// One synthesized support (calcite/03 sec. 4): a `support:` node's
 /// joint plus its fixed degrees of freedom.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#frame
 pub struct Support {
     /// The support's joint id.
     pub joint: JointId,
@@ -209,6 +219,7 @@ pub struct Support {
 /// force-length (`kN-m`) -> [`LoadKind::Moment`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
+// frob:doc docs/modules/regolith-oblig.md#frame
 pub enum LoadKind {
     /// A distributed AREA load (pressure over a surface member).
     Distributed,
@@ -229,6 +240,7 @@ pub enum LoadKind {
 /// tributary-resolution input can be assembled from this payload
 /// without re-parsing source (AD-22).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#frame
 pub struct FrameTransfer {
     /// The transfer's declared name (e.g. `deck_g1`).
     pub id: String,
@@ -264,6 +276,7 @@ pub struct FrameTransfer {
 /// NOT payload load entries -- they are ordinary derived givens on the
 /// obligations that consume them, not literal frame data.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#frame
 pub struct FrameLoad {
     /// The load case's declared name (e.g. `pedestrian`, `live`).
     pub case: String,
@@ -292,6 +305,7 @@ pub struct FrameLoad {
 /// content-addressed record carrying one structure's joints, members,
 /// supports, loads, and load-combination set.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#frame
 pub struct FramePayload {
     /// Every joint in the structure (elaboration-sorted for determinism).
     pub joints: Vec<Joint>,
@@ -321,6 +335,7 @@ impl FramePayload {
     /// # Errors
     /// Propagates [`EncodeError`] from the canonical encoder (only a
     /// non-finite float or a serializer failure -- an upstream bug).
+    // frob:doc docs/modules/regolith-oblig.md#frame
     pub fn content_digest(&self) -> Result<String, EncodeError> {
         content_address(FRAME_DOMAIN_TAG, self)
     }
@@ -411,6 +426,7 @@ mod tests {
         assert_eq!(back, payload);
     }
 
+    // frob:tests crates/regolith-oblig/src/frame.rs::FramePayload.content_digest kind="unit"
     #[test]
     fn content_digest_is_stable_and_field_sensitive() {
         let payload = sample();

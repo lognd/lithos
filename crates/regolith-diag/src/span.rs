@@ -11,6 +11,7 @@ use serde::{Deserialize, Serialize};
 
 /// A half-open byte range `[start, end)` within a source file.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-diag.md#span
 pub struct Span {
     /// The source file the range points into.
     pub file: Utf8PathBuf,
@@ -23,6 +24,7 @@ pub struct Span {
 impl Span {
     /// Construct a span over `[start, end)` in `file`.
     #[must_use]
+    // frob:doc docs/modules/regolith-diag.md#span
     pub fn new(file: impl Into<Utf8PathBuf>, start: usize, end: usize) -> Span {
         Span {
             file: file.into(),
@@ -35,6 +37,7 @@ impl Span {
 /// A span plus the short label the renderer prints beside it
 /// ("this quantity is a voltage", "borrowed here").
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-diag.md#span
 pub struct LabeledSpan {
     /// Where in source this annotation points.
     pub span: Span,
@@ -45,6 +48,7 @@ pub struct LabeledSpan {
 impl LabeledSpan {
     /// Attach `label` to `span`.
     #[must_use]
+    // frob:doc docs/modules/regolith-diag.md#span
     pub fn new(span: Span, label: impl Into<String>) -> LabeledSpan {
         LabeledSpan {
             span,

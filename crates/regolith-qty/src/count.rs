@@ -13,6 +13,7 @@ use serde::{Deserialize, Serialize};
 /// `Eq` is intentional and permitted -- counts are discrete integers,
 /// exempt from the continuous-quantity equality ban.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-qty.md#count
 pub struct Count {
     /// The number of members (`n` in `n x thing`).
     pub count: u64,
@@ -23,6 +24,7 @@ pub struct Count {
 impl Count {
     /// Build a count of `count` members of `member_kind`.
     #[must_use]
+    // frob:doc docs/modules/regolith-qty.md#count
     pub fn new(count: u64, member_kind: impl Into<String>) -> Count {
         Count {
             count,

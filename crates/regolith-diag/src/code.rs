@@ -13,6 +13,7 @@ use serde::{Deserialize, Serialize};
 /// (`E03xx` -> [`Family::References`]).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
+// frob:doc docs/modules/regolith-diag.md#code
 pub enum Family {
     /// `E01xx` -- parse, types, units, grammar (incompatible quantities,
     /// `==` on continuous).
@@ -69,6 +70,7 @@ pub enum Family {
 impl Family {
     /// The numeric base of this family (`E03xx` -> `300`).
     #[must_use]
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const fn base(self) -> u16 {
         match self {
             Family::Parse => 100,
@@ -90,6 +92,7 @@ impl Family {
 /// Renders as `E0301` (family base + offset, zero-padded to four
 /// digits).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-diag.md#code
 pub struct DiagCode {
     /// The owning family.
     pub family: Family,
@@ -100,12 +103,14 @@ pub struct DiagCode {
 impl DiagCode {
     /// Construct a code in `family` at `offset`.
     #[must_use]
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const fn new(family: Family, offset: u16) -> DiagCode {
         DiagCode { family, offset }
     }
 
     /// The full numeric code (`E0301` -> `301`).
     #[must_use]
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const fn number(self) -> u16 {
         self.family.base() + self.offset
     }
@@ -129,18 +134,22 @@ pub mod codes {
     use super::{DiagCode, Family};
 
     /// `E0101` -- arithmetic between incompatible quantities.
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const INCOMPATIBLE_QUANTITIES: DiagCode = DiagCode::new(Family::Parse, 1);
     /// `E0102` -- `==` used on a continuous quantity (equality ban).
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const EQUALITY_ON_CONTINUOUS: DiagCode = DiagCode::new(Family::Parse, 2);
     /// `E0103` -- a `[a, b]` interval and a `[i .. j]` index range were
     /// confused: both separators in one bracket, or a range endpoint
     /// carrying a unit/fractional literal (regolith/02 sec. 3).
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const INTERVAL_RANGE_CONFUSION: DiagCode = DiagCode::new(Family::Parse, 3);
     /// `E0104` -- an illegal logarithmic-unit sum: after cancelling
     /// subtracted references against added ones, more than one reference
     /// survives (`dBm + dBm`) or a subtracted reference is uncancelled
     /// (regolith/02 sec. 5a; the linear product/quotient is not a valid
     /// quantity).
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const ILLEGAL_LOG_SUM: DiagCode = DiagCode::new(Family::Parse, 4);
     /// `E0105` -- a combinational (instantaneous `=`) cycle entirely
     /// within one clock/continuous domain, with no converter or register
@@ -148,6 +157,7 @@ pub mod codes {
     /// always passes through a converter (a ZOH delta by type), so no
     /// zero-delay cycle can cross the continuous/discrete boundary; this
     /// code flags only a within-domain loop the source actually declares.
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const COMBINATIONAL_CYCLE: DiagCode = DiagCode::new(Family::Parse, 5);
     /// `E0106` -- a `run <name>:` line inside a `harness:` block (D99,
     /// WO-34 deliverable 1) whose header does not spell both a `from`
@@ -156,6 +166,7 @@ pub mod codes {
     /// (that is elaboration's job, WO-34 deliverable 2) -- only that the
     /// two keywords are both present, so a run with no path to extract
     /// a length over is rejected as close to the source as possible.
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const RUN_MISSING_ENDPOINT: DiagCode = DiagCode::new(Family::Parse, 6);
     /// `E0107` -- `by select(...)` (WO-56, D161) declared with an
     /// empty candidate list. A choice point over zero candidates has
@@ -163,22 +174,26 @@ pub mod codes {
     /// parse-adjacent malformation (same L1 tier as
     /// `RUN_MISSING_ENDPOINT`) rather than surfacing as an empty
     /// domain at the optimizer.
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const SELECT_EMPTY_CANDIDATE_LIST: DiagCode = DiagCode::new(Family::Parse, 7);
     /// `E0201` -- a flownet subnet with no pressure imposer (reference,
     /// regulator, pump curve, or `Imposer`): the network is singular by
     /// construction and is rejected at COMPILE time, never at solve time
     /// (fluorite/02 sec. 4, the AD-23 fluid discipline).
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const IMPOSER_FREE_SUBNET: DiagCode = DiagCode::new(Family::FluidNet, 1);
     /// `E0202` -- a declared flownet node that no edge joins and that is
     /// not the reference (an unjoined terminal in the fluorite terminal
     /// ledger, fluorite/02 sec. 4): a dangling node cannot participate in
     /// the solved network.
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const UNJOINED_TERMINAL: DiagCode = DiagCode::new(Family::FluidNet, 2);
     /// `E0203` -- a transient/volume-budget claim (`fluids.volume_consumed`,
     /// `peak(...)`) names an edge with neither a compliance record nor an
     /// extractable wall (fluorite/03 sec. 1): the claim would be
     /// undischargeable, so lowering rejects it at compile time rather
     /// than leaving it to fail at solve time. WO-32 deliverable 5.
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const TRANSIENT_NO_COMPLIANCE: DiagCode = DiagCode::new(Family::FluidNet, 3);
     /// `E0204` -- a circulation net declares no `edges:` and no
     /// `reference:` (calcite/03 sec. 3, the circulation discipline's
@@ -186,6 +201,7 @@ pub mod codes {
     /// per-space unjoined-terminal half of the sec. 3 ledger needs a
     /// connectivity extraction this front-end layer does not have (see
     /// `regolith_lower::calcite`'s module doc comment).
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const SPACE_NOT_IN_CIRCULATION: DiagCode = DiagCode::new(Family::FluidNet, 4);
     /// `E0205` -- a space cannot reach a reference (exit) through
     /// circulation edges (calcite/03 sec. 3, reference reachability).
@@ -193,22 +209,27 @@ pub mod codes {
     /// reachability traversal beyond the existing imposer-counting
     /// `net_core` (WO-47 close-out cut; see the crate's `calcite`
     /// module doc comment for the escalation).
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const CIRCULATION_UNREACHABLE: DiagCode = DiagCode::new(Family::FluidNet, 5);
     /// `E0206` -- an egress edge on a required path with zero/undeclared
     /// width or `path_length` (calcite/03 sec. 3).
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const EGRESS_EDGE_UNDECLARED: DiagCode = DiagCode::new(Family::FluidNet, 6);
     /// `E0207` -- a member cannot reach a support through transfer edges
     /// (calcite/03 sec. 3, the load-LEAK check). Same reachability cut
     /// as `E0205` -- see `CIRCULATION_UNREACHABLE`'s doc comment.
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const MEMBER_UNSUPPORTED: DiagCode = DiagCode::new(Family::FluidNet, 7);
     /// `E0208` -- a structure subnet has no `support:` node (calcite/03
     /// sec. 3, the load-path discipline's imposer-counting analog; WO-47
     /// deliverable 4).
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const STRUCTURE_NO_SUPPORT: DiagCode = DiagCode::new(Family::FluidNet, 8);
     /// `E0209` -- a member end/bearing terminal is unjoined and not
     /// `unloaded`, or declared tributary shares fail to partition their
     /// loaded surface (calcite/03 sec. 3; two conditions share one code
     /// per the spec's own allocation).
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const MEMBER_UNJOINED_OR_TRIBUTARY_MISMATCH: DiagCode = DiagCode::new(Family::FluidNet, 9);
     /// `E0210` -- FOPEN-1 (fluorite/04, WO-49): a flownet edge resolves,
     /// through its `from=<part>.<role>` ref, to a component with a
@@ -219,6 +240,7 @@ pub mod codes {
     /// rule). Names both media and both declaration sites. (Landed as
     /// E0204 on the WO-49 branch; renumbered at integration -- the
     /// ratified calcite spec owns E0204-E0209.)
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const MEDIUM_MISMATCH: DiagCode = DiagCode::new(Family::FluidNet, 10);
     /// `E0211` -- WO-85/D194: a concentrated (force/moment-unit) load
     /// row targets a bare MEMBER with no `@<station>` refinement (the
@@ -226,25 +248,32 @@ pub mod codes {
     /// joint/support instead -- never inferred), or its declared
     /// station is malformed / outside the normalized `[0, 1]` range.
     /// Constructive: the message names both valid spellings.
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const POINT_LOAD_NEEDS_STATION: DiagCode = DiagCode::new(Family::FluidNet, 11);
     /// `E0301` -- an entity query matched more than one entity.
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const AMBIGUOUS_SELECTION: DiagCode = DiagCode::new(Family::References, 1);
     /// `E0302` -- conflicting borrow of an owned region.
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const BORROW_CONFLICT: DiagCode = DiagCode::new(Family::References, 2);
     /// `E0303` -- WO-33 D98: a claim projection (`max`/`min`/`at`/
     /// `slope`) names a field no `compute` claim in scope declares (the
     /// unresolved-reference family, mirroring `E0301`).
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const UNRESOLVED_FIELD_REFERENCE: DiagCode = DiagCode::new(Family::References, 3);
     /// `E0304` -- a change that alters an entity's structure class.
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const STRUCTURE_CLASS_CHANGE: DiagCode = DiagCode::new(Family::References, 4);
     /// `E0305` -- WO-33 D98: a `compute` claim's `over` clause
     /// (directly or transitively) references itself as a given,
     /// forming a cycle in the computed-field promise DAG. Names the
     /// full chain.
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const COMPUTE_FIELD_CYCLE: DiagCode = DiagCode::new(Family::References, 5);
     /// `E0306` -- WO-34 deliverable 2 (D99): a `harness:` run's `from`/
     /// `to` endpoints resolve to two different nets with no inline
     /// component between them. Names both nets.
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const RUN_CROSS_NET: DiagCode = DiagCode::new(Family::References, 6);
     /// `E0307` -- WO-34 deliverable 2: a `harness:` run's `from`/`to`
     /// header text does not spell a non-empty endpoint on one (or
@@ -253,40 +282,50 @@ pub mod codes {
     /// parse-time `E0106` (which only checks the keywords are
     /// present): this fires when a keyword is present but names no
     /// endpoint text.
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const RUN_DANGLING_ENDPOINT: DiagCode = DiagCode::new(Family::References, 7);
     /// `E0308` -- WO-34 deliverable 2: a `harness:` run's `bundle`
     /// clause is present but names no group text (an empty/malformed
     /// `bundle` line) -- the co-routing group is unknown.
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const RUN_UNKNOWN_BUNDLE: DiagCode = DiagCode::new(Family::References, 8);
     /// `E0309` -- WO-34 deliverable 2: a `harness:` run's `along`
     /// structural ref failed extraction through the shared WO-32 seam
     /// (no realized record, an empty path, or an unknown roughness
     /// class -- see `regolith_lower::extract::ExtractError`).
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const RUN_EXTRACT_FAILED: DiagCode = DiagCode::new(Family::References, 9);
     /// `E0407` -- an enclosing system's boundary envelope is not
     /// contained in an imported/child artifact's proven boundary
     /// (boundary subsumption, INV-7).
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const BOUNDARY_NOT_SUBSUMED: DiagCode = DiagCode::new(Family::Contracts, 7);
     /// `E0410` -- a demanded capability exceeds the supplied one.
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const CAPABILITY_VS_DEMAND: DiagCode = DiagCode::new(Family::Contracts, 10);
     /// `E0420` -- a ledger imbalance (DOF / driver / domain-crossing).
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const LEDGER_IMBALANCE: DiagCode = DiagCode::new(Family::Contracts, 20);
     /// `E0432` -- a budget cannot close at its worst-case corner.
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const BUDGET_CANNOT_CLOSE: DiagCode = DiagCode::new(Family::Contracts, 32);
     /// `E0433` -- a compute intent is realized by other than exactly one
     /// workload (zero or two-or-more), naming both sides (cuprite/05 sec.
     /// 1 rule 1, EOPEN-15's realization ledger).
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const REALIZATION_NOT_EXACTLY_ONE: DiagCode = DiagCode::new(Family::Contracts, 33);
     /// `E0434` -- an interface-side promised bound field has no
     /// same-name field on the impl side (or vice versa): conformance
     /// windows match by field NAME (WO-26 D104), so a name present on
     /// only one side is a constructive diagnostic naming both.
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const PROMISED_BOUND_UNMATCHED: DiagCode = DiagCode::new(Family::Contracts, 34);
     /// `E0435` -- a temporal REDUCTION claim form (`peak`/`rms`/
     /// `overshoot`) was recognized but carries no trailing external
     /// comparator (WO-26 D102): a reduction yields a scalar and always
     /// needs one, so a missing comparator is rejected at compile time
     /// rather than silently deferred.
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const TEMPORAL_REDUCTION_MISSING_COMPARATOR: DiagCode =
         DiagCode::new(Family::Contracts, 35);
     /// `E0436` -- a temporal CONTAINMENT claim form (`settles`/
@@ -294,12 +333,14 @@ pub mod codes {
     /// comparator (WO-26 D102): a containment's own parameters (`to=`
     /// tolerance, `mask=` reference) ARE the acceptance, so a trailing
     /// comparator is a shape error, not an extra check.
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const TEMPORAL_CONTAINMENT_UNEXPECTED_COMPARATOR: DiagCode =
         DiagCode::new(Family::Contracts, 36);
     /// `E0437` -- a general comparison claim line carries MORE than one
     /// top-level comparator (WO-26 D103: exactly ONE per claim line --
     /// each side is an ordinary quantity expression; chained or
     /// double-bounded comparisons have no defined lowering).
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const GENERAL_COMPARISON_MULTIPLE_COMPARATORS: DiagCode =
         DiagCode::new(Family::Contracts, 37);
     /// `E0438` -- an `mfg.cost(...)` claim's argument list is malformed
@@ -308,38 +349,45 @@ pub mod codes {
     /// subject, a duplicate or empty `profile=`, an unknown keyword,
     /// or a stray positional argument is rejected at compile time with
     /// the offending argument named, never silently deferred.
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const COST_CLAIM_MALFORMED: DiagCode = DiagCode::new(Family::Contracts, 38);
     /// `E0440` -- a numeric L2 solve (rigid statics, stiffness network)
     /// hit a singular or rank-deficient system: an under-determined
     /// support set, a disconnected stiffness network, or an
     /// ill-conditioned assembly (WO-23). Always a diagnostic, never a
     /// panic and never a NaN/non-finite value escaping the solve.
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const SINGULAR_SYSTEM: DiagCode = DiagCode::new(Family::Contracts, 40);
     /// `E0441` -- an exactly-constrained sketch (WO-11's conservative
     /// DOF ledger reports residual zero) whose numeric residual closure
     /// does not converge to zero: the declared constraints are
     /// mutually inconsistent, not merely under/over-counted (WO-23,
     /// hematite/07 OPEN-5/D65).
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const SKETCH_RESIDUAL_INCONSISTENT: DiagCode = DiagCode::new(Family::Contracts, 41);
     /// `E0442` -- a profile `constraints:` item references a segment
     /// name that no walk-step label binds (D150: segment names are
     /// syntax, `a: line right`; a comment is not a binding). The
     /// diagnostic is constructive: it names the walk's steps and the
     /// label spelling.
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const UNBOUND_SEGMENT_LABEL: DiagCode = DiagCode::new(Family::Contracts, 42);
     /// `E0443` -- a `then:` feature op has no projection into the v1
     /// `FeatureProgram` op set (WO-51 d2): the part's program is
     /// emitted without it and this NAMED warning records the gap --
     /// never silent truncation.
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const UNSUPPORTED_FEATURE_OP: DiagCode = DiagCode::new(Family::Contracts, 43);
     /// `E0444` -- a `.cavity(inlet=..., outlet=...)` query names a
     /// port whose feature binding no `then:` op in the part declares
     /// (D152 misuse; constructive: lists the part's op bindings).
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const CAVITY_PORT_UNRESOLVED: DiagCode = DiagCode::new(Family::Contracts, 44);
     /// `E0445` -- a cavity's inlet->outlet feature-op chain contains
     /// an op the v1 feature-op set cannot express, so no wetted path
     /// can be derived (hematite/07 sec. 2a's named escalation
     /// diagnostic -- the syntax-gap criterion, not a reopen).
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const CAVITY_CHAIN_INEXPRESSIBLE: DiagCode = DiagCode::new(Family::Contracts, 45);
     /// `E0446` -- a `by select(...)` (WO-56, D161) candidate list
     /// names the same impl-ref twice. Constructive: the check names
@@ -347,6 +395,7 @@ pub mod codes {
     /// candidate can never change a search's outcome and is always a
     /// authoring mistake (a copy/paste or a stale edit), never a
     /// legal "weight" on one alternative to preserve.
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const SELECT_DUPLICATE_CANDIDATE: DiagCode = DiagCode::new(Family::Contracts, 46);
     /// `E0447` -- a walk with a labeled `close` edge (an unconstrained
     /// 2-DOF vector, WO-62 D171/AD-32) still carries an explicit `free`
@@ -355,6 +404,7 @@ pub mod codes {
     /// under-constrained, naming the residual segment and the missing
     /// constraint class (assert its length or remove the `close`
     /// label). The over-constrained sibling is `E0441`.
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const SKETCH_CLOSE_EDGE_UNDERCONSTRAINED: DiagCode = DiagCode::new(Family::Contracts, 47);
     /// `E0448` -- a sheet-metal `Blank(...)` op has no thickness value
     /// source: no explicit `thickness=` arg AND no enclosing
@@ -362,6 +412,7 @@ pub mod codes {
     /// INV-21's `cause: process(<proc>.sheet)` API). A gauge-less
     /// unasserted sheet part is a compile diagnostic, never a silently
     /// unthickened blank.
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const SHEET_BLANK_NO_GAUGE_SOURCE: DiagCode = DiagCode::new(Family::Contracts, 48);
     /// `E0449` -- a `plan: extern(<ref>, <dialect>)` field (WO-69,
     /// regolith/08 sec. 4's L6 row) is malformed: the extern ref string
@@ -369,6 +420,7 @@ pub mod codes {
     /// name (`gcode_fanuc`/`gcode_marlin`). No `cam.*` obligations are
     /// emitted for a malformed clause (honest silence, never a guess);
     /// this diagnostic is the only signal.
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const PLAN_CLAUSE_MALFORMED: DiagCode = DiagCode::new(Family::Contracts, 49);
     /// `E0450` -- a `forall <var> in <domain>:` sweep names a BARE PLURAL
     /// (`boards`, `assemblies`) that resolves to no declared domain, so
@@ -378,6 +430,7 @@ pub mod codes {
     /// or a dotted pack ref) is legal; an explicitly EMPTY declared
     /// domain stays legal (empty sweep = zero obligations, honestly). Only
     /// the undeclared bare-plural name trips this diagnostic.
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const FORALL_DOMAIN_UNDECLARED: DiagCode = DiagCode::new(Family::Contracts, 50);
     /// `E0451` -- a material-removal family constructor (`Ribs`,
     /// `PocketGrid`, `Shell`, `Lattice` -- charter 34 phase 1, D200/
@@ -388,6 +441,7 @@ pub mod codes {
     /// the diagnostic names the family's full signature and the exact
     /// offending slot; the op is omitted from the emitted feature
     /// program (never a guessed value, never silent truncation).
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const REMOVAL_FAMILY_MALFORMED: DiagCode = DiagCode::new(Family::Contracts, 51);
     /// `E0452` -- an `elec.impedance(...) within [lo, hi]` claim
     /// (WO-78, charter 35 sec. 1.2) names no net: the call's first
@@ -396,42 +450,54 @@ pub mod codes {
     /// names the accepted shape (`elec.impedance(<net>[, role=...,
     /// stackup=..., layer=..., w=...]) within [lo, hi]`); the claim is
     /// not lowered (never a guessed subject).
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const SI_IMPEDANCE_MALFORMED: DiagCode = DiagCode::new(Family::Contracts, 52);
     /// `E0501` -- positional index used where a domain is required.
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const INDEX_VS_DOMAIN: DiagCode = DiagCode::new(Family::Instances, 1);
     /// `E0502` -- `any` over a broken (non-uniform) orbit.
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const BROKEN_ORBIT_ANY: DiagCode = DiagCode::new(Family::Instances, 2);
     /// `E0503` -- a generic declaration is never instantiated (a dead
     /// generic: a monomorphization point-set with no points, INV-11).
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const DEAD_GENERIC: DiagCode = DiagCode::new(Family::Instances, 3);
     /// `E0504` -- a use-site generic instantiation supplies the wrong
     /// number of arguments for its declaration, so no static check can
     /// run at that point (an un-expandable instantiation, INV-11).
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const GENERIC_ARITY_MISMATCH: DiagCode = DiagCode::new(Family::Instances, 4);
     /// `E0601` -- a rule pack's static rule evaluated `false` against a
     /// matched entity (`pack.rule` provenance, `why:` rendered).
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const RULE_VIOLATION: DiagCode = DiagCode::new(Family::RulePacks, 1);
     /// `E0602` -- two attached rule packs declare a rule of the same
     /// qualified name (`pack.rule`): union composition with no priority
     /// arithmetic means a collision is an error, never silent shadowing
     /// (design doc D-C).
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const RULE_NAME_COLLISION: DiagCode = DiagCode::new(Family::RulePacks, 2);
     /// `E0603` -- a rule's predicate references a fact no layer (static
     /// entity DB, WO-22/24 realized-fact extraction) provides: a compile
     /// error on the rule itself (design doc D-E), not a deferral.
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const RULE_FACT_UNPROVIDED: DiagCode = DiagCode::new(Family::RulePacks, 3);
     /// `E0604` -- a `resolves:` clause names a field that is never
     /// `free` at any use site in the corpus (a stale resolver, mirror of
     /// `E0701`).
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const RULE_STALE_RESOLVER: DiagCode = DiagCode::new(Family::RulePacks, 4);
     /// `E0701` -- a declared waiver matched no claim or rule (stale).
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const STALE_WAIVER: DiagCode = DiagCode::new(Family::Evidence, 1);
     /// `E0702` -- a waiver carries no mandatory `basis:` (regolith/12
     /// rule 2): an unjustified concession, rejected as an INV-2 ladder
     /// overreach rather than accepted.
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const WAIVER_MISSING_BASIS: DiagCode = DiagCode::new(Family::Evidence, 2);
     /// `L0801` -- WO-40: an `import` line whose bound name is never
     /// referenced anywhere else in the same file (a dead import).
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const UNUSED_IMPORT: DiagCode = DiagCode::new(Family::Lint, 1);
     /// `L0802` -- WO-40: source text spells a retired project name
     /// (`mill`, `loom`, `dcad`, `deda`, `quarry`, `lodestone`, or the
@@ -439,10 +505,12 @@ pub mod codes {
     /// the "dead names are DEAD" CLAUDE.md rule, made mechanically
     /// checkable (design-log verbatim history and negative-fixture
     /// filenames are exempt, see `lints::retired_vocabulary`).
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const RETIRED_VOCABULARY_USAGE: DiagCode = DiagCode::new(Family::Lint, 2);
     /// `L0803` -- WO-40: one advisory per file summarizing its `todo!`/
     /// `assume!` count + locations (the honest-deferral surface; not a
     /// nag per line).
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const TODO_ASSUME_INVENTORY: DiagCode = DiagCode::new(Family::Lint, 3);
     /// `E0703` -- WO-40/D117: a `waive` block's target spells a lint
     /// code (`Lxxxx`, case-insensitive) instead of a `Group.claim`/rule
@@ -450,6 +518,7 @@ pub mod codes {
     /// (`apply_lint_config` only ever touches the `Lint` family): the
     /// waive ladder cannot silence its own audit, so this rejection can
     /// never itself be configured away by `[lints]`.
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const WAIVE_NAMES_LINT_CODE: DiagCode = DiagCode::new(Family::Evidence, 3);
 
     /// `E0901` -- WO-131/D247.2: a shipped gerber/fab-package set is
@@ -457,11 +526,13 @@ pub mod codes {
     /// bare Python string `fab_set_incomplete`
     /// (`regolith.backends.elec_fabset`, WO-124) -- no grandfathering
     /// (D247.2).
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const FAB_SET_INCOMPLETE: DiagCode = DiagCode::new(Family::Emission, 1);
     /// `E0902` -- WO-131/D247.2: a drafting audit rule failed on a
     /// gating sheet (`regolith.backends.drawings.audit`, WO-123).
     /// BACKFILLED from the bare Python string `drafting_audit_refused`
     /// -- no grandfathering (D247.2).
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const DRAFTING_AUDIT_REFUSED: DiagCode = DiagCode::new(Family::Emission, 2);
     /// `E0903` -- WO-131/D247.2: a shipped package's artifact index
     /// (the manifest's file list) drifts from what the package
@@ -471,6 +542,7 @@ pub mod codes {
     /// backfill) -- registered here so a future producer does not
     /// have to open a second home. See WO-131 close-out escalation
     /// F-WO131-1.
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const ARTIFACT_INDEX_DRIFT: DiagCode = DiagCode::new(Family::Emission, 3);
 
     /// `E1001` -- RESERVED for WO-129A (D246): an override applied
@@ -478,14 +550,17 @@ pub mod codes {
     /// attached (an unexplained override). Not raised by this WO;
     /// registered per the WO-131 deliverable 3 instruction so WO-129A
     /// can raise it without a second registry.
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const UNEXPLAINED_OVERRIDE: DiagCode = DiagCode::new(Family::Injection, 1);
     /// `E1002` -- RESERVED for WO-129A (D246): an override targets a
     /// SOURCE-only claim (the D246 claims/evidence boundary) rather
     /// than an evidence-backed one. Not raised by this WO.
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const SOURCE_ONLY_TARGET_REFUSED: DiagCode = DiagCode::new(Family::Injection, 2);
     /// `E1003` -- RESERVED for WO-129A (D246): an override names a
     /// target that cannot be resolved anywhere in the build. Not
     /// raised by this WO.
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const UNRESOLVABLE_OVERRIDE_TARGET: DiagCode = DiagCode::new(Family::Injection, 3);
 
     /// `E1101` -- WO-131/D247.2: an `expected_signals.json` carries a
@@ -494,6 +569,7 @@ pub mod codes {
     /// the bare Python string `expectation_provenance_unresolved`
     /// (`regolith.backends.harness_pack`, WO-126) -- no grandfathering
     /// (D247.2).
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const EXPECTATION_PROVENANCE_UNRESOLVED: DiagCode = DiagCode::new(Family::BringUp, 1);
     /// `E1102` -- WO-131/D247.1 (D237.1): a debug-profile ship
     /// manifest is refused as release-gate evidence.
@@ -501,11 +577,13 @@ pub mod codes {
     /// `debug_not_release_evidence` (`regolith.backends.manifest`,
     /// function `release_gate_refuses_debug_evidence`, WO-125) -- no
     /// grandfathering (D247.2).
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const RELEASE_GATE_REFUSES_DEBUG_EVIDENCE: DiagCode = DiagCode::new(Family::BringUp, 2);
     /// `E1103` -- WO-131/D247.2: a debug tap map disagrees with the
     /// artifact it claims to describe. BACKFILLED from the bare
     /// Python string `tap_map_artifact_mismatch`
     /// (`regolith.backends.debug_taps`) -- no grandfathering (D247.2).
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const TAP_MAP_DISAGREEMENT: DiagCode = DiagCode::new(Family::BringUp, 3);
 
     /// Every registered code paired with its Rust symbol name, for the
@@ -514,6 +592,7 @@ pub mod codes {
     /// deliverable 2). A code minted here and left out of this slice
     /// is a build error (see `regolith_diag::explain`'s completeness
     /// test) -- this is what makes D247.4's rule able to FAIL.
+    // frob:doc docs/modules/regolith-diag.md#code
     pub const ALL: &[(&str, DiagCode)] = &[
         ("INCOMPATIBLE_QUANTITIES", INCOMPATIBLE_QUANTITIES),
         ("EQUALITY_ON_CONTINUOUS", EQUALITY_ON_CONTINUOUS),

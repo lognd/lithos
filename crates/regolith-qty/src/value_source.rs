@@ -16,6 +16,7 @@ use crate::window::Window;
 /// A one-sided asserted comparator bound (`>= 80kN/mm`, `<= 30ns`).
 /// Comparator literals ARE literals: one-sided asserted truth.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-qty.md#value_source
 pub enum Comparator {
     /// `>= x`.
     AtLeast(Qty),
@@ -25,6 +26,7 @@ pub enum Comparator {
 
 /// A literal value source (the human knows it).
 #[derive(Debug, Clone, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-qty.md#value_source
 pub enum Literal {
     /// A plain quantity (`wall = 4mm`) or an interval scatter
     /// (`3.3V +- 5%`, `[300K, 900K]`).
@@ -41,6 +43,7 @@ pub enum Literal {
 /// (SOPEN-4): global objectives live in `policy:` blocks, not here.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
+// frob:doc docs/modules/regolith-qty.md#value_source
 pub enum Direction {
     /// Prefer the smallest satisfying value.
     Minimize,
@@ -50,6 +53,7 @@ pub enum Direction {
 
 /// A discrete domain the optimizer chooses from (monomorphized).
 #[derive(Debug, Clone, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-qty.md#value_source
 pub enum DiscreteSet {
     /// Integer choices (`n = in [2, 6]` -> 2,3,4,5,6).
     Ints(Vec<i64>),
@@ -60,6 +64,7 @@ pub enum DiscreteSet {
 /// The domain of an `in [...]` source: a continuous interval or a
 /// discrete set.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-qty.md#value_source
 pub enum DomainSpec {
     /// A continuous bounded interval (`in [10uF, 100uF]`).
     Interval(Interval),
@@ -70,6 +75,7 @@ pub enum DomainSpec {
 /// One of the five value sources every numeric slot takes.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "source", rename_all = "snake_case")]
+// frob:doc docs/modules/regolith-qty.md#value_source
 pub enum ValueSource {
     /// Asserted truth (`wall = 4mm`, `<= 12N`, `within [lo, hi]`).
     Literal(Literal),

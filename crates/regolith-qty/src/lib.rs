@@ -42,6 +42,7 @@ pub use window::Window;
 /// Number of base dimensions in the fixed dimension vector (AD-9).
 /// Length, mass, time, current, temperature, amount, luminous
 /// intensity -- SI's seven.
+// frob:doc docs/modules/regolith-qty.md#lib
 pub const BASE_DIMENSIONS: usize = 7;
 
 #[cfg(test)]

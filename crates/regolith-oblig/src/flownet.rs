@@ -28,10 +28,12 @@ use serde::{Deserialize, Serialize};
 /// Domain tag folded into every flownet content address (AD-18): keeps
 /// a flownet digest from colliding with any other payload kind even if
 /// the canonical CBOR bytes happened to coincide.
+// frob:doc docs/modules/regolith-oblig.md#flownet
 pub const FLOWNET_DOMAIN_TAG: &str = "flownet";
 
 /// A node identifier within a flownet (a stable elaboration-assigned
 /// name); nodes are the network's pressure/flow junctions.
+// frob:doc docs/modules/regolith-oblig.md#flownet
 pub type NodeId = String;
 
 /// A hash-pinned reference to a registry record (property table, vendor
@@ -39,6 +41,7 @@ pub type NodeId = String;
 /// ONLY -- resolution is the orchestrator's content-addressed store,
 /// never a pack's own IO (mirrors [`crate::payload::PayloadRef`]).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#flownet
 pub struct RecordRef {
     /// The blake3 content digest of the referenced record's bytes.
     pub digest: String,
@@ -52,6 +55,7 @@ pub struct RecordRef {
 /// wire form of `regolith_qty::Interval`, whose internal representation
 /// is not itself a boundary type).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#flownet
 pub struct ScalarInterval {
     /// The lower bound.
     pub lo: f64,
@@ -67,6 +71,7 @@ pub struct ScalarInterval {
 /// `regolith_lower::fluid::check_flownet`'s `impl FluidPort<medium=...>`
 /// binding check, WO-49 -- diagnostic `E0210`).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#flownet
 pub struct MediumRef {
     /// The hash-pinned property records describing the medium.
     pub records: Vec<RecordRef>,
@@ -75,6 +80,7 @@ pub struct MediumRef {
 /// The datum node and its imposed reference state (the one node whose
 /// pressure/temperature is fixed, anchoring the network solve).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#flownet
 pub struct Reference {
     /// The datum node id.
     pub node: NodeId,
@@ -87,6 +93,7 @@ pub struct Reference {
 /// The constructor kind of a flow edge (fluorite/02 sec. 3 vocabulary).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
+// frob:doc docs/modules/regolith-oblig.md#flownet
 pub enum EdgeKind {
     /// A rigid pipe run (hydraulic loss from wetted geometry).
     Pipe,
@@ -118,6 +125,7 @@ pub enum EdgeKind {
 /// time; the payload records WHICH record/selector, resolved by digest).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case", tag = "source")]
+// frob:doc docs/modules/regolith-oblig.md#flownet
 pub enum EdgeParams {
     /// Literal scalar-interval parameters keyed by name (e.g.
     /// `"area"`, `"length"`, `"roughness"`).
@@ -152,6 +160,7 @@ pub enum EdgeParams {
 /// (D93). Present only for edges named by transient/volume-budget
 /// claims; a rigid edge carries `None`.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#flownet
 pub struct Compliance {
     /// The wall compliance `dV/dp` interval (volume gained per unit
     /// pressure rise over the edge's wetted length).
@@ -168,6 +177,7 @@ pub struct Compliance {
 /// with its kind, parameters, optional wall compliance, and any vendor
 /// curve records.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#flownet
 pub struct FlowEdge {
     /// The stable edge id (elaboration-assigned).
     pub id: String,
@@ -190,6 +200,7 @@ pub struct FlowEdge {
 /// state variable, left symbolic for the ONE-swept-obligation rule
 /// (regolith/07 sec. 2) rather than enumerated into obligation copies.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#flownet
 pub struct StateDomain {
     /// The target the state applies to (edge id or net name).
     pub target: String,
@@ -203,6 +214,7 @@ pub struct StateDomain {
 /// content-addressed record carrying the medium, topology, datum, edges,
 /// and symbolic state domains a solver pack needs to solve the network.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#flownet
 pub struct FlownetPayload {
     /// The working-medium property-record refs.
     pub medium: MediumRef,
@@ -224,6 +236,7 @@ impl FlownetPayload {
     /// # Errors
     /// Propagates [`EncodeError`] from the canonical encoder (only a
     /// non-finite float or a serializer failure -- an upstream bug).
+    // frob:doc docs/modules/regolith-oblig.md#flownet
     pub fn content_digest(&self) -> Result<String, EncodeError> {
         content_address(FLOWNET_DOMAIN_TAG, self)
     }
@@ -285,6 +298,7 @@ mod tests {
         assert_eq!(back, payload);
     }
 
+    // frob:tests crates/regolith-oblig/src/flownet.rs::FlownetPayload.content_digest kind="unit"
     #[test]
     fn content_digest_is_stable_and_field_sensitive() {
         let payload = sample();

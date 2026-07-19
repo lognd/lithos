@@ -13,6 +13,7 @@ use crate::BASE_DIMENSIONS;
 /// A base-dimension exponent. Rational (AD-9): noise density
 /// (`nV/sqrt(Hz)`) is genuine half-integer territory the elec track
 /// needs, so integer exponents are insufficient.
+// frob:doc docs/modules/regolith-qty.md#dimension
 pub type Exponent = Ratio<i32>;
 
 /// The seven SI base dimensions, in the fixed order used by the
@@ -20,6 +21,7 @@ pub type Exponent = Ratio<i32>;
 /// order and the hash input order (AD-6).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
+// frob:doc docs/modules/regolith-qty.md#dimension
 pub enum BaseDimension {
     /// Length (metre).
     Length,
@@ -41,6 +43,7 @@ impl BaseDimension {
     /// The fixed-order list of all base dimensions; index equals the
     /// exponent-vector slot.
     #[must_use]
+    // frob:doc docs/modules/regolith-qty.md#dimension
     pub const fn all() -> [BaseDimension; BASE_DIMENSIONS] {
         [
             BaseDimension::Length,
@@ -55,6 +58,7 @@ impl BaseDimension {
 
     /// This dimension's slot in the exponent vector.
     #[must_use]
+    // frob:doc docs/modules/regolith-qty.md#dimension
     pub const fn index(self) -> usize {
         self as usize
     }
@@ -65,6 +69,7 @@ impl BaseDimension {
 /// comparable (the `==` ban is on continuous *quantities*, not on
 /// dimensions).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-qty.md#dimension
 pub struct Dimension {
     exps: [Exponent; BASE_DIMENSIONS],
 }
@@ -95,6 +100,7 @@ impl Dimension {
     /// The dimensionless dimension (all exponents zero): ratios, counts,
     /// gains, plain numbers.
     #[must_use]
+    // frob:doc docs/modules/regolith-qty.md#dimension
     pub fn dimensionless() -> Self {
         Dimension {
             exps: [Ratio::from_integer(0); BASE_DIMENSIONS],
@@ -103,6 +109,7 @@ impl Dimension {
 
     /// The unit dimension of a single base (exponent one, rest zero).
     #[must_use]
+    // frob:doc docs/modules/regolith-qty.md#dimension
     pub fn base(base: BaseDimension) -> Self {
         let mut exps = [Ratio::from_integer(0); BASE_DIMENSIONS];
         exps[base.index()] = Ratio::from_integer(1);
@@ -111,24 +118,28 @@ impl Dimension {
 
     /// Construct directly from an exponent vector (base-dimension order).
     #[must_use]
+    // frob:doc docs/modules/regolith-qty.md#dimension
     pub fn from_exponents(exps: [Exponent; BASE_DIMENSIONS]) -> Self {
         Dimension { exps }
     }
 
     /// The exponent of `base` in this dimension.
     #[must_use]
+    // frob:doc docs/modules/regolith-qty.md#dimension
     pub fn exponent(&self, base: BaseDimension) -> Exponent {
         self.exps[base.index()]
     }
 
     /// True when every base exponent is zero.
     #[must_use]
+    // frob:doc docs/modules/regolith-qty.md#dimension
     pub fn is_dimensionless(&self) -> bool {
         self.exps.iter().all(|e| *e == Ratio::from_integer(0))
     }
 
     /// Product of two dimensions: exponents add (`N/m * m` -> `N`).
     #[must_use]
+    // frob:doc docs/modules/regolith-qty.md#dimension
     pub fn mul(&self, other: &Dimension) -> Dimension {
         let mut exps = self.exps;
         for (slot, rhs) in exps.iter_mut().zip(other.exps.iter()) {
@@ -139,6 +150,7 @@ impl Dimension {
 
     /// Quotient of two dimensions: exponents subtract.
     #[must_use]
+    // frob:doc docs/modules/regolith-qty.md#dimension
     pub fn div(&self, other: &Dimension) -> Dimension {
         let mut exps = self.exps;
         for (slot, rhs) in exps.iter_mut().zip(other.exps.iter()) {
@@ -149,6 +161,7 @@ impl Dimension {
 
     /// This dimension raised to a rational power (exponents scale).
     #[must_use]
+    // frob:doc docs/modules/regolith-qty.md#dimension
     pub fn pow(&self, power: Exponent) -> Dimension {
         let mut exps = self.exps;
         for slot in &mut exps {
@@ -179,12 +192,16 @@ mod tests {
         ])
     }
 
+    // frob:tests crates/regolith-qty/src/dimension.rs::Dimension.is_dimensionless kind="unit"
     #[test]
     fn dimensionless_is_all_zero() {
         assert!(Dimension::dimensionless().is_dimensionless());
         assert!(!length().is_dimensionless());
     }
 
+    // frob:tests crates/regolith-qty/src/dimension.rs::Dimension.div kind="unit"
+    // frob:tests crates/regolith-qty/src/dimension.rs::Dimension.mul kind="unit"
+    // frob:tests crates/regolith-qty/src/dimension.rs::Dimension.from_exponents kind="unit"
     #[test]
     fn stiffness_times_length_is_force() {
         // stiffness N/m = force / length; (N/m) * m == N
@@ -197,6 +214,8 @@ mod tests {
         assert_eq!(force().div(&length()).mul(&length()), force());
     }
 
+    // frob:tests crates/regolith-qty/src/dimension.rs::Dimension.pow kind="unit"
+    // frob:tests crates/regolith-qty/src/dimension.rs::Dimension.exponent kind="unit"
     #[test]
     fn pow_scales_exponents() {
         let area = length().pow(Ratio::from_integer(2));

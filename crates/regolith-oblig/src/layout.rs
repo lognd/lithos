@@ -36,11 +36,13 @@ use serde::{Deserialize, Serialize};
 /// Domain tag folded into every realized-layout content address
 /// (AD-18): keeps a layout digest from colliding with any other payload
 /// kind even if the canonical CBOR bytes happened to coincide.
+// frob:doc docs/modules/regolith-oblig.md#layout
 pub const LAYOUT_DOMAIN_TAG: &str = "layout.realized";
 
 /// Which side of the board a placement sits on.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
+// frob:doc docs/modules/regolith-oblig.md#layout
 pub enum BoardSide {
     /// Top (component) side.
     Top,
@@ -50,6 +52,7 @@ pub enum BoardSide {
 
 /// One placed footprint on the board.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#layout
 pub struct Placement {
     /// The reference designator (e.g. `U1`, `R12`) the placement binds.
     pub reference: String,
@@ -65,6 +68,7 @@ pub struct Placement {
 
 /// One routed copper segment (a track) belonging to a net.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#layout
 pub struct RoutedSegment {
     /// The net this segment belongs to.
     pub net: String,
@@ -81,6 +85,7 @@ pub struct RoutedSegment {
 /// mirroring `regolith.realizer.elec.extraction.LayoutExtraction`'s
 /// field shapes but keyed for the schema, not a bare mapping).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#layout
 pub struct CopperSummary {
     /// Total routed track length per net, mm.
     pub net_lengths_mm: Vec<NetLength>,
@@ -92,6 +97,7 @@ pub struct CopperSummary {
 /// pairs rather than a map for AD-6 deterministic ordering across the
 /// FFI/JSON boundary).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#layout
 pub struct NetLength {
     /// The net name.
     pub net: String,
@@ -101,6 +107,7 @@ pub struct NetLength {
 
 /// One named copper region's area (a `CopperSummary` entry).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#layout
 pub struct CopperArea {
     /// The copper region name (a zone/pour identifier).
     pub region: String,
@@ -112,6 +119,7 @@ pub struct CopperArea {
 /// (e.g. a trace's parasitic resistance/inductance/capacitance) shaped
 /// as a model-pack input, keyed by the net or segment it belongs to.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#layout
 pub struct ParasiticSlot {
     /// The net or segment this parasitic value is extracted for.
     pub subject: String,
@@ -129,6 +137,7 @@ pub struct ParasiticSlot {
 /// routed segment, a copper summary, extracted parasitic slots, and the
 /// `.kicad_pcb` content-hash pin.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#layout
 pub struct RealizedLayout {
     /// The content hash of the bound netlist this layout was routed
     /// from (provenance; the G42 anti-staleness citation).
@@ -163,6 +172,7 @@ impl RealizedLayout {
     /// Propagates [`regolith_util::canon::EncodeError`] from the
     /// canonical encoder (only a non-finite float or a serializer
     /// failure -- an upstream bug).
+    // frob:doc docs/modules/regolith-oblig.md#layout
     pub fn content_digest(&self) -> Result<String, regolith_util::canon::EncodeError> {
         regolith_util::canon::content_address(LAYOUT_DOMAIN_TAG, self)
     }
@@ -208,6 +218,7 @@ mod tests {
         }
     }
 
+    // frob:tests crates/regolith-oblig/src/layout.rs::RealizedLayout.content_digest kind="unit"
     #[test]
     fn content_digest_is_stable_and_field_sensitive() {
         let payload = sample();

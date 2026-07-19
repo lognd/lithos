@@ -24,6 +24,7 @@ use serde::{Deserialize, Serialize};
 /// Domain tag folded into every drawing content address (AD-18): keeps
 /// a drawing digest from colliding with any other payload kind even if
 /// the canonical CBOR bytes happened to coincide.
+// frob:doc docs/modules/regolith-oblig.md#drawing
 pub const DRAWING_DOMAIN_TAG: &str = "drawing.sheet";
 
 /// Where a rendered number on a sheet comes from (charter sec. 1
@@ -33,6 +34,7 @@ pub const DRAWING_DOMAIN_TAG: &str = "drawing.sheet";
 /// deserialization error, not a silently-accepted unknown.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case", tag = "kind")]
+// frob:doc docs/modules/regolith-oblig.md#drawing
 pub enum Provenance {
     /// The lockfile resolution cause (free-string label mirroring
     /// `regolith_qty::Cause`'s own wire shape, kept free-form here so
@@ -59,6 +61,7 @@ pub enum Provenance {
 /// against; a project-specific size is future scope, charter sec. 3).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
+// frob:doc docs/modules/regolith-oblig.md#drawing
 pub enum SheetSize {
     /// ANSI A / 8.5x11 in.
     AnsiA,
@@ -76,6 +79,7 @@ pub enum SheetSize {
 /// checks these are non-empty): the minimal set every drafting
 /// standard demands.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#drawing
 pub struct TitleBlock {
     /// Drawing/part/assembly title.
     pub title: String,
@@ -92,6 +96,7 @@ pub struct TitleBlock {
 
 /// Which realized-IR digest a [`View`] projects, and how.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#drawing
 pub struct ViewSource {
     /// The realized-IR content digest this view projects (provenance:
     /// a view can never disagree with the build state it renders).
@@ -106,6 +111,7 @@ pub struct ViewSource {
 /// One named view on a sheet: a projection (mech/civil) or a schematic
 /// layout (fluid P&ID, elec one-line) of a [`ViewSource`].
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#drawing
 pub struct View {
     /// View name (e.g. "front", "top", "isometric", "pid").
     pub name: String,
@@ -124,6 +130,7 @@ pub struct View {
 
 /// A 2D point in sheet-space (mm), used by every entity/annotation
 /// geometry field.
+// frob:doc docs/modules/regolith-oblig.md#drawing
 pub type Point2 = [f64; 2];
 
 /// One projected or schematic 2D drawing primitive. Entities are
@@ -132,6 +139,7 @@ pub type Point2 = [f64; 2];
 /// computed by a renderer (AD-27).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case", tag = "kind")]
+// frob:doc docs/modules/regolith-oblig.md#drawing
 pub enum Entity {
     /// A straight segment.
     Segment {
@@ -172,6 +180,7 @@ pub enum Entity {
 /// provenance field (charter sec. 1 decision 3 -- the schema makes an
 /// unattributed number unrepresentable).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#drawing
 pub struct Dimension {
     /// The interface/feature role this dimension documents (e.g.
     /// `"bore.diameter"`), matched against contract-coverage checking.
@@ -196,6 +205,7 @@ pub struct Dimension {
 /// A free-text or symbolic annotation (notes, GD&T frames, per:
 /// citations).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#drawing
 pub struct Annotation {
     /// Annotation text (a GD&T frame renders as its text form here;
     /// v1 does not model frame glyph geometry separately).
@@ -218,6 +228,7 @@ pub struct Annotation {
 /// trace back to a [`Dimension`]/record elsewhere when they represent
 /// a toleranced value.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#drawing
 pub struct TableRow {
     /// Cell values, in column order.
     pub cells: Vec<String>,
@@ -227,6 +238,7 @@ pub struct TableRow {
 /// BOM) -- the ONE schedule mechanism (charter/AD-27: schedules are
 /// `tables` in the same IR, not a second mechanism).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#drawing
 pub struct Table {
     /// Table title (e.g. "Member Schedule", "Bill of Materials").
     pub title: String,
@@ -239,6 +251,7 @@ pub struct Table {
 /// One sheet: paper size, title block, its views, and the entities/
 /// dimensions/annotations/tables placed on it.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#drawing
 pub struct Sheet {
     /// Sheet paper size.
     pub size: SheetSize,
@@ -261,6 +274,7 @@ pub struct Sheet {
 /// sheets, content-addressed as a whole so a sheet SET (e.g. a civil
 /// plan + its member schedule) can be pinned by one digest.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#drawing
 pub struct DrawingModel {
     /// The subject name this drawing set documents (e.g. the part,
     /// assembly, or net subject string).
@@ -284,6 +298,7 @@ impl DrawingModel {
     /// Propagates [`regolith_util::canon::EncodeError`] from the
     /// canonical encoder (only a non-finite float or a serializer
     /// failure -- an upstream bug).
+    // frob:doc docs/modules/regolith-oblig.md#drawing
     pub fn content_digest(&self) -> Result<String, regolith_util::canon::EncodeError> {
         regolith_util::canon::content_address(DRAWING_DOMAIN_TAG, self)
     }
@@ -336,6 +351,7 @@ mod tests {
         }
     }
 
+    // frob:tests crates/regolith-oblig/src/drawing.rs::DrawingModel.content_digest kind="unit"
     #[test]
     fn content_digest_is_stable_and_field_sensitive() {
         let model = sample();

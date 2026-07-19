@@ -14,6 +14,7 @@ use crate::quantity::Qty;
 /// A position in a positional range: either a plain integer index (bus
 /// bit) or an address-valued quantity (`flash[0 .. 32kB]`).
 #[derive(Debug, Clone, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-qty.md#range
 pub enum RangePos {
     /// A non-negative integer index (a bit position).
     Index(u64),
@@ -24,6 +25,7 @@ pub enum RangePos {
 /// A half-open range `[start .. end)`. `end` is optional: an absent end
 /// means "to the extent's end" (`[1MB ..]`).
 #[derive(Debug, Clone, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-qty.md#range
 pub struct Range {
     /// Inclusive start position.
     pub start: RangePos,
@@ -34,6 +36,7 @@ pub struct Range {
 impl Range {
     /// A closed-ended half-open range `[start .. end)`.
     #[must_use]
+    // frob:doc docs/modules/regolith-qty.md#range
     pub fn new(start: RangePos, end: RangePos) -> Range {
         Range {
             start,
@@ -43,12 +46,14 @@ impl Range {
 
     /// An open-right range `[start ..]` (to the extent's end).
     #[must_use]
+    // frob:doc docs/modules/regolith-qty.md#range
     pub fn open(start: RangePos) -> Range {
         Range { start, end: None }
     }
 
     /// True when the range has no explicit end (open right).
     #[must_use]
+    // frob:doc docs/modules/regolith-qty.md#range
     pub fn is_open(&self) -> bool {
         self.end.is_none()
     }
@@ -56,6 +61,7 @@ impl Range {
     /// The count of integer positions in a closed integer range
     /// (`[0 .. 3]` -> 3). `None` for open or address-valued ranges.
     #[must_use]
+    // frob:doc docs/modules/regolith-qty.md#range
     pub fn index_len(&self) -> Option<u64> {
         match (&self.start, &self.end) {
             (RangePos::Index(start), Some(RangePos::Index(end))) => Some(end - start),
@@ -68,6 +74,8 @@ impl Range {
 mod tests {
     use super::{Range, RangePos};
 
+    // frob:tests crates/regolith-qty/src/range.rs::Range.is_open kind="unit"
+    // frob:tests crates/regolith-qty/src/range.rs::Range.open kind="unit"
     #[test]
     fn open_range_reports_open() {
         let r = Range::open(RangePos::Index(1));
@@ -82,5 +90,28 @@ mod tests {
         let json = serde_json::to_string(&r).unwrap();
         let back: Range = serde_json::from_str(&json).unwrap();
         assert!(!back.is_open());
+    }
+
+    // frob:tests crates/regolith-qty/src/range.rs::Range.index_len kind="unit"
+    #[test]
+    fn index_len_counts_closed_integer_ranges_only() {
+        let closed = Range::new(RangePos::Index(0), RangePos::Index(3));
+        assert_eq!(closed.index_len(), Some(3));
+
+        let open = Range::open(RangePos::Index(1));
+        assert_eq!(open.index_len(), None, "open ranges have no fixed count");
+
+        let addressed = Range::new(
+            RangePos::Address(crate::quantity::Qty::new(
+                0.0,
+                crate::unit::Unit::dimensionless(),
+            )),
+            RangePos::Index(3),
+        );
+        assert_eq!(
+            addressed.index_len(),
+            None,
+            "address-valued ends are not countable"
+        );
     }
 }

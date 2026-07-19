@@ -22,6 +22,7 @@ use serde::{Deserialize, Serialize};
 /// A source-declared waiver: it matches some set of claims/rules and
 /// carries a basis (and optionally evidence, making it a deviation).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#waiver
 pub struct Waiver {
     /// The rule or claim being waived (`dfm(min_web_thickness)`,
     /// `Group.claim`).
@@ -45,6 +46,7 @@ pub struct Waiver {
 /// `discharged`).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
+// frob:doc docs/modules/regolith-oblig.md#waiver
 pub enum WaiverKind {
     /// The waiver matched one or more emitted obligations (recorded as
     /// the accepted match set); their true status is untouched.
@@ -63,6 +65,7 @@ pub enum WaiverKind {
 /// surface INV-12 requires -- every waiver appears here with its reason
 /// and match set; no waiver silently vanishes.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#waiver
 pub struct WaiverRecord {
     /// The declared waiver.
     pub waiver: Waiver,
@@ -84,6 +87,7 @@ pub struct WaiverRecord {
 /// `--release`.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
+// frob:doc docs/modules/regolith-oblig.md#waiver
 pub enum LedgerEntry {
     /// A `todo!` placeholder.
     Todo(String),
@@ -98,6 +102,7 @@ pub enum LedgerEntry {
 
 /// The build's todo/assume/waive ledger.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#waiver
 pub struct WaiveLedger {
     entries: Vec<LedgerEntry>,
 }
@@ -105,6 +110,7 @@ pub struct WaiveLedger {
 impl WaiveLedger {
     /// An empty ledger.
     #[must_use]
+    // frob:doc docs/modules/regolith-oblig.md#waiver
     pub fn new() -> WaiveLedger {
         WaiveLedger {
             entries: Vec::new(),
@@ -112,12 +118,14 @@ impl WaiveLedger {
     }
 
     /// Record a ledger entry.
+    // frob:doc docs/modules/regolith-oblig.md#waiver
     pub fn record(&mut self, entry: LedgerEntry) {
         self.entries.push(entry);
     }
 
     /// Every ledger entry, in record order (the audit surface).
     #[must_use]
+    // frob:doc docs/modules/regolith-oblig.md#waiver
     pub fn entries(&self) -> &[LedgerEntry] {
         &self.entries
     }
@@ -128,6 +136,7 @@ impl WaiveLedger {
     /// is release-gated per regolith/12 rule 3; a deviation with
     /// evidence passes).
     #[must_use]
+    // frob:doc docs/modules/regolith-oblig.md#waiver
     pub fn release_blocked(&self) -> bool {
         self.entries.iter().any(|entry| match entry {
             LedgerEntry::Todo(_) | LedgerEntry::Assume(_) | LedgerEntry::Indeterminate(_) => true,
@@ -141,6 +150,7 @@ impl WaiveLedger {
     /// [`WaiverKind::Stale`] classification means it matched a claim the
     /// pipeline emits obligations for, yet accepted none.
     #[must_use]
+    // frob:doc docs/modules/regolith-oblig.md#waiver
     pub fn stale_waiver_diagnostics(&self) -> Vec<Diagnostic> {
         self.entries
             .iter()
@@ -186,6 +196,7 @@ mod tests {
         assert_eq!(back, l);
     }
 
+    // frob:tests crates/regolith-oblig/src/waiver.rs::WaiveLedger.stale_waiver_diagnostics kind="unit"
     #[test]
     fn stale_waiver_is_a_diagnostic() {
         let mut l = WaiveLedger::new();

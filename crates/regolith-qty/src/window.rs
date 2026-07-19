@@ -14,6 +14,7 @@ use crate::unit::Unit;
 
 /// A demanded window `within [lo, hi]` (`lo <= hi`) in one unit.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-qty.md#window
 pub struct Window {
     lo: f64,
     hi: f64,
@@ -23,24 +24,28 @@ pub struct Window {
 impl Window {
     /// Construct a demanded window from raw magnitudes and a unit.
     #[must_use]
+    // frob:doc docs/modules/regolith-qty.md#window
     pub fn new(lo: f64, hi: f64, unit: Unit) -> Window {
         Window { lo, hi, unit }
     }
 
     /// Lower magnitude of the demanded band.
     #[must_use]
+    // frob:doc docs/modules/regolith-qty.md#window
     pub fn lo(&self) -> f64 {
         self.lo
     }
 
     /// Upper magnitude of the demanded band.
     #[must_use]
+    // frob:doc docs/modules/regolith-qty.md#window
     pub fn hi(&self) -> f64 {
         self.hi
     }
 
     /// The unit the band is expressed in.
     #[must_use]
+    // frob:doc docs/modules/regolith-qty.md#window
     pub fn unit(&self) -> &Unit {
         &self.unit
     }
@@ -51,6 +56,8 @@ mod tests {
     use super::Window;
     use crate::unit::Unit;
 
+    // frob:tests crates/regolith-qty/src/window.rs::Window.hi kind="unit"
+    // frob:tests crates/regolith-qty/src/window.rs::Window.lo kind="unit"
     #[test]
     fn window_round_trips_json() {
         let w = Window::new(0.8, 1.6, Unit::dimensionless());

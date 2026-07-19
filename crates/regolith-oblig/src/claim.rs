@@ -13,6 +13,7 @@ use serde::{Deserialize, Serialize};
 /// A time/event window a claim is evaluated over.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
+// frob:doc docs/modules/regolith-oblig.md#claim
 pub enum Window {
     /// `during <event-or-config-domain>`.
     During(String),
@@ -30,6 +31,7 @@ pub enum Window {
 /// The claim form -- the shape of the assertion.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(tag = "form", rename_all = "snake_case")]
+// frob:doc docs/modules/regolith-oblig.md#claim
 pub enum ClaimForm {
     /// A scalar comparison (`stress < limit`, `k within [lo, hi]`).
     Comparison {
@@ -115,6 +117,7 @@ pub enum ClaimForm {
 
 /// A single named claim inside a `require` group.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#claim
 pub struct Claim {
     /// Optional claim name.
     pub name: Option<String>,
@@ -137,6 +140,7 @@ pub struct Claim {
 /// An `assume!(expr, basis=)` assumption: an un-discharged claim that
 /// `--release` refuses (recorded in the todo/assume/waive ledger).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#claim
 pub struct Assumption {
     /// The assumed expression, as text.
     pub expr: String,

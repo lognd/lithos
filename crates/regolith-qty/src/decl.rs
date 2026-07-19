@@ -13,6 +13,7 @@ use crate::unit::Unit;
 /// The tensor rank of a quantity's value.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
+// frob:doc docs/modules/regolith-qty.md#decl
 pub enum TensorRank {
     /// A single scalar magnitude (`stiffness: N/m`).
     Scalar,
@@ -28,6 +29,7 @@ pub enum TensorRank {
 /// domains so cross-domain contracts refer to one vocabulary.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
+// frob:doc docs/modules/regolith-qty.md#decl
 pub enum Namespace {
     /// Mechanical quantities (stress, displacement, stiffness).
     Mech,
@@ -49,6 +51,7 @@ pub enum Namespace {
 impl Namespace {
     /// The seeded namespaces, in declaration order.
     #[must_use]
+    // frob:doc docs/modules/regolith-qty.md#decl
     pub const fn all() -> [Namespace; 7] {
         [
             Namespace::Mech,
@@ -63,6 +66,7 @@ impl Namespace {
 
     /// The lowercase spelling used in source (`mech`, `elec`, ...).
     #[must_use]
+    // frob:doc docs/modules/regolith-qty.md#decl
     pub const fn as_str(self) -> &'static str {
         match self {
             Namespace::Mech => "mech",
@@ -79,6 +83,7 @@ impl Namespace {
 /// A declared quantity: its name, owning namespace, canonical unit, and
 /// tensor rank (`quantity stress: Pa, tensor(2)`).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-qty.md#decl
 pub struct QuantityDecl {
     /// Bare name within the namespace (`stress`, `voltage`).
     pub name: String,
@@ -97,6 +102,7 @@ mod tests {
     use crate::unit::Unit;
     use num_rational::Ratio;
 
+    // frob:tests crates/regolith-qty/src/decl.rs::Namespace.as_str kind="unit"
     #[test]
     fn seven_namespaces_seeded() {
         assert_eq!(Namespace::all().len(), 7);

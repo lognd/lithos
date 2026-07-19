@@ -16,6 +16,7 @@ use crate::payload::PayloadRef;
 /// The `given:` context an obligation is evaluated under: the pinned
 /// facts (materials, loads, backing evidence) the discharge assumes.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#obligation
 pub struct Given {
     /// Pinned material/component records (name -> content hash).
     pub materials: Vec<(String, String)>,
@@ -33,6 +34,7 @@ pub struct Given {
 /// A sweep domain an obligation is instantiated over (one obligation per
 /// domain point; the obligation carries its own domain).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#obligation
 pub struct SweepDomain {
     /// The swept axis name.
     pub axis: String,
@@ -42,6 +44,7 @@ pub struct SweepDomain {
 
 /// A self-contained verification obligation.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#obligation
 pub struct Obligation {
     /// The claim being discharged.
     pub claim: Claim,
@@ -71,6 +74,7 @@ impl Obligation {
     /// upstream compiler bug (the canonical encoder refuses to hash
     /// it silently), not a recoverable obligation-construction error.
     #[must_use]
+    // frob:doc docs/modules/regolith-oblig.md#obligation
     pub fn content_hash(&self) -> String {
         crate::encoding::content_address("regolith.oblig.obligation", self)
             .expect("Obligation must not contain non-finite floats (upstream compiler bug)")
@@ -90,6 +94,7 @@ impl Obligation {
     /// Panics if `self` contains a non-finite float (upstream compiler
     /// bug), for the same reason as [`Obligation::content_hash`].
     #[must_use]
+    // frob:doc docs/modules/regolith-oblig.md#obligation
     pub fn evidence_cache_key(&self, registry_version: &str) -> String {
         // Built-in models carry the pack identity
         // `("regolith", registry_version)` (AD-19), so the un-packed
@@ -109,6 +114,7 @@ impl Obligation {
     /// Panics if `self` contains a non-finite float (upstream compiler
     /// bug), for the same reason as [`Obligation::content_hash`].
     #[must_use]
+    // frob:doc docs/modules/regolith-oblig.md#obligation
     pub fn evidence_cache_key_for_pack(
         &self,
         registry_version: &str,
@@ -127,6 +133,7 @@ impl Obligation {
 /// by its scope name -- the WO-19 lowering pipeline emits one of these
 /// per scope (`docs/workflow/design-log/2026-07-04-cycle-11.md`).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#obligation
 pub struct SnapshotRecord {
     /// The scope this snapshot belongs to (a declaration name).
     pub scope: String,
@@ -171,6 +178,7 @@ mod tests {
         }
     }
 
+    // frob:tests crates/regolith-oblig/src/obligation.rs::Obligation.evidence_cache_key kind="unit"
     #[test]
     fn evidence_cache_key_is_sensitive_to_registry_version() {
         // BE-1/INV-1 mutation-sensitivity: the SAME obligation under two
@@ -190,6 +198,7 @@ mod tests {
         assert_ne!(k_v1, o.content_hash());
     }
 
+    // frob:tests crates/regolith-oblig/src/obligation.rs::Obligation.evidence_cache_key_for_pack kind="unit"
     #[test]
     fn evidence_cache_key_folds_pack_identity() {
         // AD-19: upgrading ONE pack must invalidate exactly its own

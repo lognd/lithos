@@ -30,6 +30,7 @@ use regolith_util::canon::{content_address, EncodeError};
 /// Domain tag folded into every realized-assembly content address
 /// (AD-18): keeps an assembly digest from colliding with any other
 /// payload kind even if the canonical CBOR bytes happened to coincide.
+// frob:doc docs/modules/regolith-oblig.md#assembly
 pub const ASSEMBLY_DOMAIN_TAG: &str = "assembly.realized";
 
 /// A rigid-body placement: translation (metres, world frame) plus an
@@ -37,6 +38,7 @@ pub const ASSEMBLY_DOMAIN_TAG: &str = "assembly.realized";
 /// assembly exporter's `Location(position, rotation)` call consumes
 /// directly (no quaternion round-trip needed at this v1 scope).
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#assembly
 pub struct Transform {
     /// World-frame translation, metres.
     pub translation_m: [f64; 3],
@@ -48,6 +50,7 @@ impl Transform {
     /// The identity placement (the mate-solve root part's transform,
     /// charter sec. 1.4: "root part at identity").
     #[must_use]
+    // frob:doc docs/modules/regolith-oblig.md#assembly
     pub const fn identity() -> Self {
         Self {
             translation_m: [0.0, 0.0, 0.0],
@@ -60,6 +63,7 @@ impl Transform {
 /// RealizedGeometry`] digest it was placed from, and its solved
 /// world-frame [`Transform`].
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#assembly
 pub struct AssemblyPart {
     /// The part's declared id (source order -- AD-6).
     pub id: String,
@@ -74,6 +78,7 @@ pub struct AssemblyPart {
 /// measure"): the two part ids (source-sorted) and the overlap volume
 /// (mm^3, axis-aligned-bbox measure -- the v1 interference test).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#assembly
 pub struct Interference {
     /// The first part's id (sorted before `part_b`).
     pub part_a: String,
@@ -93,6 +98,7 @@ pub struct Interference {
 /// is the count of the 6 rigid DOF the mate removes (a full rigid mate
 /// = 6), reported by the realizer alongside the placement.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#assembly
 pub struct MateEdge {
     /// The mate's declared id (source order -- AD-6).
     pub id: String,
@@ -113,6 +119,7 @@ pub struct MateEdge {
 /// verbatim): every placed part, each part's DOF state after solve,
 /// extracted mass/COM, and every pairwise interference fact.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#assembly
 pub struct RealizedAssembly {
     /// The content hash of the mating-graph input this assembly was
     /// solved from (provenance; the G42 anti-staleness citation,
@@ -150,6 +157,7 @@ impl RealizedAssembly {
     /// # Errors
     /// Propagates [`EncodeError`] from the canonical encoder (only a
     /// non-finite float or a serializer failure -- an upstream bug).
+    // frob:doc docs/modules/regolith-oblig.md#assembly
     pub fn content_digest(&self) -> Result<String, EncodeError> {
         content_address(ASSEMBLY_DOMAIN_TAG, self)
     }
@@ -195,6 +203,7 @@ mod tests {
         }
     }
 
+    // frob:tests crates/regolith-oblig/src/assembly.rs::RealizedAssembly.content_digest kind="unit"
     #[test]
     fn content_digest_is_stable_and_field_sensitive() {
         let payload = sample();

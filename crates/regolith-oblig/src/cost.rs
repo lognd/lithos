@@ -28,6 +28,7 @@ use regolith_util::canon::{content_address, EncodeError};
 /// Domain tag folded into every itemized-estimate content address
 /// (AD-18): keeps a cost-estimate digest from colliding with any other
 /// payload kind even if the canonical CBOR bytes happened to coincide.
+// frob:doc docs/modules/regolith-oblig.md#cost
 pub const ITEMIZED_ESTIMATE_DOMAIN_TAG: &str = "cost.itemized_estimate";
 
 /// A shop/labor/regional rate record (toolchain/27 sec. 1.3): the
@@ -35,6 +36,7 @@ pub const ITEMIZED_ESTIMATE_DOMAIN_TAG: &str = "cost.itemized_estimate";
 /// table names. One named rate per record (a shop rents by hour, a
 /// labor grade bills by hour); a profile composes several.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#cost
 pub struct RateRecord {
     /// The rate's name (e.g. `"cnc_shop_rate"`, `"assembly_labor"`).
     pub name: String,
@@ -48,6 +50,7 @@ pub struct RateRecord {
 /// One quantity-break price point (toolchain/27 sec. 1.3: "vendor
 /// price breaks by quantity").
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#cost
 pub struct PriceBreak {
     /// The minimum order quantity this break applies at.
     pub min_qty: f64,
@@ -62,6 +65,7 @@ pub struct PriceBreak {
 /// sec. 1.3) -- the expiry check itself is an orchestrator concern
 /// (deliverable 4); this module only carries the field.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#cost
 pub struct PricingRecord {
     /// The priced item's name (e.g. a part number, a material spec).
     pub item: String,
@@ -78,6 +82,7 @@ pub struct PricingRecord {
 /// area quantities by these). One assembly per record (e.g. "CMU wall,
 /// 8in, reinforced" priced per square meter).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#cost
 pub struct UnitCostRecord {
     /// The assembly's name (e.g. `"cmu_wall_8in_reinforced"`).
     pub assembly: String,
@@ -96,6 +101,7 @@ pub struct UnitCostRecord {
 /// construction time so the payload is a plain data table, never a
 /// live recomputation.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#cost
 pub struct EstimateLineItem {
     /// The line item's name (part number, assembly, labor line).
     pub item: String,
@@ -115,6 +121,7 @@ pub struct EstimateLineItem {
 /// diff. `exclusions` states what the estimator did NOT price,
 /// keeping the total honest (never a silently-partial number).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#cost
 pub struct ItemizedEstimate {
     /// The cost profile this estimate was built under (manifest
     /// `[profiles.cost.<name>]` name).
@@ -137,6 +144,7 @@ impl ItemizedEstimate {
     /// # Errors
     /// Propagates [`EncodeError`] from the canonical encoder (only a
     /// non-finite float or a serializer failure -- an upstream bug).
+    // frob:doc docs/modules/regolith-oblig.md#cost
     pub fn content_digest(&self) -> Result<String, EncodeError> {
         content_address(ITEMIZED_ESTIMATE_DOMAIN_TAG, self)
     }
@@ -188,6 +196,7 @@ mod tests {
         assert_eq!(back, est);
     }
 
+    // frob:tests crates/regolith-oblig/src/cost.rs::ItemizedEstimate.content_digest kind="unit"
     #[test]
     fn content_digest_is_stable_and_field_sensitive() {
         let est = sample();

@@ -25,6 +25,7 @@ use crate::unit::{ratio_to_f64, Unit};
 /// The additive sign a log term carries in a sum-of-logs expression.
 /// A subtracted term inverts the corresponding linear factor.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+// frob:doc docs/modules/regolith-qty.md#log
 pub enum Sign {
     /// An added term (`+`): its linear factor multiplies.
     Add,
@@ -36,6 +37,7 @@ impl Sign {
     /// Flip the sign (a `-` distributes onto the right operand of a
     /// subtraction when a `+`/`-` chain is flattened).
     #[must_use]
+    // frob:doc docs/modules/regolith-qty.md#log
     pub fn flip(self) -> Sign {
         match self {
             Sign::Add => Sign::Sub,
@@ -50,6 +52,7 @@ impl Sign {
 /// dimensionless ratio; referenced views (`dBm`/`dBW`/`dBuV`) view a
 /// quantity of the reference's dimension.
 #[derive(Debug, Clone, PartialEq)]
+// frob:doc docs/modules/regolith-qty.md#log
 pub struct LogUnit {
     /// ASCII spelling as written in source (`dB`, `dBm`, `dBuV`).
     pub symbol: String,
@@ -84,6 +87,7 @@ const LOG_TABLE: &[LogRow] = &[
 /// sec. 5a). An error VALUE (AD-7): the L1 check turns it into a
 /// diagnostic; it is never a panic or bare exception.
 #[derive(Debug, Clone, PartialEq, Eq, Error)]
+// frob:doc docs/modules/regolith-qty.md#log
 pub enum LogError {
     /// More than one referenced term survives cancellation: the linear
     /// product is not a single-reference quantity (`dBm + dBm` = mW^2).
@@ -99,6 +103,7 @@ pub enum LogError {
 /// surviving reference) or a referenced quantity of the surviving
 /// reference's dimension.
 #[derive(Debug, Clone, PartialEq)]
+// frob:doc docs/modules/regolith-qty.md#log
 pub enum LogSumResult {
     /// No reference survived: the sum views a dimensionless ratio.
     Ratio,
@@ -109,6 +114,7 @@ pub enum LogSumResult {
 
 /// A single signed term in a sum-of-logs expression.
 #[derive(Debug, Clone)]
+// frob:doc docs/modules/regolith-qty.md#log
 pub struct LogTerm {
     /// Whether this term is added or subtracted.
     pub sign: Sign,
@@ -121,6 +127,7 @@ impl LogUnit {
     /// symbol is not a known log unit. References are resolved through
     /// the ordinary unit table.
     #[must_use]
+    // frob:doc docs/modules/regolith-qty.md#log
     pub fn parse(symbol: &str) -> Option<LogUnit> {
         let (sym, factor, reference) = LOG_TABLE.iter().find(|(name, ..)| *name == symbol)?;
         let (reference, reference_si_value) = match reference {
@@ -143,6 +150,7 @@ impl LogUnit {
     /// ratio view. Cancellation in the sum algebra pairs references by
     /// this dimension.
     #[must_use]
+    // frob:doc docs/modules/regolith-qty.md#log
     pub fn reference_dimension(&self) -> Option<Dimension> {
         self.reference.as_ref().map(|u| u.dimension)
     }
@@ -150,6 +158,7 @@ impl LogUnit {
     /// Convert a value expressed in this dB view to its stored LINEAR
     /// magnitude in SI base units: `reference * 10^(db / factor)`.
     #[must_use]
+    // frob:doc docs/modules/regolith-qty.md#log
     pub fn to_linear_si(&self, db: f64) -> f64 {
         self.reference_si_value * 10.0_f64.powf(db / f64::from(self.factor))
     }
@@ -158,6 +167,7 @@ impl LogUnit {
     /// `factor * log10(linear / reference)`. Inverse of
     /// [`LogUnit::to_linear_si`] (round-trips up to float precision).
     #[must_use]
+    // frob:doc docs/modules/regolith-qty.md#log
     pub fn from_linear_si(&self, linear_si: f64) -> f64 {
         f64::from(self.factor) * (linear_si / self.reference_si_value).log10()
     }
@@ -172,6 +182,7 @@ impl LogUnit {
 /// [`LogError::TwoReferences`] when more than one added reference
 /// survives (`dBm + dBm`); [`LogError::UncancelledInverse`] when a
 /// subtracted reference has no added partner (`dB - dBm`).
+// frob:doc docs/modules/regolith-qty.md#log
 pub fn log_sum_reference(terms: &[LogTerm]) -> Result<LogSumResult, LogError> {
     // Split surviving references by sign, pairing by dimension. Each
     // subtracted reference cancels one added reference of equal
@@ -224,6 +235,7 @@ mod tests {
         assert!(LogUnit::parse("nope").is_none());
     }
 
+    // frob:tests crates/regolith-qty/src/log.rs::log_sum_reference kind="unit"
     #[test]
     fn two_referenced_powers_is_illegal() {
         // dBm + dBm == linear mW^2, not a power -- the link-budget bug.
@@ -300,6 +312,8 @@ mod tests {
         assert_eq!(log_sum_reference(&forward), log_sum_reference(&shuffled));
     }
 
+    // frob:tests crates/regolith-qty/src/log.rs::LogUnit.from_linear_si kind="unit"
+    // frob:tests crates/regolith-qty/src/log.rs::LogUnit.to_linear_si kind="unit"
     #[test]
     fn linear_db_round_trip() {
         // Stored LINEAR is the source of truth; the dB view round-trips.
@@ -332,5 +346,21 @@ mod tests {
         let dbuv = LogUnit::parse("dBuV").unwrap();
         let linear = dbuv.to_linear_si(20.0); // 20 dBuV = 10x = 10 uV
         assert!((dbuv.from_linear_si(linear) - 20.0).abs() < 1e-9);
+    }
+
+    // frob:tests crates/regolith-qty/src/log.rs::LogUnit.reference_dimension kind="unit"
+    #[test]
+    fn reference_dimension_is_none_for_an_unreferenced_ratio_view() {
+        assert!(LogUnit::parse("dB")
+            .unwrap()
+            .reference_dimension()
+            .is_none());
+        assert!(
+            LogUnit::parse("dBm")
+                .unwrap()
+                .reference_dimension()
+                .is_some(),
+            "dBm is referenced to a power (mW), so it carries a dimension"
+        );
     }
 }

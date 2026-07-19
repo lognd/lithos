@@ -16,6 +16,7 @@ use crate::quantity::Qty;
 /// (INV-21). The variants mirror the resolving mechanisms.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(tag = "cause", content = "ref", rename_all = "snake_case")]
+// frob:doc docs/modules/regolith-qty.md#resolution
 pub enum Cause {
     /// A DFM rule pinned it (`dfm(sheet.min_bend_radius)`).
     Dfm(String),
@@ -63,6 +64,7 @@ impl Cause {
 /// A resolved value with its cause: one lockfile row. There is no way
 /// to build one without a `Cause` (INV-21).
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-qty.md#resolution
 pub struct Resolution {
     value: Qty,
     cause: Cause,
@@ -72,18 +74,21 @@ impl Resolution {
     /// Build a resolution from a value and its resolving cause. The only
     /// constructor -- causeless resolutions are unrepresentable.
     #[must_use]
+    // frob:doc docs/modules/regolith-qty.md#resolution
     pub fn new(value: Qty, cause: Cause) -> Resolution {
         Resolution { value, cause }
     }
 
     /// The resolved value.
     #[must_use]
+    // frob:doc docs/modules/regolith-qty.md#resolution
     pub fn value(&self) -> &Qty {
         &self.value
     }
 
     /// The cause that decided the value.
     #[must_use]
+    // frob:doc docs/modules/regolith-qty.md#resolution
     pub fn cause(&self) -> &Cause {
         &self.cause
     }
@@ -91,6 +96,7 @@ impl Resolution {
     /// Render the documented lockfile line for slot `slot`:
     /// `slot = <value>    cause: dfm(rule)`.
     #[must_use]
+    // frob:doc docs/modules/regolith-qty.md#resolution
     pub fn lockfile_line(&self, slot: &str) -> String {
         let mut buf = ryu::Buffer::new();
         let value = buf.format(self.value.magnitude());
@@ -150,5 +156,17 @@ mod tests {
             let back: Cause = serde_json::from_str(&serde_json::to_string(&c).unwrap()).unwrap();
             assert_eq!(back, c);
         }
+    }
+
+    // frob:tests crates/regolith-qty/src/resolution.rs::Resolution.lockfile_line kind="unit"
+    #[test]
+    fn lockfile_line_names_the_slot_value_and_cause() {
+        let r = Resolution::new(
+            Qty::new(2.4, Unit::dimensionless()),
+            Cause::Dfm("sheet.min_bend_radius".to_string()),
+        );
+        let line = r.lockfile_line("bend_radius");
+        assert!(line.starts_with("bend_radius = 2.4"));
+        assert!(line.contains("cause: dfm(sheet.min_bend_radius)"));
     }
 }

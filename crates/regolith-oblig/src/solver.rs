@@ -21,6 +21,7 @@ use crate::evidence::Coverage;
 /// metadata the evidence hash folds (AD-19: `solver_version` is always
 /// folded; non-deterministic solvers also fold `settings_digest`).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#solver
 pub struct SolverResponse {
     /// The `SCHEMA_VERSION` the solver spoke; a mismatch with ours is
     /// the adapter's `SchemaVersionMismatch` failure arm (AD-5).

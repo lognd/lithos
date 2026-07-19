@@ -24,6 +24,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 /// Domain tag folded into every contract-graph content address (AD-18).
+// frob:doc docs/modules/regolith-oblig.md#contract_graph
 pub const CONTRACT_GRAPH_DOMAIN_TAG: &str = "contract_graph";
 
 /// One node in the contract graph: either a declared `interface` (with
@@ -31,6 +32,7 @@ pub const CONTRACT_GRAPH_DOMAIN_TAG: &str = "contract_graph";
 /// its `parts:`/mating `sides` (promise-slot count `0`, since an
 /// artifact is not itself an interface).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#contract_graph
 pub struct ContractNode {
     /// The interface or artifact name (readable, never a hash).
     pub name: String,
@@ -46,6 +48,7 @@ pub struct ContractNode {
 /// (`"mating"` when a mating declares no effect, honestly, rather than
 /// a fabricated label).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#contract_graph
 pub struct ContractEdge {
     /// The mating's own name.
     pub name: String,
@@ -62,6 +65,7 @@ pub struct ContractEdge {
 /// The serialized contract-graph payload: every interface/artifact node
 /// and every mating edge, by name, in source order.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, Default)]
+// frob:doc docs/modules/regolith-oblig.md#contract_graph
 pub struct ContractGraphPayload {
     /// Every node (elaboration-sorted for determinism).
     pub nodes: Vec<ContractNode>,
@@ -79,6 +83,7 @@ impl ContractGraphPayload {
     /// this payload carries no floats today, so this is effectively
     /// infallible, but the signature stays honest about the encoder's
     /// real contract).
+    // frob:doc docs/modules/regolith-oblig.md#contract_graph
     pub fn content_digest(&self) -> Result<String, EncodeError> {
         content_address(CONTRACT_GRAPH_DOMAIN_TAG, self)
     }
@@ -124,6 +129,7 @@ mod tests {
         assert_eq!(back, payload);
     }
 
+    // frob:tests crates/regolith-oblig/src/contract_graph.rs::ContractGraphPayload.content_digest kind="unit"
     #[test]
     fn content_digest_is_stable_and_field_sensitive() {
         let payload = sample();

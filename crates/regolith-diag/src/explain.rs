@@ -12,6 +12,7 @@ use crate::code::{codes, DiagCode};
 /// One code's explain content: what it means, why it fires, how to
 /// fix it, and (when authored) a worked example.
 #[derive(Debug, Clone, Copy)]
+// frob:doc docs/modules/regolith-diag.md#explain
 pub struct ExplainEntry {
     /// The code this entry explains.
     pub code: DiagCode,
@@ -67,6 +68,7 @@ macro_rules! authored {
 
 /// The ONE explain registry: every code in `codes::ALL`, no more, no
 /// fewer (`completeness_is_total` enforces both directions).
+// frob:doc docs/modules/regolith-diag.md#explain
 pub const ALL: &[ExplainEntry] = &[
 
     authored!(
@@ -311,6 +313,7 @@ pub const ALL: &[ExplainEntry] = &[
 /// Look up an explain entry by its rendered code string (`"E0901"`,
 /// case-insensitive). `regolith explain <code>` reads this.
 #[must_use]
+// frob:doc docs/modules/regolith-diag.md#explain
 pub fn find(code_str: &str) -> Option<&'static ExplainEntry> {
     let needle = code_str.trim().to_ascii_uppercase();
     ALL.iter().find(|e| e.code.to_string() == needle)
@@ -321,6 +324,7 @@ pub fn find(code_str: &str) -> Option<&'static ExplainEntry> {
 /// distance over the full string, so a typo like `E0091` still
 /// surfaces `E0901`.
 #[must_use]
+// frob:doc docs/modules/regolith-diag.md#explain
 pub fn near_matches(code_str: &str, limit: usize) -> Vec<&'static ExplainEntry> {
     let needle = code_str.trim().to_ascii_uppercase();
     let prefix: String = needle.chars().take(3).collect();
@@ -362,6 +366,7 @@ fn edit_distance(a: &str, b: &str) -> usize {
 mod tests {
     use super::{codes, find, near_matches, ALL};
 
+    // frob:tests crates/regolith-diag/src/explain.rs::find kind="unit"
     #[test]
     fn find_is_case_insensitive_and_trims() {
         assert!(find(" e0901 ").is_some());
@@ -369,6 +374,7 @@ mod tests {
         assert!(find("E9999").is_none());
     }
 
+    // frob:tests crates/regolith-diag/src/explain.rs::near_matches kind="unit"
     #[test]
     fn near_matches_suggests_same_family_first() {
         let hits = near_matches("E0999", 3);

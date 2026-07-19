@@ -18,6 +18,7 @@ use serde::{Deserialize, Serialize};
 /// `geometry.realized`, `mesh`, `table`, `spectrum`, `profile`,
 /// `mask`, `field`, `flownet`, `plan`.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#payload
 pub struct PayloadRef {
     /// The payload kind (feldspar 09 sec. 4 vocabulary, verbatim).
     pub kind: String,

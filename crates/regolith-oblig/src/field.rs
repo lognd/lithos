@@ -24,6 +24,7 @@ use crate::payload::PayloadRef;
 /// one index axis (a zone set or a config interval), plus its
 /// discharge payload once resolved.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#field
 pub struct FieldDatum {
     /// The field's name (the `compute <name>: ...` binding).
     pub name: String,

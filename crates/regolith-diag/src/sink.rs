@@ -15,6 +15,7 @@ use crate::Severity;
 /// a stable order for rendering. Checks push into it and keep going;
 /// the caller decides success from whether any error was collected.
 #[derive(Debug, Default)]
+// frob:doc docs/modules/regolith-diag.md#sink
 pub struct DiagnosticSink {
     diagnostics: Vec<Diagnostic>,
 }
@@ -22,6 +23,7 @@ pub struct DiagnosticSink {
 impl DiagnosticSink {
     /// A fresh, empty sink.
     #[must_use]
+    // frob:doc docs/modules/regolith-diag.md#sink
     pub fn new() -> DiagnosticSink {
         DiagnosticSink {
             diagnostics: Vec::new(),
@@ -29,6 +31,7 @@ impl DiagnosticSink {
     }
 
     /// Record one diagnostic. Never short-circuits the caller.
+    // frob:doc docs/modules/regolith-diag.md#sink
     pub fn emit(&mut self, diagnostic: Diagnostic) {
         self.diagnostics.push(diagnostic);
     }
@@ -36,6 +39,7 @@ impl DiagnosticSink {
     /// True when at least one collected diagnostic is an error (the
     /// build-fails predicate).
     #[must_use]
+    // frob:doc docs/modules/regolith-diag.md#sink
     pub fn has_errors(&self) -> bool {
         self.diagnostics
             .iter()
@@ -44,12 +48,14 @@ impl DiagnosticSink {
 
     /// Number of collected diagnostics.
     #[must_use]
+    // frob:doc docs/modules/regolith-diag.md#sink
     pub fn len(&self) -> usize {
         self.diagnostics.len()
     }
 
     /// True when nothing has been collected.
     #[must_use]
+    // frob:doc docs/modules/regolith-diag.md#sink
     pub fn is_empty(&self) -> bool {
         self.diagnostics.is_empty()
     }
@@ -58,6 +64,7 @@ impl DiagnosticSink {
     /// deterministic order (AD-6): by primary span (file, start), then
     /// by code number. Diagnostics without a span sort last.
     #[must_use]
+    // frob:doc docs/modules/regolith-diag.md#sink
     pub fn finish(self) -> Vec<Diagnostic> {
         let mut diagnostics = self.diagnostics;
         diagnostics.sort_by(|a, b| {
@@ -85,6 +92,8 @@ mod tests {
     use crate::code::codes;
     use crate::diagnostic::Diagnostic;
 
+    // frob:tests crates/regolith-diag/src/sink.rs::DiagnosticSink.len kind="unit"
+    // frob:tests crates/regolith-diag/src/sink.rs::DiagnosticSink.has_errors kind="unit"
     #[test]
     fn sink_collects_without_short_circuit() {
         let mut sink = DiagnosticSink::new();
@@ -95,6 +104,7 @@ mod tests {
         assert!(sink.has_errors());
     }
 
+    // frob:tests crates/regolith-diag/src/sink.rs::DiagnosticSink.finish kind="unit"
     #[test]
     fn finish_orders_and_dedups() {
         let mut sink = DiagnosticSink::new();

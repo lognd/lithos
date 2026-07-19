@@ -26,6 +26,7 @@ use crate::SCHEMA_VERSION;
 /// an infallible operation for schemars' own `Schema`/`Map` types, so
 /// this is a programmer bug, not a user-facing error.
 #[must_use]
+// frob:doc docs/modules/regolith-oblig.md#encoding
 pub fn export_schemas() -> String {
     use schemars::gen::SchemaSettings;
 
@@ -189,6 +190,7 @@ pub fn export_schemas() -> String {
 mod tests {
     use super::export_schemas;
 
+    // frob:tests crates/regolith-oblig/src/encoding.rs::export_schemas kind="unit"
     #[test]
     fn export_schemas_carries_schema_version_and_definitions() {
         let doc = export_schemas();

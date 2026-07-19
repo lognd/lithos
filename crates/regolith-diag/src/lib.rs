@@ -33,6 +33,7 @@ use serde::{Deserialize, Serialize};
 /// (data), not `Err` (AD-7).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
+// frob:doc docs/modules/regolith-diag.md#lib
 pub enum Severity {
     /// Blocks a successful build.
     Error,

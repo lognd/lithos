@@ -19,6 +19,7 @@ use crate::unit::Unit;
 /// A closed interval `[lo, hi]` (`lo <= hi`) of a single quantity,
 /// expressed in one unit.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-qty.md#interval
 pub struct Interval {
     lo: f64,
     hi: f64,
@@ -32,6 +33,7 @@ impl Interval {
     /// # Errors
     /// [`QuantityError::IncompatibleDimensions`] when the bounds differ
     /// in dimension.
+    // frob:doc docs/modules/regolith-qty.md#interval
     pub fn new(lo: &Qty, hi: &Qty) -> Result<Interval, QuantityError> {
         if lo.dimension() != hi.dimension() {
             return Err(QuantityError::IncompatibleDimensions {
@@ -63,6 +65,7 @@ impl Interval {
     ///
     /// # Errors
     /// [`QuantityError::IncompatibleDimensions`] on dimension mismatch.
+    // frob:doc docs/modules/regolith-qty.md#interval
     pub fn plus_minus(center: &Qty, tol: &Qty) -> Result<Interval, QuantityError> {
         if center.dimension() != tol.dimension() {
             return Err(QuantityError::IncompatibleDimensions {
@@ -82,6 +85,7 @@ impl Interval {
 
     /// Percentage tolerance `center +- p%` (`3.3V +- 5%`).
     #[must_use]
+    // frob:doc docs/modules/regolith-qty.md#interval
     pub fn plus_minus_percent(center: &Qty, percent: f64) -> Interval {
         let mag = center.magnitude();
         let a = mag * (1.0 - percent / 100.0);
@@ -96,6 +100,7 @@ impl Interval {
 
     /// Scale an interval by a scalar factor range: `[k1, k2] * x`.
     #[must_use]
+    // frob:doc docs/modules/regolith-qty.md#interval
     pub fn scaled(x: &Qty, k1: f64, k2: f64) -> Interval {
         let mag = x.magnitude();
         let a = k1 * mag;
@@ -110,18 +115,21 @@ impl Interval {
 
     /// The lower bound as a quantity.
     #[must_use]
+    // frob:doc docs/modules/regolith-qty.md#interval
     pub fn lo(&self) -> Qty {
         Qty::new(self.lo, self.unit.clone())
     }
 
     /// The upper bound as a quantity.
     #[must_use]
+    // frob:doc docs/modules/regolith-qty.md#interval
     pub fn hi(&self) -> Qty {
         Qty::new(self.hi, self.unit.clone())
     }
 
     /// The unit the bounds are expressed in.
     #[must_use]
+    // frob:doc docs/modules/regolith-qty.md#interval
     pub fn unit(&self) -> &Unit {
         &self.unit
     }
@@ -130,6 +138,7 @@ impl Interval {
     ///
     /// # Errors
     /// [`QuantityError::IncompatibleDimensions`] on dimension mismatch.
+    // frob:doc docs/modules/regolith-qty.md#interval
     pub fn add(&self, other: &Interval) -> Result<Interval, QuantityError> {
         if self.unit.dimension != other.unit.dimension {
             return Err(QuantityError::IncompatibleDimensions {
@@ -150,6 +159,7 @@ impl Interval {
     ///
     /// # Errors
     /// [`QuantityError::IncompatibleDimensions`] on dimension mismatch.
+    // frob:doc docs/modules/regolith-qty.md#interval
     pub fn sub(&self, other: &Interval) -> Result<Interval, QuantityError> {
         if self.unit.dimension != other.unit.dimension {
             return Err(QuantityError::IncompatibleDimensions {
@@ -169,6 +179,7 @@ impl Interval {
     /// Multiply by a scalar interval (dimensionless `[k1,k2]`): the four
     /// products' min/max, outward-rounded.
     #[must_use]
+    // frob:doc docs/modules/regolith-qty.md#interval
     pub fn mul_scalar_interval(&self, k1: f64, k2: f64) -> Interval {
         let products = [self.lo * k1, self.lo * k2, self.hi * k1, self.hi * k2];
         let lo = products.iter().copied().fold(f64::INFINITY, f64::min);
@@ -184,6 +195,7 @@ impl Interval {
     ///
     /// # Errors
     /// [`QuantityError::IncompatibleDimensions`] on dimension mismatch.
+    // frob:doc docs/modules/regolith-qty.md#interval
     pub fn contains(&self, q: &Qty) -> Result<bool, QuantityError> {
         if self.unit.dimension != q.dimension() {
             return Err(QuantityError::IncompatibleDimensions {
@@ -229,6 +241,7 @@ mod tests {
         Qty::new(x, Unit::parse_atom("mm").unwrap())
     }
 
+    // frob:tests crates/regolith-qty/src/interval.rs::Interval.lo kind="unit"
     #[test]
     fn cross_unit_boundary_value_is_still_contained() {
         // FE-6 (AD-6 / INV-9): a value at the EXACT converted boundary
@@ -250,6 +263,7 @@ mod tests {
         assert!(!iv.contains(&metres(0.2)).unwrap());
     }
 
+    // frob:tests crates/regolith-qty/src/interval.rs::Interval.hi kind="unit"
     #[test]
     fn interval_bounds_round_trip() {
         let iv = Interval::new(&metres(2.0), &metres(8.0)).unwrap();
@@ -257,6 +271,8 @@ mod tests {
         assert_eq!(iv.hi().magnitude().to_bits(), 8.0_f64.to_bits());
     }
 
+    // frob:tests crates/regolith-qty/src/interval.rs::Interval.add kind="unit"
+    // frob:tests crates/regolith-qty/src/interval.rs::Interval.plus_minus kind="unit"
     #[test]
     fn plus_minus_offset_unit_tolerance_is_a_delta_not_absolute() {
         // FE-5: a 5-degC tolerance around a 300 K center must widen the
@@ -276,6 +292,7 @@ mod tests {
     // monotone). Wired now; un-ignored when the arithmetic lands.
     proptest::proptest! {
         #![proptest_config(proptest::prelude::ProptestConfig::with_cases(32))]
+        // frob:tests crates/regolith-qty/src/interval.rs::Interval.sub kind="unit"
         #[test]
         fn add_is_monotone_in_containment(a in -100.0f64..100.0, w in 0.0f64..50.0) {
             let x = Interval::new(&metres(a), &metres(a + w)).unwrap();
@@ -330,6 +347,7 @@ mod tests {
             }
         }
 
+        // frob:tests crates/regolith-qty/src/interval.rs::Interval.mul_scalar_interval kind="unit"
         #[test]
         fn mul_scalar_interval_contains_all_true_corners(
             a in -1.0e6f64..1.0e6, w in 0.0f64..1.0e6,
@@ -356,6 +374,7 @@ mod tests {
             proptest::prop_assert!(iv.lo().magnitude() <= iv.hi().magnitude());
         }
 
+        // frob:tests crates/regolith-qty/src/interval.rs::Interval.plus_minus_percent kind="unit"
         #[test]
         fn plus_minus_percent_produces_ordered_bounds(center in -1.0e6f64..1.0e6, percent in -500.0f64..500.0) {
             let c = metres(center);
@@ -363,6 +382,7 @@ mod tests {
             proptest::prop_assert!(iv.lo().magnitude() <= iv.hi().magnitude());
         }
 
+        // frob:tests crates/regolith-qty/src/interval.rs::Interval.scaled kind="unit"
         #[test]
         fn scaled_produces_ordered_bounds(x in -1.0e6f64..1.0e6, k1 in -1.0e3f64..1.0e3, k2 in -1.0e3f64..1.0e3) {
             let q = metres(x);

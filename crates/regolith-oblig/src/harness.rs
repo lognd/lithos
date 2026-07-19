@@ -32,6 +32,7 @@ use crate::flownet::ScalarInterval;
 /// Domain tag folded into every harness content address (AD-18): keeps
 /// a harness digest from colliding with any other payload kind even if
 /// the canonical CBOR bytes happened to coincide.
+// frob:doc docs/modules/regolith-oblig.md#harness
 pub const HARNESS_DOMAIN_TAG: &str = "harness";
 
 /// One segment of a run's routed path: a structural ref extracted
@@ -39,6 +40,7 @@ pub const HARNESS_DOMAIN_TAG: &str = "harness";
 /// per-segment environment role (the seam's shared "wire run is a
 /// multi-segment path" shape, `regolith_lower::extract` module doc).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#harness
 pub struct RunSegment {
     /// The structural ref this segment was extracted along (e.g.
     /// `"frame.spine_tube"`).
@@ -54,6 +56,7 @@ pub struct RunSegment {
 /// resolved or not (D99: never hand-asserted in source, INV-21).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(tag = "kind", rename_all = "snake_case")]
+// frob:doc docs/modules/regolith-oblig.md#harness
 pub enum RunRoute {
     /// `along <structural refs>`: every ref extracted and concatenated
     /// in declaration order.
@@ -80,6 +83,7 @@ pub enum RunRoute {
 /// One declared run: its two endpoints, routed-path resolution, and
 /// bundle co-routing membership.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#harness
 pub struct RunRecord {
     /// The `from` endpoint (`component.port` text, re-tokenized from
     /// the header line elaboration reads).
@@ -95,6 +99,7 @@ pub struct RunRecord {
 /// The serialized harness payload (D99, verbatim): every declared run
 /// plus the connector environment classes the harness names.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-oblig.md#harness
 pub struct HarnessPayload {
     /// The harness's declared name.
     pub name: String,
@@ -114,6 +119,7 @@ impl HarnessPayload {
     /// [`crate::encoding::EncodeError`] when canonical encoding fails
     /// (malformed float, non-canonical map -- see
     /// `regolith_util::canon`).
+    // frob:doc docs/modules/regolith-oblig.md#harness
     pub fn content_digest(&self) -> Result<String, regolith_util::canon::EncodeError> {
         regolith_util::canon::content_address(HARNESS_DOMAIN_TAG, self)
     }
@@ -157,6 +163,7 @@ mod tests {
         }
     }
 
+    // frob:tests crates/regolith-oblig/src/harness.rs::HarnessPayload.content_digest kind="unit"
     #[test]
     fn content_digest_is_deterministic() {
         let a = sample().content_digest().unwrap();

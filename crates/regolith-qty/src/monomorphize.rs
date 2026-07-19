@@ -14,6 +14,7 @@ use crate::value_source::DiscreteSet;
 
 /// One point of a monomorphized discrete domain.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-qty.md#monomorphize
 pub enum DiscretePoint {
     /// A concrete integer instantiation.
     Int(i64),
@@ -24,6 +25,7 @@ pub enum DiscretePoint {
 /// An instantiation point: a concrete value plus a stable identity used
 /// as the cache key for per-point checks.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-qty.md#monomorphize
 pub struct InstantiationPoint {
     /// Position of this point within the enumerated domain (source order).
     pub index: usize,
@@ -37,6 +39,7 @@ pub struct InstantiationPoint {
 /// whose structure-preserving region a later pass intersects the domain
 /// with. No logic here -- just the shape the callback slot carries.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-qty.md#monomorphize
 pub struct DomainConstraint {
     /// The named structure boundary (mech fillet face, elec mode edge).
     pub boundary: String,
@@ -46,6 +49,7 @@ pub struct DomainConstraint {
 /// marks a variant axis (all points must verify); it does not change
 /// the expansion, only how callers treat the points.
 #[must_use]
+// frob:doc docs/modules/regolith-qty.md#monomorphize
 pub fn monomorphize(set: &DiscreteSet, _external: bool) -> Vec<InstantiationPoint> {
     match set {
         DiscreteSet::Ints(members) => members
@@ -71,7 +75,8 @@ pub fn monomorphize(set: &DiscreteSet, _external: bool) -> Vec<InstantiationPoin
 
 #[cfg(test)]
 mod tests {
-    use super::{DiscretePoint, DomainConstraint, InstantiationPoint};
+    use super::{monomorphize, DiscretePoint, DomainConstraint, InstantiationPoint};
+    use crate::value_source::DiscreteSet;
 
     #[test]
     fn instantiation_point_round_trips_json() {
@@ -93,5 +98,24 @@ mod tests {
         let json = serde_json::to_string(&c).unwrap();
         let back: DomainConstraint = serde_json::from_str(&json).unwrap();
         assert_eq!(back, c);
+    }
+
+    // frob:tests crates/regolith-qty/src/monomorphize.rs::monomorphize kind="unit"
+    #[test]
+    fn monomorphize_expands_ints_and_enums_in_source_order() {
+        let ints = monomorphize(&DiscreteSet::Ints(vec![2, 3, 6]), false);
+        assert_eq!(ints.len(), 3);
+        assert_eq!(ints[0].index, 0);
+        assert_eq!(ints[0].value, DiscretePoint::Int(2));
+        assert_eq!(ints[2].value, DiscretePoint::Int(6));
+
+        let variants = monomorphize(
+            &DiscreteSet::Enum(vec!["open".to_string(), "closed".to_string()]),
+            true,
+        );
+        assert_eq!(variants.len(), 2);
+        assert_eq!(variants[1].value, DiscretePoint::Enum("closed".to_string()));
+        // identity is stable per point (the cache-key contract).
+        assert_eq!(variants[0].identity, "0@open");
     }
 }
