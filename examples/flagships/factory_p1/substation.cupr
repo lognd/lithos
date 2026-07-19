@@ -1,0 +1,46 @@
+# factory_p1: the sited substation transformer (WO-136/D249/AD-42,
+# charter 43 sec. 4 -- the calcite tandem). `MainXfmr` is declared
+# ONCE, as an ordinary `part` (mass + footprint); `SubstationRoom`
+# binds it into `program.calx`'s real `ElectricalRoom` and discharges
+# the working-clearance check against the room's REAL declared
+# geometry. `frame.calx` separately consumes `SubstationRoom.xfmr.
+# mass` for a real `civil.bearing_pressure` claim -- ONE declared
+# apparatus, two domains, checked, not asserted (this is the exact
+# `examples/tracks/xdomain/sited_transformer.cupr` precedent, kept in
+# its own file for the same reason that file is standalone: a claim's
+# RHS text-capture window runs to the next `require`/top-level
+# keyword, so this file carries nothing else that could be swept in).
+
+import "program.calx" (ElectricalRoom)
+
+part MainXfmr:
+    mass:            4500kg     # nameplate mass, 1000kVA dry-type class
+    footprint_depth: 1.2m       # nameplate footprint, front-to-back
+    footprint_width: 1.0m
+
+system SubstationRoom:
+    parts:
+        xfmr: MainXfmr
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    # Placed BEFORE `require Siting` on purpose: the working-clearance
+    # claim's RHS text-capture window runs to the next `require`/
+    # top-level keyword (a landed machinery residual, F-WO137-2's
+    # sibling note), so anything placed AFTER `front:` in this same
+    # require group gets swept into its RHS text and corrupts the
+    # comparison (`working_clearance_shape_mismatch`) -- verified by
+    # direct repro. `require Siting:` therefore stays the LAST
+    # statement in this file.
+    waive import(program.calx):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+
+    require Siting:
+        # NFPA 70 (NEC), 2023 ed., Table 110.26(A)(1), Condition 2
+        # (exposed live parts one side, grounded other), 0-150V to
+        # ground: 1.0m minimum depth of working space. This design's
+        # own read of that table for its own voltage class/condition
+        # (D250.1/D250.3 -- not a lithos-transcribed table value).
+        front: elec.power.working_clearance(xfmr)
+                   >= ElectricalRoom.depth - xfmr.footprint_depth - 1.0m

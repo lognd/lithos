@@ -101,7 +101,7 @@ PRIMARY = REPO_ROOT / "examples" / "flagships" / "small_office"
 # frob:doc docs/modules/demos.md#demo-proof-pack-shape
 FALLBACK = REPO_ROOT / "examples" / "flagships" / "espresso_machine"
 
-_HX_GAP_MARKER = "hardy_cross: unsupported feature edge_kind:hx_segment"
+_HX_GAP_MARKER = "hardy_cross: unsupported feature edge_kind:pump"
 
 # The three small_office waiver bases this WO corrected (F152 honesty
 # update, 2026-07-19): the OLD text is what shipped before this WO;
@@ -115,14 +115,14 @@ _WAIVER_BEFORE_AFTER: tuple[tuple[str, str, str], ...] = (
         "fluids.dp_inputs_missing: the supply riser Pipe edge lacks "
         "density/diameter/friction/length inputs; the record chain "
         "cannot close at build (recorded machinery residual)",
-        "WO-144 F152 update: the WO-139/140/141 chain now ROUTES this "
-        "claim to the feldspar Hardy-Cross pack (fluids_dp_multipath@1)",
+        "T-0060 update: coil1/coil2's HxSegment edges now carry "
+        "k_factor/diameter/density",
     ),
     (
         "balance",
         "no registered harness model for claim kind 'fluids.flow_imbalance'",
-        "WO-144 F152 update: a registered model now exists "
-        "(fluids_flow_imbalance@1, WO-141) and the claim routes to it",
+        "T-0060 update: same Hardy-Cross routing as margin "
+        "(fluids_flow_imbalance@1, WO-141)",
     ),
     (
         "npsh",

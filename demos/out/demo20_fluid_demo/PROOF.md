@@ -4,7 +4,7 @@
 
 ## Primary target: small_office (F-WO144-1 finding)
 
-`small_office/hydronics.fluo`'s `margin`/`balance` claims now ROUTE to real registered models (`fluids_dp_multipath@1`, `fluids_flow_imbalance@1`, WO-139/140/141) -- but the feldspar Hardy-Cross pack itself abstains: `hardy_cross: unsupported feature edge_kind:hx_segment`. `coil1`/`coil2` are `HxSegment` edges, a payload feature the pack's solver does not carry yet (a feldspar-side gap, not a lithos bridge gap; out of this WO's scope to add). Per the WO's own escalation clause this is FINDING F-WO144-1, and this demo falls back to the espresso story (D258 ruling 5) rather than faking a close.
+`small_office/hydronics.fluo`'s `margin`/`balance` claims now ROUTE to real registered models (`fluids_dp_multipath@1`, `fluids_flow_imbalance@1`, WO-139/140/141) -- but the feldspar Hardy-Cross pack itself abstains: `hardy_cross: unsupported feature edge_kind:pump`. `coil1`/`coil2` are `HxSegment` edges, a payload feature the pack's solver does not carry yet (a feldspar-side gap, not a lithos bridge gap; out of this WO's scope to add). Per the WO's own escalation clause this is FINDING F-WO144-1, and this demo falls back to the espresso story (D258 ruling 5) rather than faking a close.
 
 `npsh` also cannot close: `registry(grundfos_ups32)` names a pump-curve record that does not exist anywhere in `stdlib/std.fluid/records/components.toml` -- a missing catalog record, never fabricated (D224.1).
 
@@ -14,8 +14,8 @@ Every remaining small_office hydronics waiver's basis was corrected to name its 
 
 | claim | old (stale) basis | new (true) basis |
 |---|---|---|
-| margin | fluids.dp_inputs_missing: the supply riser Pipe edge lacks density/dia... | WO-144 F152 update: the WO-139/140/141 chain now ROUTES this claim to the feldspar Hardy-C... |
-| balance | no registered harness model for claim kind 'fluids.flow_imbalance'... | WO-144 F152 update: a registered model now exists (fluids_flow_imbalance@1, WO-141) and th... |
+| margin | fluids.dp_inputs_missing: the supply riser Pipe edge lacks density/dia... | T-0060 update: coil1/coil2's HxSegment edges now carry k_factor/diameter/density... |
+| balance | no registered harness model for claim kind 'fluids.flow_imbalance'... | T-0060 update: same Hardy-Cross routing as margin (fluids_flow_imbalance@1, WO-141)... |
 | npsh | no registered harness model for claim kind 'fluids.npsh_margin'... | WO-144 F152 update: a registered model exists (NpshMarginModel, WO-110) and the npsh chann... |
 
 `regime`/`fill` are UNCHANGED and remain named residuals: F157 (design-log 2026-07-15-cycle-36.md) has landed the elec converter call-form routing only -- the `settles()`/ window-comparator claim-SHAPE lowering surface `regime`/ `fill` need is still an open, real job, not landed for fluids or any other track. Stated plainly, per the WO's own acceptance bar: this is a residual, not a discharge, and not silently narrowed to look closed.
@@ -46,4 +46,4 @@ uv run python -m demos.demo20_fluid_demo
 |----------|-------|--------|
 | `espresso_dp_sheet.json` | 1996 | `sha256:5a413c729f645d19cb2231e243e9f801e1a9c9f1f96f6adadc4497fbfaa6aaa3` |
 | `moody_diagram.json` | 10632 | `sha256:51ffbd8341c82d2ac4212e308e40e2b8d06243a33dcb32cfb546bf4b2288022a` |
-| `small_office_explain.txt` | 20149 | `sha256:0a87c6b372bb0a3e8f7424f343273c608280a2a1b1d2e7c85ec7f304f6badf2b` |
+| `small_office_explain.txt` | 20290 | `sha256:6645f7b7908f9babad7990e62dbb15b9c5321b1bccb76283cf29dba5bedd67af` |

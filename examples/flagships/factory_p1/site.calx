@@ -1,0 +1,26 @@
+# factory_p1: site truth + shared datums (calcite/02 sec. 1). One
+# `site` per project root; program.calx/frame.calx consume these
+# entries by import -- declared once, record-cited, never repeated.
+#
+# WO-137 (charter 43, AD-42; the factory flagship, the acceptance
+# test of the whole power-distribution charter): a small industrial
+# facility -- utility service -> substation transformer -> switchgear
+# -> MCCs -> motor loads -- sited in a REAL calcite building, proving
+# the power system and the building are designed as ONE design
+# (charter 43 sec. 4), not two authored independently.
+
+site MillRunRoad:
+    boundary:
+        wind_speed:   [0m/s, 45m/s]             by catalog(asce7_fig26)
+        ground_snow:  1.0kPa                    by catalog(asce7_fig7)
+        seismic_sdc:  C                         by catalog(usgs_2023)
+        frost_depth:  1.2m                      by catalog(county_gis)
+        climate_zone: 4A                        by catalog(iecc_fig301)
+    soil:
+        bearing:      [140kPa, 190kPa]          by test(factory_geotech_2026)
+        class:        registry(site_class_d)
+
+grid bays: A, B, C, D spacing 8.0m       # column lines, 8m structural bay
+grid rows: 1, 2 spacing 12.0m            # 12m deep production bay
+level ground: 0m
+level roof:   7.0m                       # clear height, MCC/crane class

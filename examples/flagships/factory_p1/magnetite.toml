@@ -1,0 +1,24 @@
+# factory_p1 -- project manifest (WO-137, the factory flagship: charter
+# 43/AD-42's acceptance test). Dependency set + the D147 cost-profile
+# declarations: pricing is project-configurable data, never compiler
+# content.
+
+[package]
+name = "examples.factory_p1"
+version = "0.1.0"
+
+[depends]
+"std.quantities" = "^1"
+"std.civil" = "^0.1"        # occupancy/egress tables, sections, load models
+"std.elec" = "^0.1"         # families, protocol packs
+"std.power" = "^0.1"        # conductor/motor/transformer/grounding records (WO-134)
+"std.cost" = "^0.1"         # estimator models + rate-record schemas (D147)
+
+[profiles.cost.construction]
+quantity = 1
+labor    = "rates.us_midwest_union_2026"
+pricing  = ["rsmeans.bldg_2026", "sqd.distributor_2026"]
+markup   = 1.18            # GC overhead + profit
+
+[profiles.cost.default]
+profile = "construction"

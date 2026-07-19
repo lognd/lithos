@@ -582,6 +582,22 @@ def _build_sheet(
         else f"{ref.kind}:{ref.origin}"
         for ref in (obligation.payloads or ())
     )
+    if not inputs and payload_refs:
+        # A payload-resolved discharge (frame/flownet resolution) carries
+        # its inputs inside the payload, not as given materials or claim
+        # kwargs -- an empty Inputs table would fail charter 41 sec. 1.5
+        # (F141 gating) AND misrepresent the provenance. One honest row
+        # per payload ref names where the numbers actually came from.
+        inputs = tuple(
+            CalcInput(
+                name="(payload-resolved: " + ref.split(":", 1)[0] + ")",
+                value=ref.split(":", 1)[-1][:12],
+                unit="",
+                provenance="derived",
+                pin=ref,
+            )
+            for ref in payload_refs
+        )
     record_pins = tuple(
         m.root[1] for m in obligation.given.materials if len(m.root) > 1
     )
@@ -908,7 +924,11 @@ def calc_sheet_drawing(sheet: CalcSheet):  # noqa: ANN201 -- DrawingModel (avoid
             drawing_number=f"CALC-{_safe_name(sheet.sheet_id)}",
             revision="A",
             scale_label="NTS",
-            subject=sheet.subject_anchor,
+            # A payload/frame-resolved claim can lack a source anchor;
+            # the content-addressed subject ref is the honest fallback
+            # identity (never a blank field -- title-block-completeness
+            # gates the ship, F141).
+            subject=sheet.subject_anchor or sheet.subject_ref[:19] or "(unanchored)",
         ),
         views=[],
         entities=[],

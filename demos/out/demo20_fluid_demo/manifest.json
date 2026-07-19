@@ -13,10 +13,10 @@
       "sha256": "sha256:51ffbd8341c82d2ac4212e308e40e2b8d06243a33dcb32cfb546bf4b2288022a"
     },
     {
-      "bytes": 20149,
+      "bytes": 20290,
       "deterministic": true,
       "path": "small_office_explain.txt",
-      "sha256": "sha256:0a87c6b372bb0a3e8f7424f343273c608280a2a1b1d2e7c85ec7f304f6badf2b"
+      "sha256": "sha256:6645f7b7908f9babad7990e62dbb15b9c5321b1bccb76283cf29dba5bedd67af"
     }
   ],
   "cause_row": "n/a",

@@ -1,0 +1,116 @@
+# factory_p1: the plant's power system (cuprite; charter 43/AD-42
+# throughout, docs/spec/cuprite/10-power-layer.md). Utility service ->
+# substation transformer -> main switchgear -> panelboard + MCC ->
+# motor/lighting loads, the fourth `NetDiscipline` (rule 1-4 all
+# exercised: a declared source per subnet, the utility/genset tie, a
+# protective device at every ampacity transition, every load
+# reachable). The transformer itself (`xfmr_feed` below) is the SAME
+# apparatus `substation.cupr`'s `SubstationRoom.xfmr` sites into the
+# real calcite `ElectricalRoom` -- WO-136's tandem lives there, kept
+# in its own file (see that file's header note).
+#
+# D250.3 (both honest paths, WO-137 deliverable 2): `MainSvc`'s
+# `available_fault`/`x_r` are DECLARED, cited to a real utility letter
+# (`fault_main` below discharges through the T-0009 screening model).
+# The genset tie path (`fault_standby`) DELIBERATELY leaves its
+# transformer's `pct_z` undeclared -- no nameplate %Z was available at
+# design time -- so it DEFERS BY NAME (D250.3: an unverifiable input
+# is a named absence, never a default).
+
+power PlantMain:
+    sources: MainSvc, Genset
+    buses: MainSvc(nominal_voltage=13.2kV, phases=3), Genset(nominal_voltage=480V, phases=3), Tie(nominal_voltage=13.2kV, phases=3), MainBus(nominal_voltage=480V, phases=3), PanelA(nominal_voltage=480V, phases=3), MccA(nominal_voltage=480V, phases=3)
+    ties: Tie
+    loads: PressMotor(kva=45, class=motor, code_letter=G), ConveyorMotor(kva=15, class=motor, code_letter=F), LightingLoad(kva=20, class=lighting)
+    feeders:
+        # DECLARED, cited utility letter value (D250.3 path 1):
+        # Riverside Electric Coop service request #RE-2026-0447,
+        # 25kA available fault, X/R 6.6.
+        svc:         service(voltage=13.2kV, available_fault=25kA, x_r=6.6) (MainSvc -> Tie)
+        gen:         generator(kva=750kVA, voltage=480V)                   (Genset -> Tie)
+        main_bkr:    breaker(frame=2000A, aic=65kA)                        (Tie -> MainBus)
+        xfmr_feed:   transformer(kva=1000kVA, primary=13.2kV, secondary=480V) (MainBus -> MainBus)
+        panel_feed:  feeder(size=cu_4_0awg, length=45m)                    (MainBus -> PanelA)
+        panel_bkr:   breaker(frame=225A, aic=25kA)                         (PanelA -> PanelA)
+        light_feed:  feeder(size=cu_10awg, length=20m)                     (PanelA -> LightingLoad)
+        mcc_bus:     busway(rating=800A, size=cu_4_0awg, length=15m)       (MainBus -> MccA)
+        mcc_fuse:    fuse(frame=800A, aic=100kA)                           (MccA -> MccA)
+        press_feed:  feeder(size=cu_2_0awg, length=30m)                    (MccA -> PressMotor)
+        press_relay: relay(curve=motor_thermal, frame=100A)               (PressMotor -> PressMotor)
+        conv_feed:   feeder(size=cu_6awg, length=25m)                      (MccA -> ConveyorMotor)
+        conv_fuse:   fuse(frame=60A, aic=25kA)                              (ConveyorMotor -> ConveyorMotor)
+
+# F-WO137-2 (loud finding, WO escalation directive): `require` claim
+# groups do NOT attach to obligations as bare top-level statements
+# following a `power <name>:` net declaration -- verified directly
+# (`regolith check` on an isolated minimal repro: obligations=0 for a
+# top-level `require` after a `power` block, WITH or WITHOUT nesting
+# the require inside the power block's own body). cuprite's claim
+# groups only attach when NESTED inside a `system`/`part`/`board`
+# decl body (the exact shape `examples/tracks/xdomain/
+# sited_transformer.cupr`'s `system SubstationRoom:` already proves,
+# and `examples/flagships/cnc_router_r1/power.cupr`'s `board
+# PowerPanel:` also proves) -- there is no landed corpus precedent
+# anywhere of a `power` net's OWN claims (`demand_load`/`voltage_drop`/
+# etc., as opposed to `working_clearance`, which already lives inside
+# a `system`) reaching lowering as real obligations without this
+# `system` wrapper. `PlantChecks`/`StandbyChecks` below are that
+# wrapper -- ordinary empty-`parts:` systems whose sole job is to give
+# these claims a subject to attach to; this workaround should drive a
+# follow-on WO (either document the requirement in cuprite/10, or land
+# `power <name>:` as a first-class claim-owning decl so this wrapper
+# is not needed).
+
+system PlantChecks:
+    require PlantLoad:
+        # NEC Art. 220: MccA's motor+lighting connected load down to a
+        # demand load, against the panel's declared rating.
+        demand: elec.power.demand_load(MccA, connected_kva=80.0, demand_factor=0.85) <= 225
+        vdrop: elec.power.voltage_drop(PanelA -> LightingLoad, current_a=40.0, length_m=20.0, resistance_ohm_per_m=0.0008, reactance_ohm_per_m=0.0002, power_factor=0.9, phase_multiplier=1.732) <= 9.6
+        amp: elec.power.ampacity(press_feed, base_ampacity_a=175.0, temperature_correction_factor=0.87, fill_adjustment_factor=1.0) >= 130
+        # D250.3 path 1: DECLARED, cited-utility-letter fault current --
+        # discharges through the T-0009 screening estimate.
+        fault_main: elec.power.fault_current(MainBus, transformer_kva=1000.0, pct_z=5.75, secondary_voltage_v=480.0) <= 65000
+        dip: elec.power.motor_start_dip(PressMotor, motor_locked_rotor_kva=250.0, source_available_kva=5000.0) <= 10
+        loading: elec.power.transformer_loading(xfmr_feed, actual_kva=800.0, rated_kva=1000.0) <= 100
+        pf: elec.power.power_factor(MainBus, real_power_kw=720.0, apparent_power_kva=800.0) >= 0.85
+        # Certified-tier-only claims (D250.4): no lithos built-in ever
+        # discharges these; they defer by name, honestly, never through a
+        # screening estimate wearing a study's clothes.
+        withstand: elec.power.withstand(MainBus) <= 65000
+        coord: elec.power.coordination(mcc_fuse, press_relay) == true
+        arc_flash: elec.power.arc_flash(MccA) <= 8
+        grounding: elec.power.grounding(MainBus) == true
+        harmonics: elec.power.harmonics(MainBus) <= 5
+
+        # WO-105 release residuals (D206/D207): memo-backed accepted
+        # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+        waive withstand:
+            basis: "D250.4: withstand has no lithos built-in model by design (certified/feldspar-tier only); honest named deferral"
+            by doc(memos/release-residuals.md)
+        waive coord:
+            basis: "D250.4: coordination has no lithos built-in model by design (feldspar curve-intersection, certified tier only); honest named deferral"
+            by doc(memos/release-residuals.md)
+        waive arc_flash:
+            basis: "D250.4 (this WO's acceptance test): arc_flash CANNOT discharge through a lithos screening estimate; IEEE 1584 arc-flash routes to feldspar's certified solver only. Honest named deferral, never a screening-estimate discharge wearing a study's clothes"
+            by doc(memos/release-residuals.md)
+        waive grounding:
+            basis: "D250.4: grounding has no lithos built-in model by design; honest named deferral"
+            by doc(memos/release-residuals.md)
+        waive harmonics:
+            basis: "D250.4: IEEE 519 harmonics has no lithos built-in model by design (feldspar tier); honest named deferral"
+            by doc(memos/release-residuals.md)
+
+system StandbyChecks:
+    require Standby:
+        # D250.3 path 2 (the HONEST undeclared path, WO-137 deliverable 2):
+        # the genset-side transformer's nameplate %Z was never obtained at
+        # design time -- `pct_z` is left undeclared on purpose, so this
+        # claim DEFERS BY NAME rather than assuming a "typical" %Z.
+        fault_standby: elec.power.fault_current(Tie, transformer_kva=750.0, secondary_voltage_v=480.0) <= 45000
+
+        # WO-105 release residuals (D206/D207): memo-backed accepted
+        # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+        waive fault_standby:
+            basis: "D250.3 honest deferral: genset-side transformer nameplate pct_z was never obtained; input left undeclared by design, never defaulted"
+            by doc(memos/release-residuals.md)

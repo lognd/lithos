@@ -1,0 +1,7 @@
+{
+  "_comment": "WO-137 ship spec. F-WO137-1 (loud, per the WO's own escalation directive): NO drawing producer reads a PowerNetPayload -- 'elec_blocks' (the only elec-family producer, registered in regolith.backends.drawings.producers) projects a HarnessPayload's RUN endpoints, not a `power <name>:` net's buses/feeders/ties graph (regolith.backends.drawings.backend.DrawingSpec's own docstring: 'elec_blocks reads .harnesses'). A one-line diagram for PlantMain is therefore NOT a deliverable this drawing surface can express today -- exactly the WO-137 acceptance-criteria gap ('a power design without a one-line is not a deliverable an electrical engineer would accept'), recorded here rather than faked with a mismatched producer. The frame sheet + contract graph still ship.",
+  "drawings": [
+    {"subject": "Frame", "track": "civil"},
+    {"subject": "contract_graph", "track": "contract_graph"}
+  ]
+}

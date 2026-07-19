@@ -1,0 +1,86 @@
+# factory_p1: architectural program + egress (calcite/02 secs. 2, 3,
+# 9, 10). One production floor, one electrical room (WO-136's tandem
+# subject -- the substation transformer sites HERE, frame.calx's
+# TransformerPad and power.cupr's SubstationRoom both reference this
+# room's real declared geometry), one MCC/motor bay, one exit
+# corridor.
+
+import std.civil (Door, Exit, HousekeepingPad)
+
+# -- Spaces (02 sec. 2) --------------------------------------------------
+
+space ElectricalRoom:
+    area:         28m2
+    depth:        4.0m        # the working-clearance check's "front" face
+    width:        7.0m
+    clear_height: 4.5m
+    occupancy:    registry(b_mechanical)
+    at:           level(ground)
+    bounded_by:   RatedWall2hr on [all]
+    offers:                                  # 02 sec. 10: MEP boundary
+        pad: HousekeepingPad(area=6m2)       # the transformer's pad
+
+space ProductionFloor:
+    area:         288m2
+    occupancy:    registry(s1_storage)
+    at:           level(ground)
+    bounded_by:   MetalPanelWall on [north, east, west]
+
+space ExitCorridor:
+    area:         24m2
+    occupancy:    registry(s1_storage)
+    at:           level(ground)
+    bounded_by:   RatedWall2hr on [south]
+
+# -- Circulation (02 sec. 3) ---------------------------------------------
+
+access:
+    elec_door:  Door(width=915mm, swing=egress, path_length=6m)
+                    (ElectricalRoom -> ExitCorridor)
+    floor_door: Door(width=1830mm, swing=egress, path_length=30m)
+                    (ProductionFloor -> ExitCorridor)
+    main_exit:  Exit(width=1830mm, path_length=9m)
+                    (ExitCorridor -> exterior)
+
+circulation Egress:
+    reference: exterior
+    nodes: ElectricalRoom, ProductionFloor, ExitCorridor
+    edges: elec_door, floor_door, main_exit
+
+# -- Envelope (02 sec. 8) -------------------------------------------------
+
+assembly RatedWall2hr: wall
+    layers:
+        board_a: registry(gyp_type_x_16mm)
+        stud:    registry(steel_stud_92mm_600oc)
+        board_b: registry(gyp_type_x_16mm)
+    promises:
+        fire_rating: >= 2hr    by catalog(ul_u419)
+
+assembly MetalPanelWall: wall
+    layers:
+        panel: registry(metal_panel_26ga)
+        ins:   registry(mineral_wool_152mm)
+        liner: registry(metal_panel_26ga)
+    promises:
+        u_value: derived
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive import(std.civil):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+
+# -- Claims (02 sec. 9) ---------------------------------------------------
+
+require Egress:
+    travel:   civil.travel_distance(ProductionFloor -> exterior) <= 61m
+    deadend:  civil.dead_end(ExitCorridor) <= 6.1m
+
+budget FloorArea kind=area:
+    members: [ElectricalRoom, ProductionFloor, ExitCorridor]
+    allocate: worst_case
+    locked:  ElectricalRoom: 28m2
+
+require Budgeting:                              # D147 estimating axis
+    construction: mfg.cost(all, profile=construction) <= 1200000USD
