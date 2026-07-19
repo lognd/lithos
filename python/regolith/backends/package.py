@@ -89,6 +89,13 @@ FAMILY_DIRS = (
     # on any package whose spec names no wire-EDM die-set program.
     "edm_profile",
     "die_set",
+    # WO-167 (AD-47 sec. 5, D268 item 4): the dwelling/house-wiring
+    # program's two families -- the cable schedule (one row per
+    # branch circuit) and the panel schedule (breaker-slot/load rows
+    # plus the panel siting verdict). Absent on any package whose
+    # spec names no dwelling-wiring program.
+    "cable_schedule",
+    "panel_schedule",
 )
 
 

@@ -1,0 +1,16 @@
+# dwelling_r1 (WO-167, D268 item 4): the calcite half of the dwelling
+# wiring program's own cuprite-calcite tandem (WO-136 pattern, same
+# shape as `examples/tracks/xdomain/sited_transformer.calx` and
+# `examples/flagships/factory_p1/program.calx`'s `ElectricalRoom`) --
+# a single utility/panel closet whose REAL declared geometry the
+# panel's working-clearance claim reads. Kept standalone (no
+# `site`/`grid`/`level` scaffolding) on the same precedent
+# `sited_transformer.calx`'s own header names: this demo's job is the
+# tandem + the circuit/schedule machinery, not a second full
+# architectural-program corpus entry.
+
+space UtilityCloset:
+    area:         2.2m2
+    depth:        0.9m     # the working-clearance check's "front" face
+    width:        2.4m
+    clear_height: 2.1m

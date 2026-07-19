@@ -1,0 +1,58 @@
+# dwelling_r1 (WO-167, D268 item 4): the residential branch-circuit/
+# panel power net -- an application of the WO-132..137 power track's
+# already-landed cuprite vocabulary (`power <name>:` net, sec. 1-3a of
+# `docs/spec/cuprite/10-power-layer.md`) to dwelling scale, NOT a new
+# construct (WO-167 deliverable 1: reuse nets/loads before adding
+# grammar). Single-source 240V/120V split-phase service (the ordinary
+# US residential service shape) -> MainPanel -> four branch circuits
+# (small-appliance kitchen, general lighting, bathroom, dryer),
+# mirroring `examples/flagships/factory_p1/power.cupr`'s PlantMain
+# shape at dwelling scale (WO-167's own instruction).
+#
+# Every circuit's load/wire-gauge/breaker-size/length below is AUTHOR-
+# DECLARED (this WO's own licensing posture, D268 item 4/D250 sec. 3):
+# no NEC ampacity/demand-factor TABLE is transcribed here -- the
+# checks below discharge through the T-0009 `regolith.harness.models.
+# power` closed forms (`AmpacityModel`/`VoltageDropModel`/
+# `DemandLoadModel`), the SAME models `power_plant_main.cupr`/
+# `power.cupr` already exercise, over this design's own declared
+# derating/demand factors and conductor figures.
+
+power DwellingMain:
+    sources: UtilitySvc
+    buses: UtilitySvc(nominal_voltage=240V, phases=1), MainPanel(nominal_voltage=240V, phases=1)
+    loads: KitchenSmallAppl(kva=2.4, class=receptacle), BedroomLighting(kva=1.2, class=lighting), BathroomRecept(kva=1.8, class=receptacle), DryerLoad(kva=5.0, class=appliance)
+    feeders:
+        svc:          service(voltage=240V, available_fault=10kA, x_r=1.5) (UtilitySvc -> MainPanel)
+        main_bkr:     breaker(frame=200A, aic=10kA)                        (MainPanel -> MainPanel)
+        kitchen_feed: feeder(size=cu_12awg, length=15m)                    (MainPanel -> KitchenSmallAppl)
+        kitchen_bkr:  breaker(frame=20A, aic=10kA)                         (KitchenSmallAppl -> KitchenSmallAppl)
+        bedroom_feed: feeder(size=cu_14awg, length=18m)                    (MainPanel -> BedroomLighting)
+        bedroom_bkr:  breaker(frame=15A, aic=10kA)                         (BedroomLighting -> BedroomLighting)
+        bath_feed:    feeder(size=cu_12awg, length=12m)                    (MainPanel -> BathroomRecept)
+        bath_bkr:     breaker(frame=20A, aic=10kA)                         (BathroomRecept -> BathroomRecept)
+        dryer_feed:   feeder(size=cu_10awg, length=9m)                     (MainPanel -> DryerLoad)
+        dryer_bkr:    breaker(frame=30A, aic=10kA)                         (DryerLoad -> DryerLoad)
+
+# F-WO137-2 precedent (`power.cupr`'s own finding): a `power <name>:`
+# net's OWN claims (`demand_load`/`ampacity`/`voltage_drop`) only reach
+# lowering as real obligations when nested inside a `system`/`part`/
+# `board` decl body -- this wrapper system is that attachment point
+# (the same workaround `PlantChecks` uses in `power.cupr`).
+system CircuitChecks:
+    require BranchCircuits:
+        # NEC Art. 220: whole-dwelling connected load down to a demand
+        # load, against the declared 200A/240V service rating (48kVA).
+        demand: elec.power.demand_load(MainPanel, connected_kva=10.4, demand_factor=1.0) <= 48
+        # NEC 310.15(B)/(C): kitchen small-appliance circuit (12AWG,
+        # ~25A base ampacity at 60C, no bundling derate on this run)
+        # against its 20A declared load.
+        kitchen_amp: elec.power.ampacity(kitchen_feed, base_ampacity_a=25.0, temperature_correction_factor=1.0, fill_adjustment_factor=1.0) >= 20
+        # IEEE Std 141-1993 ch.3: kitchen run voltage drop, single-
+        # phase, against a declared 3% (dwelling branch-circuit)
+        # maximum.
+        kitchen_vdrop: elec.power.voltage_drop(MainPanel -> KitchenSmallAppl, current_a=20.0, length_m=15.0, resistance_ohm_per_m=0.00521, reactance_ohm_per_m=0.0002, power_factor=0.95, phase_multiplier=2.0) <= 3.0
+        # Dryer circuit (10AWG, ~30A base ampacity) against its 30A
+        # declared load.
+        dryer_amp: elec.power.ampacity(dryer_feed, base_ampacity_a=30.0, temperature_correction_factor=1.0, fill_adjustment_factor=1.0) >= 30
+        dryer_vdrop: elec.power.voltage_drop(MainPanel -> DryerLoad, current_a=24.0, length_m=9.0, resistance_ohm_per_m=0.00328, reactance_ohm_per_m=0.0002, power_factor=0.95, phase_multiplier=2.0) <= 3.0

@@ -410,7 +410,9 @@ _GERBER_LAYER_EXT = frozenset(
 #: family's file always classifies (the honest `file`/`binary` fallback
 #: `classify()` returned when no extension mapped).
 _COMMON_PATH_PATTERNS: tuple[PathPattern, ...] = tuple(
-    PathPattern(contains="", exts=frozenset({ext}), kind=kind, viewer=viewer, media_type=media)
+    PathPattern(
+        contains="", exts=frozenset({ext}), kind=kind, viewer=viewer, media_type=media
+    )
     for ext, (kind, viewer, media) in _EXT_CLASSIFY.items()
 ) + (
     PathPattern(
@@ -534,6 +536,13 @@ def default_artifact_family_registry() -> ArtifactFamilyRegistry:
         # common extension baseline).
         ("edm_profile", "svg"),
         ("die_set", "table"),
+        # WO-167 (AD-47 sec. 5, D268 item 4): the dwelling/house-wiring
+        # program's two families -- the cable schedule (one row per
+        # branch circuit, a table default narrowed by the common
+        # extension baseline) and the panel schedule (breaker-slot/
+        # load rows plus the panel siting verdict, same table default).
+        ("cable_schedule", "table"),
+        ("panel_schedule", "table"),
     )
     for family, viewer in builtins:
         patterns = (

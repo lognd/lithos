@@ -1,0 +1,47 @@
+{
+  "artifacts": [
+    {
+      "bytes": 5416,
+      "deterministic": true,
+      "path": "cable_schedule/cable_schedule.pdf",
+      "sha256": "sha256:60c748dcf6300f02fe797b09dfa3df86242d636114d8ea24c70446bfb0982295"
+    },
+    {
+      "bytes": 8401,
+      "deterministic": true,
+      "path": "cable_schedule/cable_schedule.svg",
+      "sha256": "sha256:f44cd02258aabaebba7b5ede5fa95e3740c0b9e5bd2ef416a96ce3c6fcd964e2"
+    },
+    {
+      "bytes": 1294,
+      "deterministic": true,
+      "path": "dwelling/checks_report.json",
+      "sha256": "sha256:6964db2e2f1cc01b1c13283f2d5400ec234cc5038b23b0ff91c57e7cd4a3991d"
+    },
+    {
+      "bytes": 4721,
+      "deterministic": true,
+      "path": "panel_schedule/panel_schedule.pdf",
+      "sha256": "sha256:a9fe42166e2a7466bd91416f30c80e9f8bf612df78f6568b87d859fca38677af"
+    },
+    {
+      "bytes": 7139,
+      "deterministic": true,
+      "path": "panel_schedule/panel_schedule.svg",
+      "sha256": "sha256:132e15a26eeab61322a51a01b40d695c06aa96cecd312261590433288aba31c9"
+    },
+    {
+      "bytes": 1044,
+      "deterministic": true,
+      "path": "source_check/check_output.txt",
+      "sha256": "sha256:d16564dc4582103a3d47fd93e1f445c10caf06b55b9a492f87ed70baed37555f"
+    }
+  ],
+  "cause_row": "n/a",
+  "demo": "demo21_dwelling_wiring",
+  "domain": "residential branch-circuit/panel wiring program: 200A/240V service, four branch circuits, one sited panel",
+  "live": true,
+  "optimized_quantity": "n/a (dwelling-wiring program, not an optimizer surface)",
+  "surface": "dwelling/house-wiring program: branch circuits -> panel siting (cuprite-calcite tandem) -> cable + panel schedule artifacts (WO-167)",
+  "winner": "n/a"
+}

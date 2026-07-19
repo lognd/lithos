@@ -8,7 +8,17 @@ from regolith._schema.models import (
     RecordRef,
     ScalarInterval,
 )
-from regolith.backends.cost_schedule import cost_summary_sheet, member_schedule_sheet
+from regolith.backends.cost_schedule import (
+    cable_schedule_sheet,
+    cost_summary_sheet,
+    member_schedule_sheet,
+    panel_schedule_sheet,
+)
+from regolith.realizer.elec.dwelling_wiring import (
+    BranchCircuit,
+    DwellingCircuitPlan,
+    realize_dwelling_circuit_plan,
+)
 
 
 def _estimate() -> ItemizedEstimate:
@@ -82,3 +92,76 @@ def test_member_schedule_sheet_rows_from_frame():
     assert row.cells[0] == "B1"
     assert "W200x22" in row.cells
     assert "S355" in row.cells
+
+
+# frob:ticket T-0047
+def _dwelling_plan() -> DwellingCircuitPlan:
+    return DwellingCircuitPlan(
+        panel_name="MainPanel",
+        service_amps=200.0,
+        service_voltage=240.0,
+        room="UtilityCloset",
+        working_clearance_mm=750.0,
+        min_working_clearance_mm=750.0,
+        circuits=(
+            BranchCircuit(
+                name="kitchen_feed",
+                room="Kitchen",
+                load_class="receptacle",
+                connected_va=2400.0,
+                wire_gauge="12 AWG",
+                breaker_a=20.0,
+                length_m=15.0,
+                base_ampacity_a=25.0,
+                resistance_ohm_per_m=0.00521,
+            ),
+        ),
+    )
+
+
+# frob:ticket T-0047
+def test_cable_schedule_sheet_rows_from_realized_circuits():
+    realized = realize_dwelling_circuit_plan(_dwelling_plan()).danger_ok
+    model = cable_schedule_sheet("MainPanel", realized)
+    table = model.sheets[0].tables[0]
+    assert table.title == "Cable Schedule"
+    (row,) = table.rows
+    assert row.cells[0] == "kitchen_feed"
+    assert row.cells[-1] == "pass"
+
+
+# frob:ticket T-0047
+def test_panel_schedule_sheet_carries_siting_verdict():
+    realized = realize_dwelling_circuit_plan(_dwelling_plan()).danger_ok
+    model = panel_schedule_sheet("MainPanel", realized)
+    table = model.sheets[0].tables[0]
+    assert table.title == "Panel Schedule"
+    clearance_row = table.rows[-1]
+    assert clearance_row.cells[3] == "working_clearance"
+    assert "pass" in clearance_row.cells[-1]
+
+
+# frob:ticket T-0047
+def test_cable_schedule_sheet_flags_a_violated_circuit():
+    overloaded = _dwelling_plan().model_copy(
+        update={
+            "circuits": (
+                BranchCircuit(
+                    name="overloaded_feed",
+                    room="Garage",
+                    load_class="motor",
+                    connected_va=6000.0,
+                    wire_gauge="14 AWG",
+                    breaker_a=30.0,
+                    length_m=5.0,
+                    base_ampacity_a=20.0,  # below the 30A declared breaker
+                    resistance_ohm_per_m=0.00828,
+                ),
+            )
+        }
+    )
+    realized = realize_dwelling_circuit_plan(overloaded).danger_ok
+    assert not realized.all_clean
+    model = cable_schedule_sheet("MainPanel", realized)
+    (row,) = model.sheets[0].tables[0].rows
+    assert row.cells[-1] == "VIOLATED"

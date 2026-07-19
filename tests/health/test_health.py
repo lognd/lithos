@@ -25,7 +25,12 @@ from tools.health.report import HealthReport, LegSummary
 # sec. 4): the logic-analyzer tap jig is held to the same fleet bar as
 # every design it exists to test -- 15 -> 16. factory_p1 joined at
 # WO-137 (charter 43/AD-42, the facility power-distribution flagship)
-# -- 16 -> 17.
+# -- 16 -> 17. WO-167's dwelling_r1 example is NOT a fleet member (no
+# `magnetite.toml`, deliberately, mirroring `examples/tracks/xdomain/
+# sited_transformer`'s precedent): it has no schedule-emitting
+# `regolith build`/`ship` stage (see `demos/demo21_dwelling_wiring.py`'s
+# SCOPE NOTE), so it stays off the build/ship-green fleet census
+# rather than failing that gate honestly-but-loudly every run.
 _EXPECTED_FLEET = 17
 
 

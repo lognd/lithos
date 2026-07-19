@@ -39,6 +39,7 @@ from typani.result import Err, Ok, Result
 
 from regolith._schema.models import FeatureProgram
 from regolith.logging_setup import get_logger
+from regolith.realizer.elec.dwelling_wiring import DwellingCircuitPlan
 from regolith.realizer.elec.kicad import LayoutRequest
 from regolith.realizer.elec.perfboard import PerfboardNetlist
 from regolith.realizer.mech.wire_edm import WireEdmProfile
@@ -450,7 +451,9 @@ def _wire_edm_capability() -> RealizerCapability:
         realized_kind="edm_profile.realized",
         artifact_families=("edm_profile", "die_set"),
         tool_adapters=(
-            ToolAdapterDescriptor(name="wire_edm_profile_emitter", tier="deterministic"),
+            ToolAdapterDescriptor(
+                name="wire_edm_profile_emitter", tier="deterministic"
+            ),
         ),
         process_records=(
             "std.process/wire_edm",
@@ -469,19 +472,96 @@ def _wire_edm_capability() -> RealizerCapability:
     )
 
 
+def _dwelling_wiring_capability() -> RealizerCapability:
+    """The dwelling/house-wiring domain (WO-167, AD-47 sec. 5, D268
+    item 4): the FOURTH new capability program through this registry
+    (perfboard, wire_edm were the first two; this is the fourth and
+    final owner capability target) -- an application of the
+    WO-132..137 power track's landed cuprite power vocabulary +
+    WO-136 cuprite-calcite tandem to residential branch-circuit/
+    panel/service scope.
+
+    - ``program_kind``: `DwellingCircuitPlan`
+      (`regolith.realizer.elec.dwelling_wiring`), this program's own
+      minimal IR (a panel + its declared branch circuits, mirroring
+      the `PerfboardNetlist`/`WireEdmProfile` "new capability, own
+      small IR" precedent).
+    - ``realized_kind``: ``"dwelling_wiring.realized"``
+      (`DWELLING_WIRING_DOMAIN_TAG`).
+    - ``artifact_families``: ``cable_schedule`` (one row per branch
+      circuit: load/gauge/breaker/length/derated-ampacity/voltage-
+      drop) and ``panel_schedule`` (breaker-slot/load rows plus the
+      panel siting verdict) -- both registered in
+      `default_artifact_family_registry`, both riding the existing
+      `Table`/`DrawingModel` schedule machinery
+      (`regolith.backends.cost_schedule`), no new rendering mechanism.
+    - ``tool_adapters``: ONE deterministic tier -- the schedule
+      projection and the ampacity/voltage-drop/working-clearance
+      arithmetic all run in-process against author-declared circuit
+      data; no external tool is invoked (the same posture perfboard's
+      Manhattan assignment takes).
+    - ``process_records``: the `std.process` elec-install namespaces
+      WO-170 populated (branch-circuit wiring, panel/service
+      installation, conduit/raceway installation) -- per the licensing
+      gate (D250 sec. 3), this program references THESE EXISTING
+      records only; no new breaker/panel catalog content is added.
+    - ``dfm_checks``: `check_ampacity_containment`/
+      `check_voltage_drop_limit` (branch-circuit loading, discharged
+      through the real WO-135 `AmpacityModel`/`VoltageDropModel`) and
+      `check_working_clearance` (the panel siting check, the same
+      predicate the cuprite/calcite tandem source discharges).
+    - ``claim_kinds``: the three EXISTING `elec.power.*` claim kinds
+      this program discharges (`ampacity`, `voltage_drop`,
+      `working_clearance`) -- no new claim vocabulary, per WO-167
+      deliverable 1's "reuse existing constructs before adding new
+      grammar" instruction. Panel bus-ampacity/breaker-catalog claims
+      remain a NAMED REFUSAL (D250 sec. 3): this registration does not
+      claim them.
+    """
+    return RealizerCapability(
+        domain="dwelling_wiring",
+        program_kind=DwellingCircuitPlan,
+        realized_kind="dwelling_wiring.realized",
+        artifact_families=("cable_schedule", "panel_schedule"),
+        tool_adapters=(
+            ToolAdapterDescriptor(
+                name="dwelling_circuit_schedule_projection", tier="deterministic"
+            ),
+        ),
+        process_records=(
+            "std.process/branch_circuit_wiring",
+            "std.process/panel_service_installation",
+            "std.process/conduit_raceway_installation",
+        ),
+        dfm_checks=(
+            "regolith.harness.models.dfm.checks:check_ampacity_containment",
+            "regolith.harness.models.dfm.checks:check_voltage_drop_limit",
+            "regolith.harness.models.dfm.checks:check_working_clearance",
+        ),
+        claim_kinds=(
+            "elec.power.ampacity",
+            "elec.power.voltage_drop",
+            "elec.power.working_clearance",
+        ),
+    )
+
+
 # frob:doc docs/modules/py-backends.md#backends-capabilities
 def default_capability_registry() -> CapabilityRegistry:
-    """The four built-in registrations: mech and elec (WO-164
+    """The five built-in registrations: mech and elec (WO-164
     deliverable 3, a descriptive retrofit), perfboard (WO-165, the
-    first NEW capability program), and wire_edm (WO-166, the second).
-    A collision here is a built-in authoring bug (every domain tag is
-    a hard-coded distinct string), so it is allowed to raise straight
-    through rather than being caught -- the same posture the other
-    `default_*_registry` factories in `registry.py` take with their
-    own `assert result.is_ok` built-in-collision guards."""
+    first NEW capability program), wire_edm (WO-166, the second), and
+    dwelling_wiring (WO-167, the fourth and final owner capability
+    target). A collision here is a built-in authoring bug (every
+    domain tag is a hard-coded distinct string), so it is allowed to
+    raise straight through rather than being caught -- the same
+    posture the other `default_*_registry` factories in `registry.py`
+    take with their own `assert result.is_ok` built-in-collision
+    guards."""
     registry = CapabilityRegistry()
     registry.register(_mech_capability())
     registry.register(_elec_capability())
     registry.register(_perfboard_capability())
     registry.register(_wire_edm_capability())
+    registry.register(_dwelling_wiring_capability())
     return registry

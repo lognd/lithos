@@ -1,0 +1,38 @@
+# dwelling_r1 (WO-167 deliverable 2): the panel's siting, the cuprite-
+# calcite tandem (WO-136) applied at dwelling scale -- the SAME
+# shape/pattern as `examples/tracks/xdomain/sited_transformer.cupr`
+# and `examples/flagships/factory_p1/substation.cupr`: an apparatus
+# declared once (`MainPanelBox`), sited into `dwelling.calx`'s real
+# `UtilityCloset` geometry, its working-clearance claim discharging
+# against that room's REAL declared depth (never a lithos-transcribed
+# NEC table value -- this design's own read of NEC Table 110.26(A)(1)
+# for its own voltage class/condition, D250.1/D250.3).
+
+import "dwelling.calx" (UtilityCloset)
+
+part MainPanelBox:
+    mass:            18kg    # nameplate mass, 200A residential load-center class
+    footprint_depth: 0.15m   # nameplate footprint, front-to-back (surface-mount panel)
+    footprint_width: 0.5m
+
+system PanelRoom:
+    parts:
+        panel: MainPanelBox
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). Placed before
+    # `require Siting` on purpose (the same F-WO137-2 sibling
+    # text-capture-window note `substation.cupr` names: nothing may
+    # follow `front:` in the same require group).
+    waive import(dwelling.calx):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+
+    require Siting:
+        # NFPA 70 (NEC), 2023 ed., Table 110.26(A)(1), Condition 1
+        # (exposed live parts on one side only, 0-150V to ground):
+        # 0.9m minimum depth of working space. This design's own read
+        # of that table for its own voltage class/condition (D250.1/
+        # D250.3 -- not a lithos-transcribed table value).
+        front: elec.power.working_clearance(panel)
+                   >= UtilityCloset.depth - panel.footprint_depth - 0.75m

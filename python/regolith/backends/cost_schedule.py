@@ -22,6 +22,7 @@ PROJECT the realized IRs, they never compute a cost or a takeoff.
 from __future__ import annotations
 
 from collections.abc import Mapping
+from typing import TYPE_CHECKING
 
 from regolith._schema.models import (
     DrawingModel,
@@ -34,6 +35,14 @@ from regolith._schema.models import (
     TitleBlock,
 )
 from regolith.logging_setup import get_logger
+
+if TYPE_CHECKING:
+    # Type-only: `regolith.realizer.elec.dwelling_wiring` imports THIS
+    # module's `cable_schedule_sheet`/`panel_schedule_sheet` (the
+    # `Table`/`DrawingModel` schedule machinery, WO-167 deliverable 3),
+    # so a runtime import here would be circular -- the same
+    # `PayloadResolver`-in-`harness/model.py` precedent.
+    from regolith.realizer.elec.dwelling_wiring import RealizedDwellingWiring
 
 _log = get_logger(__name__)
 
@@ -119,6 +128,122 @@ def cost_summary_sheet(
         f"{subject} Cost Summary",
         f"COST-{subject}",
         Table(title="Cost Summary", columns=columns, rows=rows),
+    )
+
+
+# frob:doc docs/modules/py-backends.md#backends-cost-schedule
+def cable_schedule_sheet(
+    subject: str, realized: RealizedDwellingWiring
+) -> DrawingModel:
+    """A cable schedule sheet (WO-167 deliverable 3, D268 item 4): one
+    row per dwelling branch circuit -- name/room/load class/connected
+    VA/wire gauge/breaker size/length/derated ampacity/voltage drop --
+    in declaration order, each row's ampacity/voltage-drop verdict
+    carried alongside the declared data (never a second silent
+    source of truth: the verdict IS this same realize pass's
+    `CircuitCheckResult`, projected, not recomputed)."""
+    columns = [
+        "circuit",
+        "room",
+        "load_class",
+        "connected_va",
+        "wire_gauge",
+        "breaker_a",
+        "length_m",
+        "derated_ampacity_a",
+        "voltage_drop_pct",
+        "verdict",
+    ]
+    rows: list[TableRow] = []
+    checks_by_name = {c.name: c for c in realized.circuit_checks}
+    for circuit in realized.plan.circuits:
+        check = checks_by_name[circuit.name]
+        verdict = (
+            "VIOLATED"
+            if (check.ampacity_violated or check.voltage_drop_violated)
+            else "pass"
+        )
+        rows.append(
+            TableRow(
+                cells=[
+                    circuit.name,
+                    circuit.room,
+                    circuit.load_class,
+                    f"{circuit.connected_va:g}",
+                    circuit.wire_gauge,
+                    f"{circuit.breaker_a:g}",
+                    f"{circuit.length_m:g}",
+                    f"{check.derated_ampacity_a:.3f}",
+                    f"{check.voltage_drop_pct:.4f}",
+                    verdict,
+                ]
+            )
+        )
+    _log.info("cable schedule sheet: %s -> %d row(s)", subject, len(rows))
+    return _sheet(
+        subject,
+        f"{subject} Cable Schedule",
+        f"CBL-{subject}",
+        Table(title="Cable Schedule", columns=columns, rows=rows),
+    )
+
+
+# frob:doc docs/modules/py-backends.md#backends-cost-schedule
+def panel_schedule_sheet(
+    subject: str, realized: RealizedDwellingWiring
+) -> DrawingModel:
+    """A panel schedule sheet (WO-167 deliverable 3): the panel's
+    service rating + siting verdict, then one row per branch circuit
+    (breaker size + connected load) -- the panel-catalog CONTENT
+    (bus ampacity, lugs rating, slot count) is a NAMED REFUSAL (D250
+    sec. 3, no `std.power` catalog record for it exists); this sheet
+    carries only the author-declared circuits/loads WO-167 permits."""
+    plan = realized.plan
+    columns = [
+        "breaker_slot",
+        "circuit",
+        "room",
+        "load_class",
+        "breaker_a",
+        "connected_va",
+    ]
+    rows: list[TableRow] = [
+        TableRow(
+            cells=[
+                str(i + 1),
+                circuit.name,
+                circuit.room,
+                circuit.load_class,
+                f"{circuit.breaker_a:g}",
+                f"{circuit.connected_va:g}",
+            ]
+        )
+        for i, circuit in enumerate(plan.circuits)
+    ]
+    clearance_row = TableRow(
+        cells=[
+            "--",
+            "(panel siting)",
+            plan.room,
+            "working_clearance",
+            f"{plan.working_clearance_mm:.1f}mm",
+            (
+                "VIOLATED"
+                if realized.working_clearance_violated
+                else f"pass (min {plan.min_working_clearance_mm:.1f}mm)"
+            ),
+        ]
+    )
+    rows.append(clearance_row)
+    _log.info("panel schedule sheet: %s -> %d row(s)", subject, len(rows))
+    return _sheet(
+        subject,
+        f"{subject} Panel Schedule "
+        f"({plan.service_amps:g}A/{plan.service_voltage:g}V service; "
+        "breaker/panel bus-ampacity catalog content D250 sec.3 named "
+        "refusal, not represented here)",
+        f"PNL-{subject}",
+        Table(title="Panel Schedule", columns=columns, rows=rows),
     )
 
 

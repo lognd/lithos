@@ -47,9 +47,16 @@ def test_registers_a_complete_capability() -> None:
     assert get_capability(registry, "nonexistent") is None
 
 
+# frob:ticket T-0047
 @pytest.mark.parametrize(
     "field",
-    ["artifact_families", "tool_adapters", "process_records", "dfm_checks", "claim_kinds"],
+    [
+        "artifact_families",
+        "tool_adapters",
+        "process_records",
+        "dfm_checks",
+        "claim_kinds",
+    ],
 )
 def test_refuses_capability_missing_a_tuple_field(field: str) -> None:
     kwargs = _complete_kwargs()
@@ -137,13 +144,42 @@ def test_elec_capability_is_honestly_populated() -> None:
 
 
 # frob:tests python/regolith/backends/capabilities.py::default_capability_registry kind="unit"
+# frob:ticket T-0047
 def test_default_registry_has_exactly_mech_elec_perfboard_wire_edm() -> None:
     # WO-165: perfboard joins mech/elec as the first NEW capability
     # program registered through this registry (mech/elec were a
     # descriptive retrofit of pre-existing code). WO-166 adds wire_edm
-    # as the second.
+    # as the second, WO-167 adds dwelling_wiring as the fourth (the
+    # final owner capability target).
     registry = default_capability_registry()
-    assert set(registry.domains()) == {"mech", "elec", "perfboard", "wire_edm"}
+    assert set(registry.domains()) == {
+        "mech",
+        "elec",
+        "perfboard",
+        "wire_edm",
+        "dwelling_wiring",
+    }
+
+
+# frob:ticket T-0047
+def test_dwelling_wiring_capability_is_honestly_populated() -> None:
+    from regolith.realizer.elec.dwelling_wiring import DwellingCircuitPlan
+
+    registry = default_capability_registry()
+    cap = registry.get("dwelling_wiring")
+    assert cap is not None
+    assert cap.program_kind is DwellingCircuitPlan
+    assert cap.realized_kind == "dwelling_wiring.realized"
+    assert set(cap.artifact_families) == {"cable_schedule", "panel_schedule"}
+    assert len(cap.tool_adapters) == 1
+    assert cap.tool_adapters[0].tier == "deterministic"
+    assert all(rec.startswith("std.process/") for rec in cap.process_records)
+    assert len(cap.dfm_checks) == 3
+    assert set(cap.claim_kinds) == {
+        "elec.power.ampacity",
+        "elec.power.voltage_drop",
+        "elec.power.working_clearance",
+    }
 
 
 def test_wire_edm_capability_is_honestly_populated() -> None:

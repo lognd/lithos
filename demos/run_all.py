@@ -55,6 +55,7 @@ DEMOS = (
     "demo18_perfboard_wiring",
     "demo19_wire_edm_die_set",
     "demo20_fluid_demo",
+    "demo21_dwelling_wiring",
 )
 
 
