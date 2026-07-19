@@ -1517,7 +1517,7 @@ See docs/workflow/work-orders/WO-166-wire-edm-die-set-program.md. D268 item 1 + 
 ```yaml
 id: T-0047
 title: 'WO-167: dwelling/house wiring program'
-state: in-progress
+state: done
 kind: feature
 origin: human
 created: '2026-07-19'
@@ -1528,12 +1528,22 @@ scope:
 - docs/spec/calcite/**
 - python/regolith/**
 - demos/**
-evidence: []
+evidence:
+- tests/realizer/elec/test_dwelling_wiring.py::test_realize_dwelling_circuit_plan
+- tests/realizer/elec/test_dwelling_wiring.py::test_realize_an_ampacity_violation_is_named_not_papered_over
 attachments: []
 acceptance:
 - see docs/workflow/work-orders/WO-167-dwelling-wiring-program.md
 threat: null
 ```
+## Done report
+
+WO-167 landed (8be8b8f4): the fourth capability target -- branch
+circuits + panel siting + cable/panel schedules + real NEC/IEEE
+model discharges; panel catalog stays D250-refused; dwelling_r1 is
+deliberately manifest-less pending the T-0064 oneline producer.
+Demo21 byte-identical; suites green.
+
 See docs/workflow/work-orders/WO-167-dwelling-wiring-program.md. D268 item 4, rides WO-132..137 power track completion (T-0007..T-0011) per D268 sequencing item 5. Licensing posture D250/D268 verbatim: representation-first, named refusals, no new NEC table transcription, no new breaker/panel catalog content absent an owner source.
 
 <!-- ticket:T-0048 -->
