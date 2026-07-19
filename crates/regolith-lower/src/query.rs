@@ -47,8 +47,8 @@ use crate::output::ParsedFile;
 /// Resolve every `refer` query against its declaration scope's snapshot
 /// across `files`, returning the collected diagnostics in file-then-
 /// source order (AD-6). Poisoned subjects are skipped (INV-20 gating).
-// frob:doc docs/modules/regolith-lower.md#query
 #[must_use]
+// frob:doc docs/modules/regolith-lower.md#query
 // frob:invariant INV-006
 // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn run_query_resolution(files: &[ParsedFile]) -> Vec<Diagnostic> {

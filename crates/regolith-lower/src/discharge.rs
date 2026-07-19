@@ -51,8 +51,8 @@ const L2_STIFFNESS_REL_EPS: f64 = 0.05;
 /// AD-1), threaded here so it is folded into every evidence-cache key
 /// (BE-1/INV-1): a model fix/upgrade bumps the version, which changes the
 /// keys and forces re-verification rather than reusing stale evidence.
-// frob:doc docs/modules/regolith-lower.md#discharge
 #[must_use]
+// frob:doc docs/modules/regolith-lower.md#discharge
 // frob:invariant INV-010
 // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 pub fn discharge_static(
