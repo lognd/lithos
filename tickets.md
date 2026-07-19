@@ -6,7 +6,7 @@ Central ledger managed by `frob ticket` -- one section per ticket.
 ```yaml
 id: T-0001
 title: Wire docs/workflow/work-orders/*.md into the docs link graph (DOC001)
-state: queued
+state: done
 kind: docs
 origin: agent
 created: '2026-07-17'
@@ -14,7 +14,9 @@ blocked_by: []
 parent: null
 scope:
 - docs/index.md
-evidence: []
+evidence:
+- cmd:bash -c 'n=$(frob check --only gates 2>&1 | grep -c DOC001); echo DOC001=$n;
+  test $n -eq 0' exit=0 sha256=9f1ad0aa2425
 attachments: []
 acceptance: []
 threat: null
@@ -24,6 +26,25 @@ frob check --type python --only gates flags 769 DOC001 warnings (frob.toml legac
 Design-log entries are explicitly frozen history (lithos CLAUDE.md: NEVER sweep or edit these) so those stay warn-only permanently via frob.toml's [gates.severity] DOC001=warn baseline. Work-order files are live and should be linked: add an index section in docs/index.md (or docs/workflow/README.md, then link that from docs/index.md) enumerating active/closed WOs so DOC001 clears for that subset without touching frozen design-log content.
 
 Origin: frob enforcement adoption sweep (frob check --only gates dry run).
+
+## Done report
+
+Created `docs/index.md` as the doc-link root (linked from the
+top-level `README.md`), plus new link-index READMEs for
+`docs/workflow/work-orders/` (157 entries), `docs/workflow/design-log/`
+(32 entries, index only -- verbatim file content untouched per
+CLAUDE.md), `docs/workflow/research/` (4 entries), and
+`docs/spec/toolchain/` (26 entries). Linkified the existing
+per-track README tables (cuprite, hematite, fluorite, calcite,
+regolith, guide) so their backtick-only `NN-name.md` mentions became
+real markdown links reachable from the new root.
+
+Verification: `frob check --only gates 2>&1 | grep -c DOC001` went
+from 256 (baseline at ticket creation) to 0. No DOC002 (dangling
+anchor) regressions introduced (`grep -c DOC002` on the same run:
+0, unchanged). Total gate violation count dropped from 3476 to 3220,
+matching the 256 DOC001 warnings removed exactly. Cargo build/clippy/
+fmt/test and Python collection all still pass.
 
 <!-- ticket:T-0002 -->
 ```yaml
@@ -628,7 +649,7 @@ threat: null
 ```yaml
 id: T-0031
 title: 'chore: frob adoption -- ticket conversion + docs link graph'
-state: queued
+state: done
 kind: docs
 origin: agent
 created: '2026-07-18'
@@ -638,10 +659,38 @@ scope:
 - docs/**
 - tickets.md
 - TODO.md
-evidence: []
+evidence:
+- cmd:bash -c 'frob ticket list >/dev/null && frob ticket doable >/dev/null' exit=0
+  sha256=e3b0c44298fc
 attachments: []
 acceptance:
 - frob ticket list parses clean; frob ticket doable shows correct set; frob check
   --only gates reports DOC001=0 and no ticket/queue errors
 threat: null
 ```
+## Done report
+
+Part A: created T-0004..T-0030 (27 tickets) for every WO with
+`Status: open` in `docs/workflow/work-orders/` plus the two
+cycle-36 residual WOs still queued in TODO.md (WO-123, WO-124) and
+two non-WO queue items (docs/README currency sweep, coordinator
+visual acceptance), each with `scope:`/`blocked_by:`/`acceptance:`
+mirroring the WO's own `Depends:` line and pointing at its doc
+rather than duplicating it. Rewrote TODO.md's DISPATCH QUEUE section
+to point at `tickets.md`/`frob ticket doable` instead of an inline
+block (the old block had drifted across five closed cycles without
+being pruned).
+
+Part B: see T-0001's own Done report -- DOC001 256 -> 0 via
+docs/index.md + four new index READMEs + linkifying six existing
+per-track README tables.
+
+Verification: `frob ticket list` parses all 31 tickets with no
+errors; `frob ticket doable` returns exactly the unblocked set
+(T-0001..T-0007, T-0012..T-0015, T-0017, T-0021, T-0023, T-0024,
+T-0026, T-0029, T-0031 at time of check) -- power/traced-profile/
+waveform/sim chains correctly excluded pending their blockers;
+`frob check --only gates` shows 0 DOC001, 0 new DOC002, and no
+ticket-ledger parse errors (COV003 or otherwise). `make check`-
+equivalent gate run: cargo-check/clippy/fmt/test all still pass,
+810 Rust tests green.
