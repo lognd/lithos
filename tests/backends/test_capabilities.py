@@ -137,12 +137,29 @@ def test_elec_capability_is_honestly_populated() -> None:
 
 
 # frob:tests python/regolith/backends/capabilities.py::default_capability_registry kind="unit"
-def test_default_registry_has_exactly_mech_elec_perfboard() -> None:
+def test_default_registry_has_exactly_mech_elec_perfboard_wire_edm() -> None:
     # WO-165: perfboard joins mech/elec as the first NEW capability
     # program registered through this registry (mech/elec were a
-    # descriptive retrofit of pre-existing code).
+    # descriptive retrofit of pre-existing code). WO-166 adds wire_edm
+    # as the second.
     registry = default_capability_registry()
-    assert set(registry.domains()) == {"mech", "elec", "perfboard"}
+    assert set(registry.domains()) == {"mech", "elec", "perfboard", "wire_edm"}
+
+
+def test_wire_edm_capability_is_honestly_populated() -> None:
+    from regolith.realizer.mech.wire_edm import WireEdmProfile
+
+    registry = default_capability_registry()
+    wire_edm = get_capability(registry, "wire_edm")
+    assert wire_edm is not None
+    assert wire_edm.program_kind is WireEdmProfile
+    assert wire_edm.realized_kind == "edm_profile.realized"
+    assert "edm_profile" in wire_edm.artifact_families
+    assert "die_set" in wire_edm.artifact_families
+    tiers = {adapter.tier for adapter in wire_edm.tool_adapters}
+    assert tiers == {"deterministic"}
+    assert any("check_wire_edm_corner_radius" in c for c in wire_edm.dfm_checks)
+    assert "mfg.die_set_producible" in wire_edm.claim_kinds
 
 
 def test_capability_model_is_frozen() -> None:

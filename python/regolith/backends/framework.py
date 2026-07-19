@@ -51,6 +51,7 @@ if TYPE_CHECKING:
     from regolith.backends.hdl import HdlBuildProducts
     from regolith.realizer.elec.board_assignment import RealizedBoardAssignment
     from regolith.realizer.elec.debug_placement import TapPlacementPlan
+    from regolith.realizer.mech.wire_edm import RealizedWireEdmProfile
 
 
 # frob:doc docs/modules/py-backends.md#backends-framework
@@ -167,6 +168,7 @@ class BackendInputs:
         tap_placements: Mapping[str, TapPlacementPlan] = {},  # noqa: B006 (frozen inputs)
         hdl_debug_pins: Mapping[str, tuple[str, ...]] = {},  # noqa: B006 (frozen inputs)
         board_assignments: Mapping[str, RealizedBoardAssignment] = {},  # noqa: B006 (frozen inputs)
+        edm_profiles: Mapping[str, RealizedWireEdmProfile] = {},  # noqa: B006 (frozen inputs)
     ) -> None:
         """Bind the inputs a backend may ever read.
 
@@ -253,6 +255,10 @@ class BackendInputs:
         # wiring-map/cut-list producers' input, mirroring `layouts`'
         # subject-keyed shape for the sibling `layout.realized` kind.
         self.board_assignments = board_assignments
+        # WO-166 (AD-47 sec. 5): the wire-EDM profile-cut realizer's
+        # `edm_profile.realized` payload, keyed by subject -- the
+        # EDM backend's input, mirroring `board_assignments`' shape.
+        self.edm_profiles = edm_profiles
 
 
 # frob:doc docs/modules/py-backends.md#backends-framework

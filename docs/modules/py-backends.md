@@ -239,6 +239,22 @@ is a CSV bill of wire lengths by gauge (`DimensionedValue`-carrying per
 D262/INV-34; v1 assumes one gauge, `DEFAULT_JUMPER_GAUGE_AWG`, a named
 simplification) plus a `board_dimensions.json` sibling.
 
+<a id="backends-edm"></a>
+### `backends/edm.py`
+
+The wire-EDM manufacturing package: profile-cut DXF + setup sheet
+(WO-166 slice b, AD-47 sec. 5, D268 item 1). Mirrors
+`PerfboardBackend`'s shape over `BackendInputs.edm_profiles` (the
+`edm_profile.realized` kind, WO-166) instead of `board_assignments`.
+No external EDM-machine tool adapter is claimed at v1 -- every emitted
+file is `tier="deterministic"` (WO-160/AD-45). The profile geometry is
+projected via `regolith.realizer.mech.wire_edm.profile_drawing_model`
+and rendered through the SAME `DrawingModel` -> DXF path
+(`renderer_dxf.render_dxf`, AD-27); the setup sheet is a JSON document
+of kerf/spark-gap/lead-in/per-vertex corner-radii plus the SAME
+`CamOutcome` DFM-outcome objects the realize step already computed
+(never re-derived here).
+
 <a id="backends-firmware"></a>
 ### `backends/firmware.py`
 

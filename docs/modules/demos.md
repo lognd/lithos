@@ -51,6 +51,17 @@ Per-demo focus (each demo names the surface it proves):
   build`/`ship` (a named scope cut -- see the script's module
   docstring: a real `.cupr` substrate variant or a staged-build
   integration point is outside this WO's declared surface).
+* `demo19_wire_edm_die_set.py` -- wire-EDM die-set production program
+  (WO-166, D268 item 1): material-state transitions (as-rolled ->
+  quenched+tempered) on D2/A2 tool-steel plates, wire-EDM profile cuts
+  (DXF + setup sheet), a bolted die-set assembly with guide pins, and
+  the shut-height/alignment/press-tonnage numeric gates; punch-die
+  clearance is an explicit named refusal (no cited public-domain
+  clearance-percent bound exists in this repo). Drives the realizer +
+  backend chain directly from in-memory IR values rather than through
+  `regolith build`/`ship` (a named scope cut -- see the script's module
+  docstring: a hematite grammar addition or staged-build integration
+  point is outside this dispatch's schema-frozen posture).
 
 <a id="harness"></a>
 ## demos/harness.py -- shared proof-pack machinery

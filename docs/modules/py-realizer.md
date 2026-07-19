@@ -358,3 +358,48 @@ plus `regolith-lower::feature_program::project_op`'s literal arms
 mirroring the Rust schemars export); `tests/realizer/mech/
 test_coverage.py` verifies this ledger against a live compiler run
 over the full corpus, so a diff between them is a definitional drift.
+
+<a id="mech-wire-edm"></a>
+### `realizer/mech/wire_edm.py`
+
+WO-166 slice (b) (D268 item 1): the wire-EDM profile-cut program kind,
+mirroring WO-77's `Ribs`/`PocketGrid`/`Shell`/`Lattice` feature-op idiom
+at the plain-pydantic layer (T-0043/D272 posture -- no
+`crates/regolith-syntax`/`regolith-lower` change, promotable later).
+`WireEdmProfile` is a THROUGH-CUT 2D contour (declared per-vertex
+corner radii, kerf, spark gap, lead-in) distinct from a milling removal
+op. `realize_wire_edm_profile` grounds every declared corner radius
+against `check_wire_edm_corner_radius` and the closed/start-hole pair
+against `check_wire_edm_start_hole` (both WO-169 wave 1, never
+re-derived here), refusing an `Err` on the first violation.
+`profile_drawing_model` projects the realized profile into a
+`DrawingModel` (contour polyline + kerf/lead-in/corner-radius
+annotations), rendered to DXF by the EXISTING `render_dxf` path (AD-27)
+-- DXF's first OUTPUT-side use. `regolith.backends.edm.WireEdmBackend`
+(see py-backends.md) consumes the realized payload to emit the
+`edm_profile` artifact family.
+
+<a id="mech-die-set"></a>
+### `realizer/mech/die_set.py`
+
+WO-166 slice (c) (D268 item 1, D269 amendment): die-set assembly
+composition (a bolted stack of `DiePlate`s -- the existing hematite
+bolted-flat-plate mating shape, no new assembly primitive) plus the
+die-set-specific numeric checks: `check_die_set_shut_height` (plate-
+thickness sum vs. a declared press-daylight window),
+`check_die_set_alignment` (worst-case linear sum of guide-pin bushing
+radial clearances vs. a declared budget), and
+`check_die_set_press_tonnage` (the standard blanking-force formula
+`required_tonnage_blanking_n` -- perimeter x thickness x shear strength
+-- fed into the EXISTING `check_press_tonnage`, WO-169).
+`check_die_set_punch_die_clearance` wraps the EXISTING
+`check_punch_die_clearance` (WO-169) but returns an explicit
+`NamedRefusal` value (never an invented `min_pct`/`max_pct`) when the
+caller has no cited public-domain clearance-percent bound -- the D269
+amendment's own posture, since `std.process/stamping_blanking` records
+no such bound itself.
+`check_die_set_shot_peen_remediation` wraps
+`check_shot_peen_recast_remediation` (WO-169) as an OPTIONAL
+post-EDM recast-layer remediation gate -- named optional per the
+honest-demo posture (a caller only invokes it if a shot-peen step is
+actually declared).

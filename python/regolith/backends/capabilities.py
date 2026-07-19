@@ -41,6 +41,7 @@ from regolith._schema.models import FeatureProgram
 from regolith.logging_setup import get_logger
 from regolith.realizer.elec.kicad import LayoutRequest
 from regolith.realizer.elec.perfboard import PerfboardNetlist
+from regolith.realizer.mech.wire_edm import WireEdmProfile
 
 _log = get_logger(__name__)
 
@@ -409,18 +410,78 @@ def _perfboard_capability() -> RealizerCapability:
     )
 
 
+def _wire_edm_capability() -> RealizerCapability:
+    """The wire-EDM die-set domain (WO-166, AD-47 sec. 5, D268 item 1):
+    the SECOND new capability program through this registry (perfboard
+    was the first).
+
+    - ``program_kind``: `WireEdmProfile`
+      (`regolith.realizer.mech.wire_edm`), this program's own input IR
+      (a 2D contour + kerf/lead-in geometry, mirroring
+      `PerfboardNetlist`'s "new capability, own minimal IR" precedent).
+    - ``realized_kind``: ``"edm_profile.realized"``
+      (`regolith.realizer.mech.wire_edm.EDM_PROFILE_DOMAIN_TAG`).
+    - ``artifact_families``: ``edm_profile`` (the DXF-profile-plus-
+      setup-sheet package, `regolith.backends.edm.WireEdmBackend`) and
+      ``die_set`` (the assembly check-result package -- guide-pin
+      alignment, shut height, press tonnage, punch-die clearance,
+      shot-peen remediation -- both registered in
+      `default_artifact_family_registry`).
+    - ``tool_adapters``: ONE deterministic tier -- no real EDM-machine
+      toolpath post-processor is claimed at v1 (the profile/setup-
+      sheet computation is entirely in-process, AD-45).
+    - ``process_records``: the `std.process` wire-EDM/quench-temper/
+      stamping namespaces WO-169 wave 1 populated.
+    - ``dfm_checks``: the wire-EDM corner-radius/start-hole pair
+      (slice b), the quench-section-uniformity + process-sequencing
+      pair (slice a), and the press-tonnage/shot-peen-remediation pair
+      (slice c) -- punch-die clearance is DELIBERATELY excluded here
+      (it is a named refusal absent a cited bound,
+      `regolith.realizer.mech.die_set.check_die_set_punch_die_clearance`,
+      not a hard gate every die-set build must pass).
+    - ``claim_kinds``: `"mfg.die_set_producible"` -- this domain's own
+      claim tag for "the declared die-set stack passes its numeric
+      gates" (no existing claim-kind fits a die-set's own composite
+      shape).
+    """
+    return RealizerCapability(
+        domain="wire_edm",
+        program_kind=WireEdmProfile,
+        realized_kind="edm_profile.realized",
+        artifact_families=("edm_profile", "die_set"),
+        tool_adapters=(
+            ToolAdapterDescriptor(name="wire_edm_profile_emitter", tier="deterministic"),
+        ),
+        process_records=(
+            "std.process/wire_edm",
+            "std.process/quench_temper",
+            "std.process/stamping_blanking",
+        ),
+        dfm_checks=(
+            "regolith.harness.models.dfm.checks:check_wire_edm_corner_radius",
+            "regolith.harness.models.dfm.checks:check_wire_edm_start_hole",
+            "regolith.harness.models.dfm.checks:check_quench_section_uniformity",
+            "regolith.harness.models.dfm.checks:check_process_sequencing",
+            "regolith.harness.models.dfm.checks:check_press_tonnage",
+            "regolith.harness.models.dfm.checks:check_shot_peen_recast_remediation",
+        ),
+        claim_kinds=("mfg.die_set_producible",),
+    )
+
+
 # frob:doc docs/modules/py-backends.md#backends-capabilities
 def default_capability_registry() -> CapabilityRegistry:
-    """The three built-in registrations: mech and elec (WO-164
-    deliverable 3, a descriptive retrofit) plus perfboard (WO-165, the
-    first NEW capability program). A collision here is a built-in
-    authoring bug (every domain tag is a hard-coded distinct string),
-    so it is allowed to raise straight through rather than being
-    caught -- the same posture the other `default_*_registry`
-    factories in `registry.py` take with their own `assert
-    result.is_ok` built-in-collision guards."""
+    """The four built-in registrations: mech and elec (WO-164
+    deliverable 3, a descriptive retrofit), perfboard (WO-165, the
+    first NEW capability program), and wire_edm (WO-166, the second).
+    A collision here is a built-in authoring bug (every domain tag is
+    a hard-coded distinct string), so it is allowed to raise straight
+    through rather than being caught -- the same posture the other
+    `default_*_registry` factories in `registry.py` take with their
+    own `assert result.is_ok` built-in-collision guards."""
     registry = CapabilityRegistry()
     registry.register(_mech_capability())
     registry.register(_elec_capability())
     registry.register(_perfboard_capability())
+    registry.register(_wire_edm_capability())
     return registry

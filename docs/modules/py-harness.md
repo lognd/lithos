@@ -233,6 +233,22 @@ preserved. Both wire into `regolith.backends.capabilities.
 RealizerCapability.process_records`/`.dfm_checks` (WO-164) as plain
 string cross-links.
 
+<a id="models-material-state"></a>
+### `harness/models/material_state.py`
+
+WO-166 slice (a) (D268 item 1): the plain-pydantic material-state
+representation (`HeatTreatState` -- `as_rolled`/`annealed`/
+`quenched_and_tempered(temper_temp_c)`/`through_hardened(target_hrc)`,
+one model gated by a field validator rather than a discriminated
+union) and `HeatTreatStep` (an explicit heat-treat program step: a
+material transitioning `from_state` -> `to_state` via a declared
+`process_record_key`). Lives at this plain-pydantic layer rather than
+as a hematite grammar addition (T-0043/D272 posture: schema frozen,
+realized kinds stay plain-pydantic, promotable later). `check_heat_
+treat_transition` gates a step against the REAL WO-169 wave-1 checks
+(`check_process_sequencing`, `check_quench_section_uniformity`) --
+never a new predicate.
+
 ## harness/models/hdl
 
 <a id="models-hdl"></a>

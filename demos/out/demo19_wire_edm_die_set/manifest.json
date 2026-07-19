@@ -1,0 +1,41 @@
+{
+  "artifacts": [
+    {
+      "bytes": 1690,
+      "deterministic": true,
+      "path": "die_set/checks_report.json",
+      "sha256": "sha256:4b9f7a2bae715d20eb8014cc44a9f55fe56aec4c8c8a8bf6625ef88b64c5807b"
+    },
+    {
+      "bytes": 2676,
+      "deterministic": true,
+      "path": "edm_profile/die_profile.dxf",
+      "sha256": "sha256:a79a25883d32ceeb73f7bf1e49ed8034a37ebeb894effa31fc843e72d4b2cf48"
+    },
+    {
+      "bytes": 1612,
+      "deterministic": true,
+      "path": "edm_profile/die_setup_sheet.json",
+      "sha256": "sha256:44e86fda9194e230a7993ef1e3fbe442d9cb64f71433eb5dfeb889d81e2f9e5b"
+    },
+    {
+      "bytes": 2676,
+      "deterministic": true,
+      "path": "edm_profile/punch_profile.dxf",
+      "sha256": "sha256:e437771dec8cb1f1fbf36bd6ed9959f1ad0e9f468f9eb7c941267fb99a677846"
+    },
+    {
+      "bytes": 1617,
+      "deterministic": true,
+      "path": "edm_profile/punch_setup_sheet.json",
+      "sha256": "sha256:ff4f2bc1db73d2ac195b92c16f08041811b1b1b3b693d67d2dd58136e85cd916"
+    }
+  ],
+  "cause_row": "n/a",
+  "demo": "demo19_wire_edm_die_set",
+  "domain": "two-station wire-EDM stamping die set (D2 punch / A2 die / 1018 backing plate) -- blank-and-pierce strip part",
+  "live": true,
+  "optimized_quantity": "n/a (die-set production program, not an optimizer surface)",
+  "surface": "wire-EDM die-set production program: material state -> profile cut -> bolted die-set assembly (WO-166)",
+  "winner": "n/a"
+}

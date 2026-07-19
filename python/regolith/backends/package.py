@@ -83,6 +83,12 @@ FAMILY_DIRS = (
     # whose spec names no perf-board substrate.
     "wiring_map",
     "cutlist",
+    # WO-166 (AD-47 sec. 5, D268 item 1): the wire-EDM die-set
+    # program's two families -- the profile-cut DXF+setup-sheet
+    # package and the die-set assembly's check-result package. Absent
+    # on any package whose spec names no wire-EDM die-set program.
+    "edm_profile",
+    "die_set",
 )
 
 

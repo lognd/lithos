@@ -524,6 +524,16 @@ def default_artifact_family_registry() -> ArtifactFamilyRegistry:
         # sibling, both narrowed by the common extension baseline).
         ("wiring_map", "svg"),
         ("cutlist", "table"),
+        # WO-166 (AD-47 sec. 5, D268 item 1): the wire-EDM die-set
+        # program's two families -- the profile-cut DXF-plus-metadata
+        # output (an svg-renderer-family default since it rides the
+        # same `DrawingModel` projection every drawing family uses,
+        # narrowed to the .dxf extension by the common baseline) and
+        # the die-set assembly's own check-result/summary package (a
+        # table default: JSON/CSV check reports, narrowed by the
+        # common extension baseline).
+        ("edm_profile", "svg"),
+        ("die_set", "table"),
     )
     for family, viewer in builtins:
         patterns = (
