@@ -54,6 +54,30 @@ the per-file relpath-narrowing rules that used to live in
 matched in order via `match_path_pattern` -- one dispatch path, not two
 independently-drifting ones.
 
+<a id="backends-capabilities"></a>
+### `backends/capabilities.py`
+
+The realizer capability registry (WO-164, AD-47 sec. 5, charter 44):
+`RealizerCapability` names the full checklist a NEW manufacturing/
+generation capability must supply -- `domain`, `program_kind`
+(the L1/L2 program IR class), `realized_kind` (the `put_realized_*`
+kind-string), `artifact_families`, `tool_adapters` (the ordered
+real_tool-then-deterministic AD-45 tier ladder), `process_records`
+(AD-37 stdlib namespaces), `dfm_checks`, and `claim_kinds` -- all seven
+required, no silent-default holes. `CapabilityRegistry.register` raises
+`IncompleteCapabilityError` (never a silent `None`) on any empty
+required field or a duplicate `domain`; `register_capability` is a
+`Result`-returning wrapper for composable call sites. `mech` and `elec`
+are retrofit as the first two registrations, DESCRIPTIVELY -- named
+field-by-field from their existing scattered pieces
+(`FeatureProgram`/`geometry.realized`/build123d-OCCT in-process
+deterministic tier for mech; `LayoutRequest`/`layout.realized`/the
+kicad-cli-then-fake two-tier ladder for elec) -- no behavior change to
+either realizer. `get_capability` is the lookup surface a future
+capability program (wire-EDM die-set, perf-board routing, dwelling
+wiring, D268) uses instead of hard-coding process records/DFM checks/
+tool adapters per domain.
+
 <a id="backends-plugin"></a>
 ### `backends/plugin.py`
 
