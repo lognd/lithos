@@ -1,0 +1,20 @@
+# BREAKS: a power net whose `buses:`/`loads:` items omit the REQUIRED
+#   `PowerNetPayload` fields the front end lets them declare (WO-133
+#   deliverable 2, coordinator adjudication F-WO133-1): `MainBus` never
+#   declares `nominal_voltage=`/`phases=` and `Motor1` never declares
+#   `kva=`. D250.3 exactly: a required field with no declared source is
+#   REFUSED, never fabricated -- payload emission for the whole net
+#   stops and names both gaps.
+# EXPECT: E0217
+# Self-calibration (WO-133): `regolith_lower::power::emit_power_payloads`
+# refuses to emit a payload for `PlantMain` here, pushing one E0217 per
+# unresolved required field. Verified against live output
+# (`cargo test -p regolith-lower power::payload_tests`).
+power PlantMain:
+    sources: Svc1
+    buses: Svc1(nominal_voltage=13.2kV, phases=3), MainBus
+    loads: Motor1
+    feeders:
+        f1: transformer(kva=500kVA) (Svc1 -> MainBus)
+        p1: breaker(frame=400A)     (MainBus -> MainBus)
+        f2: feeder(size=cu_4_0awg, length=10m) (MainBus -> Motor1)

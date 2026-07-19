@@ -99,6 +99,38 @@ would let a bus "reach" every other source sharing a downstream node
 -- a false positive caught in WO-132's own review (see
 `regolith_lower::power::reachable_from`'s doc comment).
 
+## 3a. `buses:`/`loads:` per-item properties (WO-133 deliverable 2, coordinator adjudication F-WO133-1)
+
+`buses:`/`loads:` items may carry OPTIONAL declared properties, in the
+SAME `name(key=value, ...)` shape the apparatus edge vocabulary (sec.
+2) already uses -- no new syntax, mirroring the existing convention
+rather than inventing one:
+
+```
+buses: Utility, MainBus(nominal_voltage=480V, phases=3)
+loads: LightingLoad, PressMotor(kva=45, class=motor, code_letter=G)
+```
+
+A bare name (no parenthesized properties) is the pre-existing shape
+and stays valid; `regolith_syntax::ast::PowerDecl::bus_items`/
+`load_items` parse each item into its name plus its declared
+`(key, value)` pairs (`crate::ast::PowerListItem`), a small hand-rolled
+text scan over the field's lossless value text -- additive, zero
+blast radius on any other field/claim shape (it re-parses nothing the
+shared statement grammar already owns).
+
+These properties are how `regolith_lower::power::emit_power_payloads`
+(WO-133 deliverable 2) fills the `PowerNetPayload` schema's REQUIRED
+fields (`Bus.nominal_voltage`, `Bus.phases`, `Load.connected_kva` --
+the schema itself stayed FROZEN, D272 spent): a bus/load that omits
+one is not silently defaulted (D250.3) -- payload emission for the
+WHOLE net refuses, naming the exact gap, coded `E0217`
+(`POWER_PAYLOAD_FIELD_UNRESOLVED`). See
+`examples/negative/77_cupr_power_payload_field_unresolved.cupr` for
+the refusal case and `examples/tracks/cuprite/power_plant_main.cupr`
+for the complete-declaration case (a byte-stable payload, WO-133
+deliverable 5).
+
 ## 4. Claim forms (WO-132 deliverable 4; routing/discharge WO-133/135)
 
 The following claim kinds parse today with zero grammar changes --
@@ -109,14 +141,22 @@ syntax: `elec.power.demand_load`, `voltage_drop`, `ampacity`,
 `fault_current`, `withstand`, `transformer_loading`,
 `motor_start_dip`, `coordination`, `arc_flash`, `grounding`,
 `power_factor`, `harmonics`, `working_clearance`. They parse and reach
-lowering as recognized (unrejected AST nodes); routing them to real
-givens and discharge is WO-133 (payload) / WO-135 (models), not this
-layer.
+lowering as recognized (unrejected AST nodes). WO-133 deliverable 3
+routes seven of these kinds (`demand_load`, `voltage_drop`, `ampacity`,
+`fault_current`, `motor_start_dip`, `transformer_loading`,
+`power_factor`) to their T-0009 `regolith.harness.models.power` models
+via `regolith.orchestrator.translate._translate_power_claim`; the
+remaining six (`withstand`, `coordination`, `arc_flash`, `grounding`,
+`harmonics`, `working_clearance`) register no model (D250.4) and stay
+on the generic dotted-call fallback, which names the call in an honest
+deferral rather than a misleading "missing inputs" one.
 
 ## 5. Non-goals and deferred work (named, not invented)
 
-- The `PowerNetPayload` lowering slot, and any actual numeric
-  discharge of the sec. 4 claim forms above: WO-133.
+- The `PowerNetPayload` lowering slot itself has landed (sec. 3a,
+  WO-133 deliverable 2); actual numeric discharge of the sec. 4 claim
+  forms above (routing to `regolith.harness.models.power` where a
+  model is registered) is WO-135/D250.4.
 - `std.power` component records (transformer catalogs, breaker
   frames, motor code letters): WO-134 (data already lands in
   `stdlib/std.power/`, ahead of this front-end landing).

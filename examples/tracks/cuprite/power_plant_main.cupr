@@ -7,12 +7,21 @@
 # for the utility/generator tie (rule 2), a protective device at every
 # ampacity transition (rule 3), and every load reachable from a source
 # (rule 4).
+#
+# WO-133 deliverable 2 (coordinator adjudication F-WO133-1): every bus
+# declares its `nominal_voltage`/`phases` and every load its `kva` (plus
+# `class`/`code_letter` for the two motors) as per-item properties --
+# `docs/spec/cuprite/10-power-layer.md` sec. 4's additive grammar --
+# so this design lowers to a COMPLETE `PowerNetPayload` (E0217 never
+# fires here; see `76b_cupr_power_payload_field_unresolved.cupr` for the
+# refusal case). `press_relay`/`mcc_bus` also gain the `frame=`/`size=`+
+# `length=` fields their branch kinds require to emit.
 
 power PlantMain:
     sources: Utility, Genset
-    buses: Utility, Genset, Tie, MainSwgr, PanelA, MccA
+    buses: Utility(nominal_voltage=13.2kV, phases=3), Genset(nominal_voltage=480V, phases=3), Tie(nominal_voltage=13.2kV, phases=3), MainSwgr(nominal_voltage=480V, phases=3), PanelA(nominal_voltage=480V, phases=3), MccA(nominal_voltage=480V, phases=3)
     ties: Tie
-    loads: PressMotor, ConveyorMotor, LightingLoad
+    loads: PressMotor(kva=45, class=motor, code_letter=G), ConveyorMotor(kva=15, class=motor, code_letter=F), LightingLoad(kva=20, class=lighting)
     feeders:
         svc:        service(voltage=13.2kV, available_fault=25kA, x_r=6.6) (Utility -> Tie)
         gen:        generator(kva=750kVA, voltage=480V)                   (Genset -> Tie)
@@ -22,9 +31,9 @@ power PlantMain:
         panel_feed: feeder(size=cu_4_0awg, length=45m)                    (MainSwgr -> PanelA)
         panel_bkr:  breaker(frame=225A, aic=25kA)                         (PanelA -> PanelA)
         light_feed: feeder(size=cu_10awg, length=20m)                     (PanelA -> LightingLoad)
-        mcc_bus:    busway(rating=800A)                                   (MainSwgr -> MccA)
+        mcc_bus:    busway(rating=800A, size=cu_4_0awg, length=15m)       (MainSwgr -> MccA)
         mcc_fuse:   fuse(frame=800A, aic=100kA)                           (MccA -> MccA)
         press_feed: feeder(size=cu_2_0awg, length=30m)                    (MccA -> PressMotor)
-        press_relay: relay(curve=motor_thermal)                          (PressMotor -> PressMotor)
+        press_relay: relay(curve=motor_thermal, frame=100A)              (PressMotor -> PressMotor)
         conv_feed:  feeder(size=cu_6awg, length=25m)                      (MccA -> ConveyorMotor)
         conv_fuse:  fuse(frame=60A, aic=25kA)                             (ConveyorMotor -> ConveyorMotor)

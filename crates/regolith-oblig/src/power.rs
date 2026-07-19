@@ -54,7 +54,7 @@ pub type BusId = String;
 /// against (D255, the cross-standard guard). Named, never inferred --
 /// a record with no declared family cannot participate in the guard's
 /// crossing check and lowering treats that absence honestly.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 // frob:doc docs/modules/regolith-oblig.md#power
 pub enum StandardFamily {

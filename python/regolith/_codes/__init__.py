@@ -300,6 +300,66 @@ ALL: tuple[CodeEntry, ...] = (
         authored=False,
     ),
     CodeEntry(
+        code="E0212",
+        symbol="POWER_SUBNET_UNSOURCED",
+        family="FluidNet",
+        meaning="WO-132 (charter 43 sec. 1 rule 1, D248/AD-42): an energized power subnet has no source imposer (utility `service` or `generator`) -- an unsourced load is a diagnostic, never an assumption.",
+        why="no explanation authored yet",
+        fix="no explanation authored yet",
+        example=None,
+        authored=False,
+    ),
+    CodeEntry(
+        code="E0213",
+        symbol="POWER_UNDECLARED_PARALLEL_PATH",
+        family="FluidNet",
+        meaning="WO-132 (charter 43 sec. 1 rule 2): a bus is reachable from more than one source through the declared `feeders:` edges and is not named in the net's `ties:` field -- an undeclared parallel source path (accidental parallelism destroys equipment).",
+        why="no explanation authored yet",
+        fix="no explanation authored yet",
+        example=None,
+        authored=False,
+    ),
+    CodeEntry(
+        code="E0214",
+        symbol="POWER_UNPROTECTED_TRANSITION",
+        family="FluidNet",
+        meaning="WO-132 (charter 43 sec. 1 rule 3): a `feeders:` edge whose apparatus constructor narrows ampacity (`transformer`, `feeder`, `busway`) declares no adjoining protective device (`breaker`/`fuse`/`relay`) -- an unprotected ampacity transition.",
+        why="no explanation authored yet",
+        fix="no explanation authored yet",
+        example=None,
+        authored=False,
+    ),
+    CodeEntry(
+        code="E0215",
+        symbol="POWER_LOAD_UNREACHABLE",
+        family="FluidNet",
+        meaning="WO-132 (charter 43 sec. 1 rule 4): a declared `loads:` entry cannot reach any source bus by walking the net's declared `feeders:` edges.",
+        why="no explanation authored yet",
+        fix="no explanation authored yet",
+        example=None,
+        authored=False,
+    ),
+    CodeEntry(
+        code="E0216",
+        symbol="POWER_CROSS_STANDARD_MIX",
+        family="FluidNet",
+        meaning="WO-133 deliverable 6 (D255, the cross-standard guard): a power branch's apparatus record declares a `standard_family` (IEC/NEC/ANSI-NEMA) that disagrees with another apparatus/conductor record in the same subnet. Mixing is not forbidden -- mixing SILENTLY is; names both families, both records, and the claim at stake.",
+        why="no explanation authored yet",
+        fix="no explanation authored yet",
+        example=None,
+        authored=False,
+    ),
+    CodeEntry(
+        code="E0217",
+        symbol="POWER_PAYLOAD_FIELD_UNRESOLVED",
+        family="FluidNet",
+        meaning="WO-133 deliverable 2 (F-WO133-1, D250.3): a `PowerNetPayload` required field (`Bus.nominal_voltage`, `Bus.phases`, `Load.connected_kva`) has no declared source reaching it. Refused, never fabricated -- payload emission stops rather than filling the field with a guessed value.",
+        why="no explanation authored yet",
+        fix="no explanation authored yet",
+        example=None,
+        authored=False,
+    ),
+    CodeEntry(
         code="E0301",
         symbol="AMBIGUOUS_SELECTION",
         family="References",
@@ -790,6 +850,12 @@ STRUCTURE_NO_SUPPORT = "E0208"
 MEMBER_UNJOINED_OR_TRIBUTARY_MISMATCH = "E0209"
 MEDIUM_MISMATCH = "E0210"
 POINT_LOAD_NEEDS_STATION = "E0211"
+POWER_SUBNET_UNSOURCED = "E0212"
+POWER_UNDECLARED_PARALLEL_PATH = "E0213"
+POWER_UNPROTECTED_TRANSITION = "E0214"
+POWER_LOAD_UNREACHABLE = "E0215"
+POWER_CROSS_STANDARD_MIX = "E0216"
+POWER_PAYLOAD_FIELD_UNRESOLVED = "E0217"
 AMBIGUOUS_SELECTION = "E0301"
 BORROW_CONFLICT = "E0302"
 UNRESOLVED_FIELD_REFERENCE = "E0303"

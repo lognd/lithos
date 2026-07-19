@@ -301,6 +301,20 @@ live here). The apparatus vocabulary (`service`, `generator`,
 each is an ordinary constructor name used as a `feeders:` edge's
 value, exactly like fluorite's `Pipe`/`Valve`/`Pump`.
 
+`emit_power_payloads` (WO-133 deliverable 2, coordinator adjudication
+F-WO133-1): CST -> `PowerNetPayload` emission. Buses/loads read their
+declared per-item properties (`PowerDecl::bus_items`/`load_items`,
+`regolith_syntax`); branches read each `feeders:` edge's apparatus
+kwargs (`kva`, `pct_z`, `length`, `frame`, ...). The schema stayed
+FROZEN (D272 spent): a REQUIRED field (`Bus.nominal_voltage`/`phases`,
+`Load.connected_kva`, `Transformer.kva`, `Feeder.length`,
+`ProtectiveDevice.frame`) with no declared source refuses emission for
+the WHOLE net (E0217, `POWER_PAYLOAD_FIELD_UNRESOLVED`) rather than
+fabricating a value (D250.3 exactly) -- mirrors this module's own
+E0212-E0216 "refuse, never guess" posture. `check_cross_standard_mix`
+(E0216, `POWER_CROSS_STANDARD_MIX`, D255) flags a bus touched by
+apparatus edges declaring disagreeing `std=` standard families.
+
 <a id="query"></a>
 ### `query`
 

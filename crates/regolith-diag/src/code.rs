@@ -279,6 +279,31 @@ pub mod codes {
     // frob:doc docs/modules/regolith-diag.md#code
     // frob:ticket T-0007
     pub const POWER_LOAD_UNREACHABLE: DiagCode = DiagCode::new(Family::FluidNet, 15);
+    /// `E0216` -- WO-133 deliverable 6 (D255, the cross-standard
+    /// guard): a power branch's apparatus record declares a
+    /// `standard_family` (IEC/NEC/ANSI-NEMA) that disagrees with
+    /// another apparatus/conductor record in the SAME subnet. Mixing
+    /// standard families is not forbidden (real plants mix) -- mixing
+    /// SILENTLY is; this names both families, both records, and the
+    /// claim at stake so the author either declares the crossing
+    /// deliberately (`assume!` with a basis) or fixes it. Never a
+    /// conversion table (D250 forbids translating one family's rating
+    /// into another's assumption).
+    // frob:doc docs/modules/regolith-diag.md#code
+    // frob:ticket T-0008
+    pub const POWER_CROSS_STANDARD_MIX: DiagCode = DiagCode::new(Family::FluidNet, 16);
+    /// `E0217` -- WO-133 deliverable 2 (coordinator adjudication
+    /// F-WO133-1, D250.3 exactly): a `PowerNetPayload` REQUIRED field
+    /// (`Bus.nominal_voltage`, `Bus.phases`, `Load.connected_kva`) has
+    /// no declared source reaching it -- neither a per-item `buses:`/
+    /// `loads:` property (`mainbus(nominal_voltage=480V, phases=3)`)
+    /// nor an unambiguous propagated apparatus value (a source's
+    /// declared voltage, a transformer's declared secondary, ...).
+    /// Refused, never fabricated: payload emission for the whole net
+    /// stops rather than filling the field with a guessed value.
+    // frob:doc docs/modules/regolith-diag.md#code
+    // frob:ticket T-0008
+    pub const POWER_PAYLOAD_FIELD_UNRESOLVED: DiagCode = DiagCode::new(Family::FluidNet, 17);
     /// `E0301` -- an entity query matched more than one entity.
     // frob:doc docs/modules/regolith-diag.md#code
     pub const AMBIGUOUS_SELECTION: DiagCode = DiagCode::new(Family::References, 1);
@@ -622,7 +647,7 @@ pub mod codes {
     /// is a build error (see `regolith_diag::explain`'s completeness
     /// test) -- this is what makes D247.4's rule able to FAIL.
     // frob:doc docs/modules/regolith-diag.md#code
-    // frob:ticket T-0007
+    // frob:ticket T-0008
     pub const ALL: &[(&str, DiagCode)] = &[
         ("INCOMPATIBLE_QUANTITIES", INCOMPATIBLE_QUANTITIES),
         ("EQUALITY_ON_CONTINUOUS", EQUALITY_ON_CONTINUOUS),
@@ -652,6 +677,11 @@ pub mod codes {
         ),
         ("POWER_UNPROTECTED_TRANSITION", POWER_UNPROTECTED_TRANSITION),
         ("POWER_LOAD_UNREACHABLE", POWER_LOAD_UNREACHABLE),
+        ("POWER_CROSS_STANDARD_MIX", POWER_CROSS_STANDARD_MIX),
+        (
+            "POWER_PAYLOAD_FIELD_UNRESOLVED",
+            POWER_PAYLOAD_FIELD_UNRESOLVED,
+        ),
         ("AMBIGUOUS_SELECTION", AMBIGUOUS_SELECTION),
         ("BORROW_CONFLICT", BORROW_CONFLICT),
         ("UNRESOLVED_FIELD_REFERENCE", UNRESOLVED_FIELD_REFERENCE),
@@ -734,7 +764,7 @@ mod tests {
     use super::{DiagCode, Family};
 
     #[test]
-    // frob:ticket T-0007
+    // frob:ticket T-0008
     fn code_renders_zero_padded() {
         assert_eq!(codes::AMBIGUOUS_SELECTION.to_string(), "E0301");
         assert_eq!(codes::BUDGET_CANNOT_CLOSE.to_string(), "E0432");
@@ -768,6 +798,8 @@ mod tests {
         assert_eq!(codes::POWER_UNDECLARED_PARALLEL_PATH.to_string(), "E0213");
         assert_eq!(codes::POWER_UNPROTECTED_TRANSITION.to_string(), "E0214");
         assert_eq!(codes::POWER_LOAD_UNREACHABLE.to_string(), "E0215");
+        assert_eq!(codes::POWER_CROSS_STANDARD_MIX.to_string(), "E0216");
+        assert_eq!(codes::POWER_PAYLOAD_FIELD_UNRESOLVED.to_string(), "E0217");
     }
 
     #[test]
@@ -814,7 +846,7 @@ mod tests {
     /// crude but effective count check: bump this alongside any new
     /// `pub const`).
     #[test]
-    // frob:ticket T-0007
+    // frob:ticket T-0008
     fn all_registry_has_no_duplicates() {
         let mut names = std::collections::HashSet::new();
         let mut numbers = std::collections::HashSet::new();
@@ -827,7 +859,7 @@ mod tests {
         }
         assert_eq!(
             codes::ALL.len(),
-            77,
+            79,
             "codes::ALL count drifted; if you added a code, bump this and \
              the completeness registry in explain.rs"
         );

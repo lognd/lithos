@@ -176,6 +176,13 @@ pub fn lower_with_lint_config(
             .diagnostics,
     );
 
+    // WO-133 deliverable 2: PowerNetPayload emission (an E0217 refusal
+    // joins this same batch, see `power::emit_power_payloads`'s doc).
+    diagnostics.extend(
+        tracing::info_span!("lower.power.payload")
+            .in_scope(|| power::emit_power_payloads(&parsed).diagnostics),
+    );
+
     let (graph, contract_graph, choice_points) = run_contracts_pass(&parsed, &snapshots);
     diagnostics.extend(graph.diagnostics.iter().cloned());
 
@@ -342,6 +349,10 @@ pub fn lower_and_discharge_with_lint_config(
     let power_report =
         tracing::info_span!("lower.power").in_scope(|| power::run_power_checks(&parsed));
     diagnostics.extend(power_report.diagnostics.iter().cloned());
+
+    let power_payload_report =
+        tracing::info_span!("lower.power.payload").in_scope(|| power::emit_power_payloads(&parsed));
+    diagnostics.extend(power_payload_report.diagnostics.iter().cloned());
 
     let (graph, contract_graph, choice_points) = run_contracts_pass(&parsed, &snapshots);
     diagnostics.extend(graph.diagnostics.iter().cloned());

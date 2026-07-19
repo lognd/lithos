@@ -275,7 +275,13 @@ blocked_by:
 parent: null
 scope:
 - crates/regolith-lower/**
+- crates/regolith-diag/**
+- crates/regolith-syntax/**
+- crates/regolith-oblig/**
 - python/regolith/**
+- examples/**
+- docs/spec/cuprite/**
+- docs/modules/**
 evidence: []
 attachments: []
 acceptance:

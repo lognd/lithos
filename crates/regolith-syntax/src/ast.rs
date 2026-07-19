@@ -2323,6 +2323,120 @@ impl PowerDecl {
         self.syntax.children().filter_map(Field::cast).collect()
     }
 
+    /// The `buses:` field's items, each with its optional declared
+    /// per-bus properties (WO-133 deliverable 2, coordinator
+    /// adjudication F-WO133-1): `mainbus(nominal_voltage=480V,
+    /// phases=3)`, mirroring the apparatus edge-kwarg convention
+    /// (`service(voltage=13.2kV, ...)`) rather than inventing new
+    /// syntax. A bare `mainbus` (no parenthesized properties) is the
+    /// pre-existing shape, still supported: `properties` is empty.
+    #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
+    pub fn bus_items(&self) -> Vec<PowerListItem> {
+        self.power_list_field("buses")
+    }
+
+    /// The `loads:` field's items, each with its optional declared
+    /// per-load properties (WO-133 deliverable 2, F-WO133-1):
+    /// `press_motor(kva=45, class=motor, code_letter=G)`. See
+    /// [`PowerDecl::bus_items`] for the shared convention.
+    #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
+    pub fn load_items(&self) -> Vec<PowerListItem> {
+        self.power_list_field("loads")
+    }
+
+    /// The named field's comma-list items, parsed for optional
+    /// per-item `(key=value, ...)` properties over its full (lossless)
+    /// value text -- an empty vec when the field is absent.
+    fn power_list_field(&self, field_name: &str) -> Vec<PowerListItem> {
+        self.fields()
+            .into_iter()
+            .find(|f| f.name() == field_name)
+            .map(|f| parse_power_list_items(&f.full_value_text()))
+            .unwrap_or_default()
+    }
+}
+
+/// One `buses:`/`loads:` list item: its name plus any declared
+/// per-item properties (WO-133 deliverable 2, F-WO133-1). Property
+/// values stay RAW TEXT here (e.g. `"480V"`, `"3"`, `"motor"`) --
+/// parsing a quantity out of a property's text is a lowering-layer
+/// concern (`regolith_lower::power`), not this crate's; this layer
+/// only recognizes the SHAPE (`name` or `name(key=value, ...)`).
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+// frob:doc docs/modules/regolith-syntax.md#ast
+pub struct PowerListItem {
+    /// The item's name (the bus/load identifier).
+    pub name: String,
+    /// The item's declared `key=value` properties, in declared order.
+    /// Empty for a bare name with no parenthesized properties.
+    pub properties: Vec<(String, String)>,
+}
+
+/// Parse a `buses:`/`loads:` field's full value text into
+/// [`PowerListItem`]s: a top-level (paren-depth 0) comma split, then
+/// each item's leading name plus its optional `(key=value, ...)`
+/// property list. A hand-rolled text scan rather than a re-entry into
+/// the token/layout parser (WO-133 D-F-WO133-1): the values this
+/// grammar corner needs (bare idents, `name(k=v, ...)`) are simple
+/// enough that duplicating the shared statement grammar here would
+/// add risk with no benefit, and this function touches NOTHING else
+/// in the parser (fully additive, zero blast radius on any other
+/// field/claim shape).
+#[must_use]
+// frob:doc docs/modules/regolith-syntax.md#ast
+pub fn parse_power_list_items(text: &str) -> Vec<PowerListItem> {
+    split_top_level(text, ',')
+        .into_iter()
+        .filter(|raw| !raw.trim().is_empty())
+        .map(|raw| parse_one_power_list_item(raw.trim()))
+        .collect()
+}
+
+fn parse_one_power_list_item(raw: &str) -> PowerListItem {
+    let name_end = raw.find('(').unwrap_or(raw.len());
+    let name = raw[..name_end].trim().to_string();
+    let mut properties = Vec::new();
+    if name_end < raw.len() {
+        let after_paren = &raw[name_end + 1..];
+        let inner = after_paren.strip_suffix(')').unwrap_or(after_paren);
+        for part in split_top_level(inner, ',') {
+            let part = part.trim();
+            if part.is_empty() {
+                continue;
+            }
+            if let Some((key, value)) = part.split_once('=') {
+                properties.push((key.trim().to_string(), value.trim().to_string()));
+            }
+        }
+    }
+    PowerListItem { name, properties }
+}
+
+/// Split `text` on every occurrence of `sep` at PAREN DEPTH ZERO
+/// (never inside a `(...)` group), preserving each segment verbatim
+/// (untrimmed -- callers trim).
+fn split_top_level(text: &str, sep: char) -> Vec<String> {
+    let mut segments = Vec::new();
+    let mut depth = 0i32;
+    let mut start = 0usize;
+    for (i, ch) in text.char_indices() {
+        match ch {
+            '(' => depth += 1,
+            ')' => depth -= 1,
+            c if c == sep && depth == 0 => {
+                segments.push(text[start..i].to_string());
+                start = i + c.len_utf8();
+            }
+            _ => {}
+        }
+    }
+    segments.push(text[start..].to_string());
+    segments
+}
+
+impl PowerDecl {
     /// The `feeders:` block, if declared (charter 43 sec. 1): the
     /// bus-to-bus apparatus edges (services, generators, transformers,
     /// feeders, protective devices), typed identically to a flownet
@@ -2336,8 +2450,72 @@ impl PowerDecl {
 
 #[cfg(test)]
 mod tests {
-    use super::{AstNode, Decl, File};
+    use super::{parse_power_list_items, AstNode, Decl, File};
     use crate::syntax_kind::SyntaxKind;
+
+    #[test]
+    // frob:tests crates/regolith-syntax/src/ast.rs::parse_power_list_items kind="unit"
+    fn power_list_items_parses_bare_names() {
+        let items = parse_power_list_items("Utility, Genset, Tie");
+        assert_eq!(
+            items.iter().map(|i| i.name.as_str()).collect::<Vec<_>>(),
+            vec!["Utility", "Genset", "Tie"]
+        );
+        assert!(items.iter().all(|i| i.properties.is_empty()));
+    }
+
+    #[test]
+    // frob:tests crates/regolith-syntax/src/ast.rs::parse_power_list_items kind="unit"
+    fn power_list_items_parses_declared_properties() {
+        let items = parse_power_list_items("MainBus(nominal_voltage=480V, phases=3), PanelA");
+        assert_eq!(items.len(), 2);
+        assert_eq!(items[0].name, "MainBus");
+        assert_eq!(
+            items[0].properties,
+            vec![
+                ("nominal_voltage".to_string(), "480V".to_string()),
+                ("phases".to_string(), "3".to_string()),
+            ]
+        );
+        assert_eq!(items[1].name, "PanelA");
+        assert!(items[1].properties.is_empty());
+    }
+
+    #[test]
+    // frob:tests crates/regolith-syntax/src/ast.rs::PowerDecl.bus_items kind="unit"
+    // frob:tests crates/regolith-syntax/src/ast.rs::PowerDecl.load_items kind="unit"
+    fn power_decl_exposes_bus_and_load_items() {
+        let src = "power PlantMain:\n\
+                   \x20   sources: Svc1\n\
+                   \x20   buses: Svc1, MainBus(nominal_voltage=480V, phases=3)\n\
+                   \x20   loads: PressMotor(kva=45, class=motor, code_letter=G)\n\
+                   \x20   feeders:\n\
+                   \x20       f1: feeder(size=cu_4_0awg) (MainBus -> PressMotor)\n";
+        let file_path = camino::Utf8PathBuf::from("t.cupr");
+        let parse = crate::parser::parse(src, &file_path);
+        let file = File::cast(parse.syntax()).expect("root is File");
+        let power = file.power_nets().into_iter().next().expect("power decl");
+        let buses = power.bus_items();
+        let mainbus = buses.iter().find(|b| b.name == "MainBus").unwrap();
+        assert_eq!(
+            mainbus.properties,
+            vec![
+                ("nominal_voltage".to_string(), "480V".to_string()),
+                ("phases".to_string(), "3".to_string()),
+            ]
+        );
+        let loads = power.load_items();
+        assert_eq!(loads.len(), 1);
+        assert_eq!(loads[0].name, "PressMotor");
+        assert_eq!(
+            loads[0].properties,
+            vec![
+                ("kva".to_string(), "45".to_string()),
+                ("class".to_string(), "motor".to_string()),
+                ("code_letter".to_string(), "G".to_string()),
+            ]
+        );
+    }
 
     #[test]
     // frob:tests crates/regolith-syntax/src/ast.rs::MediumDecl.phase kind="unit"

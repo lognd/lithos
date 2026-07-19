@@ -69,7 +69,7 @@ macro_rules! authored {
 /// The ONE explain registry: every code in `codes::ALL`, no more, no
 /// fewer (`completeness_is_total` enforces both directions).
 // frob:doc docs/modules/regolith-diag.md#explain
-// frob:ticket T-0007
+// frob:ticket T-0008
 pub const ALL: &[ExplainEntry] = &[
 
     authored!(
@@ -266,6 +266,8 @@ pub const ALL: &[ExplainEntry] = &[
     stub!(POWER_UNDECLARED_PARALLEL_PATH, "WO-132 (charter 43 sec. 1 rule 2): a bus is reachable from more than one source through the declared `feeders:` edges and is not named in the net's `ties:` field -- an undeclared parallel source path (accidental parallelism destroys equipment)."),
     stub!(POWER_UNPROTECTED_TRANSITION, "WO-132 (charter 43 sec. 1 rule 3): a `feeders:` edge whose apparatus constructor narrows ampacity (`transformer`, `feeder`, `busway`) declares no adjoining protective device (`breaker`/`fuse`/`relay`) -- an unprotected ampacity transition."),
     stub!(POWER_LOAD_UNREACHABLE, "WO-132 (charter 43 sec. 1 rule 4): a declared `loads:` entry cannot reach any source bus by walking the net's declared `feeders:` edges."),
+    stub!(POWER_CROSS_STANDARD_MIX, "WO-133 deliverable 6 (D255, the cross-standard guard): a power branch's apparatus record declares a `standard_family` (IEC/NEC/ANSI-NEMA) that disagrees with another apparatus/conductor record in the same subnet. Mixing is not forbidden -- mixing SILENTLY is; names both families, both records, and the claim at stake."),
+    stub!(POWER_PAYLOAD_FIELD_UNRESOLVED, "WO-133 deliverable 2 (F-WO133-1, D250.3): a `PowerNetPayload` required field (`Bus.nominal_voltage`, `Bus.phases`, `Load.connected_kva`) has no declared source reaching it. Refused, never fabricated -- payload emission stops rather than filling the field with a guessed value."),
     stub!(AMBIGUOUS_SELECTION, "an entity query matched more than one entity."),
     stub!(BORROW_CONFLICT, "conflicting borrow of an owned region."),
     stub!(UNRESOLVED_FIELD_REFERENCE, "WO-33 D98: a claim projection (`max`/`min`/`at`/ `slope`) names a field no `compute` claim in scope declares (the unresolved-reference family, mirroring `E0301`)."),

@@ -75,6 +75,15 @@ document the shape the codegen must produce. Regolith reference:
 `SyntaxNode` of a specific `SyntaxKind` and exposes typed child
 accessors; trivia is skipped at this layer.
 
+`PowerDecl::bus_items`/`load_items` (WO-133 deliverable 2, coordinator
+adjudication F-WO133-1, `docs/spec/cuprite/10-power-layer.md` sec. 3a)
+parse the `buses:`/`loads:` fields' OPTIONAL per-item properties
+(`mainbus(nominal_voltage=480V, phases=3)`) into `PowerListItem`s via
+`parse_power_list_items`, a small hand-rolled paren-depth text scan
+over the field's lossless value text -- additive, and deliberately
+NOT a re-entry into the shared statement/expression grammar (zero
+blast radius on any other field/claim shape).
+
 <a id="checks"></a>
 ### `checks`
 

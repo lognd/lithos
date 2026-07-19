@@ -115,6 +115,30 @@ from regolith.harness.models.lumped_thermal import INPUTS as _THERMO_INPUTS
 from regolith.harness.models.npsh_margin import CLAIM_KIND as _NPSH_KIND
 from regolith.harness.models.npsh_margin import INPUTS as _NPSH_INPUTS
 from regolith.harness.models.post_embedment import CLAIM_KIND as _CIVIL_EMBEDMENT_KIND
+from regolith.harness.models.power import AMPACITY_INPUTS as _POWER_AMPACITY_INPUTS
+from regolith.harness.models.power import AMPACITY_KIND as _POWER_AMPACITY_KIND
+from regolith.harness.models.power import DEMAND_LOAD_INPUTS as _POWER_DEMAND_LOAD_INPUTS
+from regolith.harness.models.power import DEMAND_LOAD_KIND as _POWER_DEMAND_LOAD_KIND
+from regolith.harness.models.power import (
+    FAULT_CURRENT_INPUTS as _POWER_FAULT_CURRENT_INPUTS,
+)
+from regolith.harness.models.power import FAULT_CURRENT_KIND as _POWER_FAULT_CURRENT_KIND
+from regolith.harness.models.power import (
+    MOTOR_START_DIP_INPUTS as _POWER_MOTOR_START_DIP_INPUTS,
+)
+from regolith.harness.models.power import (
+    MOTOR_START_DIP_KIND as _POWER_MOTOR_START_DIP_KIND,
+)
+from regolith.harness.models.power import POWER_FACTOR_INPUTS as _POWER_FACTOR_INPUTS
+from regolith.harness.models.power import POWER_FACTOR_KIND as _POWER_FACTOR_KIND
+from regolith.harness.models.power import (
+    TRANSFORMER_LOADING_INPUTS as _POWER_TRANSFORMER_LOADING_INPUTS,
+)
+from regolith.harness.models.power import (
+    TRANSFORMER_LOADING_KIND as _POWER_TRANSFORMER_LOADING_KIND,
+)
+from regolith.harness.models.power import VOLTAGE_DROP_INPUTS as _POWER_VOLTAGE_DROP_INPUTS
+from regolith.harness.models.power import VOLTAGE_DROP_KIND as _POWER_VOLTAGE_DROP_KIND
 from regolith.harness.models.shaft_torsion import CLAIM_KIND as _TWIST_KIND
 from regolith.harness.models.shaft_torsion import INPUTS as _TWIST_INPUTS
 from regolith.harness.models.workload_realization import CLAIM_KIND as _REALIZATION_KIND
@@ -349,6 +373,37 @@ _FLUID_DP_FORM_NAMES: tuple[str, ...] = (_FLUID_DP_KIND,)
 _BUCK_RIPPLE_FORM_NAMES: tuple[str, ...] = (_BUCK_RIPPLE_KIND,)
 _BUCK_EFFICIENCY_FORM_NAMES: tuple[str, ...] = (_BUCK_EFFICIENCY_KIND,)
 _BUCK_TRANSIENT_FORM_NAMES: tuple[str, ...] = (_BUCK_TRANSIENT_KIND,)
+# WO-133 deliverable 3: the seven `elec.power.*` claim kinds T-0009's
+# built-in models discharge (`regolith.harness.models.power`), same
+# non-frame call-form shape as the buck/thermo/fluid_dp siblings above
+# -- matched by the same `_split_named_call_predicate`/`_match_call_lhs`
+# pair, no new grammar. `withstand`/`coordination`/`arc_flash`/
+# `grounding`/`harmonics`/`working_clearance` register NO model
+# (D250.4) and are deliberately left OFF this list: they fall through
+# to the generic dotted-call path, which names the call in an honest
+# `unmatched_call_path` deferral rather than a misleading "missing
+# inputs" one for ports no model will ever read.
+_POWER_DEMAND_LOAD_FORM_NAMES: tuple[str, ...] = (_POWER_DEMAND_LOAD_KIND,)
+_POWER_VOLTAGE_DROP_FORM_NAMES: tuple[str, ...] = (_POWER_VOLTAGE_DROP_KIND,)
+_POWER_AMPACITY_FORM_NAMES: tuple[str, ...] = (_POWER_AMPACITY_KIND,)
+_POWER_FAULT_CURRENT_FORM_NAMES: tuple[str, ...] = (_POWER_FAULT_CURRENT_KIND,)
+_POWER_MOTOR_START_DIP_FORM_NAMES: tuple[str, ...] = (_POWER_MOTOR_START_DIP_KIND,)
+_POWER_TRANSFORMER_LOADING_FORM_NAMES: tuple[str, ...] = (
+    _POWER_TRANSFORMER_LOADING_KIND,
+)
+_POWER_FACTOR_FORM_NAMES: tuple[str, ...] = (_POWER_FACTOR_KIND,)
+# The kind -> declared-inputs map every `_translate_power_claim` call
+# site shares (avoids seven near-identical wrapper functions -- NO
+# DUPLICATION): each entry is exactly one T-0009 model's own `INPUTS`.
+_POWER_CLAIM_INPUTS: dict[str, tuple[str, ...]] = {
+    _POWER_DEMAND_LOAD_KIND: _POWER_DEMAND_LOAD_INPUTS,
+    _POWER_VOLTAGE_DROP_KIND: _POWER_VOLTAGE_DROP_INPUTS,
+    _POWER_AMPACITY_KIND: _POWER_AMPACITY_INPUTS,
+    _POWER_FAULT_CURRENT_KIND: _POWER_FAULT_CURRENT_INPUTS,
+    _POWER_MOTOR_START_DIP_KIND: _POWER_MOTOR_START_DIP_INPUTS,
+    _POWER_TRANSFORMER_LOADING_KIND: _POWER_TRANSFORMER_LOADING_INPUTS,
+    _POWER_FACTOR_KIND: _POWER_FACTOR_INPUTS,
+}
 # WO-86: `mech.cg(members=[...])` -- the uav_talon CG/moment-budget
 # ask (F112). NOT a stdlib/grammar addition (`path-or-call` already
 # accepts any dotted name, grammar.ebnf) and NOT a registered harness
@@ -1818,6 +1873,36 @@ def _translate_call_kwargs_claim(
             deterministic=True,
             regimes=_regimes_for(claim_kind),
         )
+    )
+
+
+def _translate_power_claim(
+    obligation: Obligation, split: tuple[str, str, str]
+) -> Result[DischargeRequest, Deferral]:
+    """Lower one `elec.power.<kind>(<subject>, ...) <op> <limit>` claim
+    (WO-133 deliverable 3) against its call kwargs / `given.loads`
+    inputs -- the exact `_translate_call_kwargs_claim` posture
+    `_translate_fluid_dp`/`_translate_bolted_joint` already take, with
+    the seven T-0009 `regolith.harness.models.power` kinds sharing this
+    ONE wrapper (:data:`_POWER_CLAIM_INPUTS`) instead of seven
+    near-identical copies. A missing declared input (an undeclared
+    `available_fault_current`, `pct_z`, ...) is D250.3's named absence:
+    the shared discharge path refuses by name, never a "typical value"
+    fallback -- no record-chain resolution happens here, unlike
+    `_translate_fluid_dp`'s medium walk, because none of these seven
+    models needs one (every port is an author-declared nameplate/run
+    value).
+    """
+    claim_kind, args_text, bound_text = split
+    subject = args_text.split(",", 1)[0].strip()
+    inputs_needed = _POWER_CLAIM_INPUTS[claim_kind]
+    return _translate_call_kwargs_claim(
+        obligation,
+        claim_kind=claim_kind,
+        inputs_needed=inputs_needed,
+        subject=subject,
+        args_text=args_text,
+        bound_text=bound_text,
     )
 
 
@@ -4114,6 +4199,24 @@ def translate(
                 _translate_si_termination(obligation, args_text, term_bound),
                 model_pin,
             )
+        # WO-133 deliverable 3: the seven `elec.power.*` claim kinds
+        # with a registered model, all sharing one dispatch table (the
+        # form-names -> translator pairs) to avoid seven near-copies
+        # of this same three-line block.
+        for power_form_names in (
+            _POWER_DEMAND_LOAD_FORM_NAMES,
+            _POWER_VOLTAGE_DROP_FORM_NAMES,
+            _POWER_AMPACITY_FORM_NAMES,
+            _POWER_FAULT_CURRENT_FORM_NAMES,
+            _POWER_MOTOR_START_DIP_FORM_NAMES,
+            _POWER_TRANSFORMER_LOADING_FORM_NAMES,
+            _POWER_FACTOR_FORM_NAMES,
+        ):
+            power_split = _split_named_call_predicate(form.rhs, power_form_names)
+            if power_split is not None:
+                return _pin_model(
+                    _translate_power_claim(obligation, power_split), model_pin
+                )
         # WO-86: `mech.cg(members=[...])` -- always defers honestly in
         # v1 (see `_translate_cg_moment`'s docstring for the keystone
         # finding). Matched unconditionally on `op == "require"`, same
@@ -4246,6 +4349,24 @@ def translate(
             _translate_thermo(obligation, (_THERMO_KIND, args_text, bound_text)),
             model_pin,
         )
+    for power_kind, power_form_names in (
+        (_POWER_DEMAND_LOAD_KIND, _POWER_DEMAND_LOAD_FORM_NAMES),
+        (_POWER_VOLTAGE_DROP_KIND, _POWER_VOLTAGE_DROP_FORM_NAMES),
+        (_POWER_AMPACITY_KIND, _POWER_AMPACITY_FORM_NAMES),
+        (_POWER_FAULT_CURRENT_KIND, _POWER_FAULT_CURRENT_FORM_NAMES),
+        (_POWER_MOTOR_START_DIP_KIND, _POWER_MOTOR_START_DIP_FORM_NAMES),
+        (_POWER_TRANSFORMER_LOADING_KIND, _POWER_TRANSFORMER_LOADING_FORM_NAMES),
+        (_POWER_FACTOR_KIND, _POWER_FACTOR_FORM_NAMES),
+    ):
+        power_lhs = _match_call_lhs(form.lhs, power_form_names)
+        if power_lhs is not None:
+            _, args_text = power_lhs
+            return _pin_model(
+                _translate_power_claim(
+                    obligation, (power_kind, args_text, bound_text)
+                ),
+                model_pin,
+            )
     # F152: the three registered converter models' own call-form
     # spellings, single-source-line variant (a real comparator already
     # split above, mirroring the bolt/bearing/thermo `_lhs` siblings).
