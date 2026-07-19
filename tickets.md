@@ -1081,7 +1081,7 @@ threat: null
 ```yaml
 id: T-0039
 title: 'WO-159: regolith.surface UI read facade (AD-44)'
-state: in-progress
+state: done
 kind: feature
 origin: human
 created: '2026-07-19'
@@ -1090,12 +1090,23 @@ parent: null
 scope:
 - python/regolith/surface.py
 - design/lithos.strata
-evidence: []
+evidence:
+- tests/test_surface_facade.py::test_all_names_exactly_the_charter_set
+- tests/test_surface_facade.py::test_every_all_name_resolves_on_the_module
 attachments: []
 acceptance:
 - see docs/workflow/work-orders/WO-159-surface-facade.md
 threat: null
 ```
+## Done report
+
+WO-159 landed: python/regolith/surface.py facade (12 exports incl the
+reviewed calc read-model addition), 5 facade tests + reach-in pin,
+docs anchor, strata surface_facade/graphite_ui nodes+flows (honest
+no-noflow note), graphite companion T-0021 closed in graphite ledger
+(commit 8599c1d there: reports/build/calc/obligations/health migrated,
+FI-* forbidden-import policy live). Committed ca0c896a.
+
 See docs/workflow/work-orders/WO-159-surface-facade.md. Charter AD-44. Graphite-side migration + frob.toml forbidden-import policy is a companion filed in graphite's own tickets.md, not tracked here.
 
 <!-- ticket:T-0040 -->
@@ -1145,7 +1156,7 @@ See docs/workflow/work-orders/WO-161-registration-derived-classification.md. Cha
 ```yaml
 id: T-0042
 title: 'WO-162: promotion-ticket rule gains teeth (AD-22 teeth)'
-state: in-progress
+state: done
 kind: feature
 origin: human
 created: '2026-07-19'
@@ -1155,12 +1166,22 @@ scope:
 - python/regolith/orchestrator/programs.py
 - frob.toml
 - tools/**
-evidence: []
+evidence:
+- tests/health/test_promotion_tickets.py::test_marker_pointing_at_a_done_ticket_fails
+- tests/health/test_promotion_tickets.py::test_main_exits_nonzero_on_violation
 attachments: []
 acceptance:
 - see docs/workflow/work-orders/WO-162-promotion-ticket-rule.md
 threat: null
 ```
+## Done report
+
+WO-162 landed: tools/health/promotion_tickets.py + make target +
+7 tests + live violation demonstration; FeatureProgram marked with
+promotion ticket T-0052 (created this close); frob policy kinds
+could not express the cross-file join (documented in module
+docstring). Committed d3b8dd8b.
+
 See docs/workflow/work-orders/WO-162-promotion-ticket-rule.md. Charter AD-22 hardened. Marks FeatureProgram with frob:ticket directive; creates or points at its promotion ticket.
 
 <!-- ticket:T-0043 -->
@@ -1168,7 +1189,7 @@ See docs/workflow/work-orders/WO-162-promotion-ticket-rule.md. Charter AD-22 har
 id: T-0043
 title: 'WO-163: RealizedLayout put seam, generalized for board-shaped capabilities
   (A7)'
-state: in-progress
+state: done
 kind: feature
 origin: human
 created: '2026-07-19'
@@ -1179,12 +1200,22 @@ scope:
 - python/regolith/_schema/models.py
 - python/regolith/orchestrator/orchestrate.py
 - crates/regolith-syntax/**
-evidence: []
+evidence:
+- tests/realizer/elec/test_board_assignment.py::test_board_assignment_round_trips_through_the_payload_store
+- tests/realizer/elec/test_board_assignment.py::test_no_copper_or_kicad_fields_leak_onto_the_non_copper_kind
 attachments: []
 acceptance:
 - see docs/workflow/work-orders/WO-163-realized-layout-put-seam.md
 threat: null
 ```
+## Done report
+
+WO-163 landed: RealizedBoardAssignment + put seam (mirrors
+put_realized_layout), orchestrator kind-table registration, 3 tests;
+plain-pydantic posture pending next scheduled schema bump per D211;
+staged-loop wiring deferred to WO-165 subject selector per WO body.
+Committed d3b8dd8b.
+
 See docs/workflow/work-orders/WO-163-realized-layout-put-seam.md. AD-47 prerequisite for board-shaped capabilities. Recon correction: KiCad-copper put seam already lands (realized.py:97, orchestrate.py:1465); the real gap is a non-copper realized_kind for perf-board.
 
 <!-- ticket:T-0044 -->
@@ -1396,7 +1427,10 @@ scope:
 evidence: []
 attachments: []
 acceptance:
-- 'AD-22 promotion (charter sec. 2, D267): regolith-lower emits FeatureProgram from real .hema source; orchestrator/programs.py extraction deleted or demoted to drift check in the SAME change; the frob:ticket marker on the class comes off at close'
-- 'Pre-promotion ledger: this OPEN ticket is the honest record; tools/health/promotion_tickets.py (WO-162) enforces the marker->open-ticket join'
+- 'AD-22 promotion (charter sec. 2, D267): regolith-lower emits FeatureProgram from
+  real .hema source; orchestrator/programs.py extraction deleted or demoted to drift
+  check in the SAME change; the frob:ticket marker on the class comes off at close'
+- 'Pre-promotion ledger: this OPEN ticket is the honest record; tools/health/promotion_tickets.py
+  (WO-162) enforces the marker->open-ticket join'
 threat: null
 ```
