@@ -59,7 +59,6 @@ class _FakeExpensive(Model):
     def cost(self) -> int:
         return 99
 
-    # frob:waive TEST005 reason="test-file fixture/helper with environment-gated branches (tool-absent paths unreachable in a kicad-less env); TEST005 measuring test code is a tool quirk (TEST001 skips test files, TEST005 does not) -- FROBLEMS 2026-07-19"
     def estimate(self, request: DischargeRequest) -> Result[Prediction, HarnessError]:
         return Ok(Prediction(value=0.0, eps=0.0))
 

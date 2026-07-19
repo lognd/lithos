@@ -107,8 +107,9 @@ node ffi_bridge : trusted {
 // plugins seam, toolenv registry, procio subprocess seam, config,
 // logging setup, _schema (generated pydantic models), _codes. Kept as
 // one node (see the coarsening note above).
-// frob:doc docs/workflow/strata-system-model.md#what-this-is
 // frob:ticket T-0034
+// frob:ticket T-0035
+// frob:doc docs/workflow/strata-system-model.md#what-this-is
 node regolith_py : trusted {
     clearance Internal;
     // Every file/subpackage under python/regolith EXCEPT compiler.py
@@ -147,7 +148,19 @@ node regolith_py : trusted {
     // cli/app.py wires the same httpx-backed client (plus a confined
     // file:// transport for offline/vendor-mirror sources) into the CLI.
     may "net";
-    waive "LINT004" reason "no real disable flag exists yet for procio.py's subprocess spawning (exec) or magnetite/client.py's RegistryClient network fetches (net) -- REGOLITH_LOG/REGOLITH_UPDATE_GOLDEN/REGOLITH_OPTIMIZE_BUDGET_EVALS/REGOLITH_DEBUG_TAPS are unrelated knobs, none gate exec or net -- T-0035 is the follow-on ticket to add REGOLITH_NO_EXEC/REGOLITH_OFFLINE, mirroring feldspar's FELDSPAR_CCX/FELDSPAR_NGSPICE precedent (a path override is not a disable flag either)" ticket "T-0035";
+    // exec kill-switch (T-0035): REGOLITH_NO_EXEC, checked at
+    // procio.py's run_argv (the ONE process-invocation seam, WO-153) --
+    // any non-empty value other than "0"/"false" refuses the spawn with
+    // a typed ToolFailure(kind="disabled") before subprocess.run is ever
+    // called. run_tool/legacy_bytes_runner (and transitively toolenv.py's
+    // version probe) route through the same choke point.
+    attr flag=REGOLITH_NO_EXEC;
+    // net kill-switch (T-0035): REGOLITH_OFFLINE, checked at
+    // magnetite/client.py's RegistryClient.fetch_index/fetch_archive --
+    // refuses http(s):// fetches with a typed MagnetiteError(kind="offline")
+    // before the transport is touched; file:// sources (cli/app.py's
+    // confined _FileTransport) stay allowed, no network involved.
+    attr flag=REGOLITH_OFFLINE;
 }
 
 // The AD-44 UI read facade: the ONE sanctioned import surface for

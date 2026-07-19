@@ -163,3 +163,56 @@ def test_legacy_bytes_runner_raises_file_not_found_on_missing_binary() -> None:
     except FileNotFoundError:
         return
     raise AssertionError("expected FileNotFoundError")
+
+
+# frob:tests python/regolith/procio.py kind="unit"
+def test_run_argv_refuses_when_no_exec_is_set(monkeypatch) -> None:
+    """T-0035: `REGOLITH_NO_EXEC` set to a truthy value refuses the spawn
+    with `Err(ToolFailure(kind="disabled"))` -- a real kill-switch, not
+    just a path override that would still fall through to a spawn
+    attempt (the feldspar `FELDSPAR_CCX`/`FELDSPAR_NGSPICE` precedent
+    this mirrors)."""
+    monkeypatch.setenv(procio.NO_EXEC_VAR, "1")
+    result = procio.run_argv(("true",), timeout_s=5.0, tool="true")
+    assert result.is_err
+    fail = result.danger_err
+    assert fail.kind == "disabled"
+    assert fail.returncode is None
+    assert procio.NO_EXEC_VAR in fail.stderr_excerpt
+
+
+def test_run_argv_no_exec_false_string_is_not_disabled(monkeypatch) -> None:
+    """`REGOLITH_NO_EXEC=false` (and `"0"`) are the explicit off-values,
+    same convention as feldspar's `FELDSPAR_DISABLE_*` flags -- the
+    spawn proceeds normally."""
+    monkeypatch.setenv(procio.NO_EXEC_VAR, "false")
+    result = procio.run_argv(("true",), timeout_s=5.0, tool="true")
+    assert result.is_ok
+
+
+def test_run_argv_no_exec_unset_spawns_normally(monkeypatch) -> None:
+    monkeypatch.delenv(procio.NO_EXEC_VAR, raising=False)
+    result = procio.run_argv(("true",), timeout_s=5.0, tool="true")
+    assert result.is_ok
+
+
+def test_run_tool_refuses_when_no_exec_is_set(tmp_path: Path, monkeypatch) -> None:
+    """`run_tool` refuses through the SAME `run_argv` choke point, even
+    after `toolenv.resolve` finds a real binary -- the kill-switch wins
+    over a successful resolution."""
+
+    def fake_resolve(name: str, **kwargs: object) -> toolenv.ToolStatus:
+        spec = toolenv.spec_for(name)
+        assert spec is not None
+        return toolenv.ToolStatus(spec=spec, path="/bin/true", version=None)
+
+    monkeypatch.setattr(toolenv, "resolve", fake_resolve)
+    monkeypatch.setenv(procio.NO_EXEC_VAR, "1")
+
+    class _NullArgs(procio.ToolArgs):
+        def emit(self) -> tuple[str, ...]:
+            return ()
+
+    result = procio.run_tool("verilator", _NullArgs(), cwd=tmp_path, timeout_s=5.0)
+    assert result.is_err
+    assert result.danger_err.kind == "disabled"

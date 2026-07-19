@@ -70,12 +70,10 @@ class Capture:
 
     calls: list[CapturedCall] = field(default_factory=list)
 
-    # frob:waive TEST005 reason="test-file fixture/helper with environment-gated branches (tool-absent paths unreachable in a kicad-less env); TEST005 measuring test code is a tool quirk (TEST001 skips test files, TEST005 does not) -- FROBLEMS 2026-07-19"
     def by_model(self, model_id_prefix: str) -> list[CapturedCall]:
         """Captured calls whose ``model_id`` starts with the prefix."""
         return [c for c in self.calls if c.model_id.startswith(model_id_prefix)]
 
-    # frob:waive TEST005 reason="test-file fixture/helper with environment-gated branches (tool-absent paths unreachable in a kicad-less env); TEST005 measuring test code is a tool quirk (TEST001 skips test files, TEST005 does not) -- FROBLEMS 2026-07-19"
     def model_ids(self) -> set[str]:
         """Every distinct model id captured."""
         return {c.model_id for c in self.calls}

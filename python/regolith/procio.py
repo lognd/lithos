@@ -47,6 +47,7 @@ touching either function's own body or its test-injected fakes.
 
 from __future__ import annotations
 
+import os
 import subprocess
 from collections.abc import Sequence
 from pathlib import Path
@@ -60,6 +61,25 @@ from regolith.logging_setup import get_logger
 _log = get_logger(__name__)
 
 _STDERR_EXCERPT_LINES = 40
+
+# frob:doc docs/modules/py-regolith.md#procio
+#: The `REGOLITH_NO_EXEC` kill-switch (T-0035, mirroring feldspar's
+#: `FELDSPAR_DISABLE_CCX`/`FELDSPAR_DISABLE_NGSPICE` precedent, T-0016
+#: there): any non-empty value other than "0"/"false" (case-insensitive)
+#: counts as set. Checked at :func:`run_argv`, the ONE process-invocation
+#: seam (WO-153) -- every other spawn path in this package (`run_tool`,
+#: `legacy_bytes_runner`, and transitively `regolith.toolenv.resolve`'s
+#: version probe) already routes through it, so one choke point covers
+#: the whole `may "exec"` capability declared on the `regolith_py` node
+#: (design/lithos.strata).
+NO_EXEC_VAR = "REGOLITH_NO_EXEC"
+
+
+def _exec_disabled() -> bool:
+    """Reads `REGOLITH_NO_EXEC`; truthy values are any non-empty string
+    except "0"/"false" (case-insensitive)."""
+    raw = os.environ.get(NO_EXEC_VAR, "")
+    return raw.strip().lower() not in ("", "0", "false")
 
 
 def _excerpt(text: str, *, lines: int = _STDERR_EXCERPT_LINES) -> str:
@@ -190,7 +210,9 @@ class ToolFailure(BaseModel):
     already carried (verilator_adapter's `ToolFailure`, kicad's
     `ToolUnavailable`/`LayoutFailed` where their semantics coincide):
     tool name, resolved version if known, argv, returncode (``None`` for
-    not-found/timeout), a BOUNDED stderr excerpt, and the failure kind.
+    not-found/timeout/disabled), a BOUNDED stderr excerpt, and the
+    failure kind (``"disabled"`` is the `REGOLITH_NO_EXEC` kill-switch,
+    T-0035 -- the spawn was refused before any subprocess was attempted).
     """
 
     model_config = ConfigDict(frozen=True)
@@ -200,7 +222,7 @@ class ToolFailure(BaseModel):
     argv: tuple[str, ...]
     returncode: int | None
     stderr_excerpt: str
-    kind: Literal["not_found", "timeout", "nonzero"]
+    kind: Literal["not_found", "timeout", "nonzero", "disabled"]
 
 
 # frob:doc docs/modules/py-regolith.md#procio
@@ -219,12 +241,31 @@ def run_argv(
 
     A nonzero exit is NOT a failure at this layer -- ``Ok(ToolOutput)``
     covers every returncode the process itself reported; only spawn
-    failure (missing binary/OSError) and timeout are :class:`ToolFailure`
-    here, so a caller with its own exit-code semantics (the AD-19
-    adapter, the layout wrapper) can still inspect the raw result.
+    failure (missing binary/OSError), timeout, and the `REGOLITH_NO_EXEC`
+    kill-switch (T-0035) are :class:`ToolFailure` here, so a caller with
+    its own exit-code semantics (the AD-19 adapter, the layout wrapper)
+    can still inspect the raw result.
     """
     full_argv = tuple(argv)
     label = tool or (full_argv[0] if full_argv else "")
+    if _exec_disabled():
+        _log.warning(
+            "procio: refusing to spawn %s, %s is set (exec kill-switch active)",
+            full_argv,
+            NO_EXEC_VAR,
+        )
+        return Err(
+            ToolFailure(
+                tool=label,
+                version=version,
+                argv=full_argv,
+                returncode=None,
+                kind="disabled",
+                stderr_excerpt=(
+                    f"{NO_EXEC_VAR} is set -- unset it to allow subprocess exec"
+                ),
+            )
+        )
     _log.debug(
         "procio: spawning %s (cwd=%s, timeout=%gs, version=%s)",
         full_argv,
@@ -433,6 +474,7 @@ def legacy_bytes_runner(
 __all__ = [
     "KicadDrcArgs",
     "KicadLayoutArgs",
+    "NO_EXEC_VAR",
     "ToolArgs",
     "ToolFailure",
     "ToolOutput",

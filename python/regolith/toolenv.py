@@ -15,6 +15,15 @@ a loud, teaching diagnostic -- tool name, why this design needs it,
 and exact install guidance -- never a bare traceback and never a
 silent pass. Call sites ask this module WHAT to say; they never
 compose the message themselves (no duplication of hint text).
+
+`REGOLITH_NO_EXEC` (T-0035) needs no separate check here: every
+version-probe spawn in this module goes through `regolith.procio`'s
+`legacy_bytes_runner` default, which routes into `run_argv` -- the ONE
+process-invocation seam that already refuses when the kill-switch is
+set. A disabled probe surfaces the same way a missing binary already
+does (``FileNotFoundError`` from `legacy_bytes_runner`, caught by
+`_probe_version` below, so ``version`` comes back ``None`` rather than
+raising).
 """
 
 from __future__ import annotations

@@ -139,7 +139,6 @@ def test_staged_build_elec_leg_produces_layout_realized(tmp_path) -> None:  # ty
     assert "boards/: present (unrouted -- fab-shape evidence" in index_text
 
 
-# frob:waive TEST005 reason="test-file fixture/helper with environment-gated branches (tool-absent paths unreachable in a kicad-less env); TEST005 measuring test code is a tool quirk (TEST001 skips test files, TEST005 does not) -- FROBLEMS 2026-07-19"
 @pytest.mark.skipif(
     real_kicad_available(),
     reason="proves the honest-skip arm; only meaningful when the gate is "

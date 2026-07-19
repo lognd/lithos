@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import sys
 from pathlib import Path
 from typing import Literal, cast
@@ -57,7 +58,7 @@ from regolith.logging_setup import (
     set_level,
     set_presentation,
 )
-from regolith.magnetite.client import RegistryClient
+from regolith.magnetite.client import OFFLINE_VAR, RegistryClient
 from regolith.magnetite.index import latest_version, parse_index, select_version
 from regolith.magnetite.lints import resolve_lint_config
 from regolith.magnetite.manifest import Manifest, load_manifest
@@ -112,6 +113,7 @@ from regolith.orchestrator.test_runner import (
 )
 from regolith.orchestrator.tiers import TIER_BY_VERB, BuildTier
 from regolith.plugins import PluginKind, discover_plugins
+from regolith.procio import NO_EXEC_VAR
 from regolith.toolenv import resolve_all as resolve_all_tools
 
 _log = get_logger(__name__)
@@ -400,11 +402,24 @@ def doctor(
 
     One row per `regolith.toolenv` catalog entry: found/missing,
     resolved path, version, the capability it unlocks, and install
-    guidance for anything missing. stdout IS the report (no separate
-    renderer); always exits clean -- a missing OPTIONAL tool is not a
-    doctor failure, it is exactly what doctor exists to show.
+    guidance for anything missing. Also reports the two exec/net
+    kill-switches (T-0035: `REGOLITH_NO_EXEC`/`REGOLITH_OFFLINE`) so an
+    operator can see at a glance whether either is currently active.
+    stdout IS the report (no separate renderer); always exits clean -- a
+    missing OPTIONAL tool is not a doctor failure, it is exactly what
+    doctor exists to show.
     """
     statuses = resolve_all_tools()
+    no_exec_active = os.environ.get(NO_EXEC_VAR, "").strip().lower() not in (
+        "",
+        "0",
+        "false",
+    )
+    offline_active = os.environ.get(OFFLINE_VAR, "").strip().lower() not in (
+        "",
+        "0",
+        "false",
+    )
     if as_json:
         payload = [
             {
@@ -431,6 +446,9 @@ def doctor(
         rows.append(f"             unlocks: {status.spec.capability}")
         if not status.available:
             rows.append(f"             install: {status.spec.install.render()}")
+    rows.append("")
+    rows.append(f"{NO_EXEC_VAR:<20} {'ACTIVE' if no_exec_active else 'inactive'}")
+    rows.append(f"{OFFLINE_VAR:<20} {'ACTIVE' if offline_active else 'inactive'}")
     typer.echo("\n".join(rows))
     raise typer.Exit(EXIT_CLEAN)
 

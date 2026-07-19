@@ -56,15 +56,12 @@ class _FixtureFamilyPack(FamilyPack):
 
     family = "fixture_family"
 
-    # frob:waive TEST005 reason="test-file fixture/helper with environment-gated branches (tool-absent paths unreachable in a kicad-less env); TEST005 measuring test code is a tool quirk (TEST001 skips test files, TEST005 does not) -- FROBLEMS 2026-07-19"
     def pin_init_lines(self, assignment: PinAssignment) -> tuple[str, ...]:
         return (f"/* fixture pin init: {assignment.flow} */",)
 
-    # frob:waive TEST005 reason="test-file fixture/helper with environment-gated branches (tool-absent paths unreachable in a kicad-less env); TEST005 measuring test code is a tool quirk (TEST001 skips test files, TEST005 does not) -- FROBLEMS 2026-07-19"
     def clock_init_lines(self, clock: ClockDecl) -> tuple[str, ...]:
         return (f"/* fixture clock init: {clock.name} */",)
 
-    # frob:waive TEST005 reason="test-file fixture/helper with environment-gated branches (tool-absent paths unreachable in a kicad-less env); TEST005 measuring test code is a tool quirk (TEST001 skips test files, TEST005 does not) -- FROBLEMS 2026-07-19"
     def isr_stub(self, event: EventDecl) -> tuple[str, ...]:
         del event
         return ("/* fixture isr */",)
@@ -103,7 +100,6 @@ def test_mcu_pack_plugin_is_discovered_and_composed_after_builtins() -> None:
 class _FixtureBackend:
     """A trivial fixture manufacturing backend proving the backend kind."""
 
-    # frob:waive TEST005 reason="test-file fixture/helper with environment-gated branches (tool-absent paths unreachable in a kicad-less env); TEST005 measuring test code is a tool quirk (TEST001 skips test files, TEST005 does not) -- FROBLEMS 2026-07-19"
     def produce(
         self, inputs: BackendInputs
     ) -> Result[tuple[OutputFile, ...], BackendError]:
@@ -120,7 +116,6 @@ class _BuiltinMarkerBackend:
     already registered under this key" -- a real `Backend` so the plugin
     seam's `dict[str, Backend]` typing holds, never a bare `object()`."""
 
-    # frob:waive TEST005 reason="test-file fixture/helper with environment-gated branches (tool-absent paths unreachable in a kicad-less env); TEST005 measuring test code is a tool quirk (TEST001 skips test files, TEST005 does not) -- FROBLEMS 2026-07-19"
     def produce(
         self, inputs: BackendInputs
     ) -> Result[tuple[OutputFile, ...], BackendError]:

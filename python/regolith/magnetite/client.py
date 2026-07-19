@@ -10,9 +10,17 @@ in-memory ``httpx.MockTransport`` and never touch the network.
 Trust is NOT decided here: hosting confers nothing (sec. 10.4). This layer
 delivers verified bytes; :mod:`regolith.magnetite.trust` decides their tier
 from signatures.
+
+`REGOLITH_OFFLINE` (T-0035) is this module's kill-switch for the `may
+"net"` capability declared on the `regolith_py` node (design/lithos.strata):
+set, every `http(s)://` fetch is refused with a typed
+:class:`~regolith.errors.MagnetiteError` before the transport is ever
+touched; `file://` sources stay allowed (no network involved).
 """
 
 from __future__ import annotations
+
+import os
 
 import blake3
 import httpx
@@ -29,6 +37,41 @@ from regolith.magnetite.index import (
 from regolith.magnetite.sources import Registry
 
 _log = get_logger(__name__)
+
+# frob:doc docs/modules/py-magnetite.md#magnetite-client
+#: The `REGOLITH_OFFLINE` kill-switch (T-0035, mirroring `procio.py`'s
+#: `REGOLITH_NO_EXEC`): any non-empty value other than "0"/"false"
+#: (case-insensitive) counts as set. Refuses `http(s)://` fetches;
+#: `file://` sources (the confined vendor-mirror transport, cli/app.py's
+#: `_FileTransport`) stay allowed -- they touch no network at all.
+OFFLINE_VAR = "REGOLITH_OFFLINE"
+
+
+def _offline() -> bool:
+    """Reads `REGOLITH_OFFLINE`; truthy values are any non-empty string
+    except "0"/"false" (case-insensitive)."""
+    raw = os.environ.get(OFFLINE_VAR, "")
+    return raw.strip().lower() not in ("", "0", "false")
+
+
+def _refuse_if_offline(url: str) -> MagnetiteError | None:
+    """`None` if `url` may be fetched, else the refusal error.
+
+    `file://` URLs are never network traffic (cli/app.py mounts a local
+    `_FileTransport` for them), so they stay allowed even with
+    `REGOLITH_OFFLINE` set -- only `http(s)://` fetches are refused.
+    """
+    if url.startswith("file://") or not _offline():
+        return None
+    _log.warning(
+        "magnetite: refusing GET %s, %s is set (network kill-switch active)",
+        url,
+        OFFLINE_VAR,
+    )
+    return MagnetiteError(
+        kind="offline",
+        message=f"{OFFLINE_VAR} is set -- refusing network fetch of {url}",
+    )
 
 
 def _strip_algo(content_hash: str) -> Result[str, MagnetiteError]:
@@ -103,6 +146,9 @@ class RegistryClient:
     ) -> Result[tuple[IndexEntry, ...], MagnetiteError]:
         """Fetch and parse ``package``'s sparse index (sec. 10.1)."""
         url = f"{self._registry.index_url.rstrip('/')}/{index_path(package)}"
+        refusal = _refuse_if_offline(url)
+        if refusal is not None:
+            return Err(refusal)
         try:
             response = self._http.get(url)
         except httpx.HTTPError as exc:
@@ -127,6 +173,9 @@ class RegistryClient:
         if digest_result.is_err:
             return Err(digest_result.danger_err)
         url = f"{self._registry.archive_url.rstrip('/')}/{digest_result.danger_ok}"
+        refusal = _refuse_if_offline(url)
+        if refusal is not None:
+            return Err(refusal)
         try:
             response = self._http.get(url)
         except httpx.HTTPError as exc:

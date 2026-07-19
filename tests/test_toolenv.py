@@ -10,7 +10,7 @@ from __future__ import annotations
 import subprocess
 
 import pytest
-from regolith import toolenv
+from regolith import procio, toolenv
 
 
 def _fake_version_runner(stdout: bytes = b"v1.2.3\n"):
@@ -141,6 +141,36 @@ def test_install_hint_render_includes_kicad_ppa_caveat_for_ngspice() -> None:
     assert spec is not None
     rendered = spec.install.render()
     assert "force-overwrite" in rendered
+
+
+# frob:tests python/regolith/toolenv.py kind="unit"
+def test_version_probe_is_none_when_no_exec_is_set(monkeypatch) -> None:
+    """T-0035: `REGOLITH_NO_EXEC` is honored transitively -- `resolve`'s
+    default `runner` (`procio.legacy_bytes_runner`) routes through
+    `procio.run_argv`'s kill-switch check, so a disabled probe degrades
+    the same way a missing/failed spawn already does (``version`` comes
+    back ``None``, never a raised exception) even though the binary
+    itself IS found on PATH."""
+    monkeypatch.setenv(procio.NO_EXEC_VAR, "1")
+    status = toolenv.resolve(
+        "kicad-cli",
+        which_fn=lambda name: "/usr/bin/kicad-cli",
+        use_cache=False,
+    )
+    assert status.available
+    assert status.version is None
+
+
+def test_version_probe_runs_normally_when_no_exec_is_unset(monkeypatch) -> None:
+    monkeypatch.delenv(procio.NO_EXEC_VAR, raising=False)
+    status = toolenv.resolve(
+        "kicad-cli",
+        which_fn=lambda name: "/usr/bin/kicad-cli",
+        runner=_fake_version_runner(b"kicad-cli-9.0\n"),
+        use_cache=False,
+    )
+    assert status.available
+    assert status.version == "kicad-cli-9.0"
 
 
 def test_guide_quotes_registry_capabilities() -> None:

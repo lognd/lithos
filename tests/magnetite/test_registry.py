@@ -208,6 +208,117 @@ def test_vendor_store_rejects_tampered_file(tmp_path) -> None:
     assert store.read(h).is_err  # INV-22 re-verification catches it
 
 
+# --- REGOLITH_OFFLINE kill-switch (T-0035) --------------------------------
+
+
+# frob:tests python/regolith/magnetite/client.py::RegistryClient.fetch_index kind="unit"
+def test_fetch_index_refuses_when_offline_is_set(monkeypatch) -> None:
+    """T-0035: `REGOLITH_OFFLINE` set to a truthy value refuses an
+    `http(s)://` index fetch with `Err(MagnetiteError(kind="offline"))`
+    before the transport is ever touched."""
+    from regolith.magnetite.client import OFFLINE_VAR
+
+    monkeypatch.setenv(OFFLINE_VAR, "1")
+    client = _mock_registry(
+        "std.materials",
+        {},
+        [],
+    )
+    result = client.fetch_index("std.materials")
+    assert result.is_err
+    assert result.danger_err.kind == "offline"
+
+
+# frob:tests python/regolith/magnetite/client.py::RegistryClient.fetch_archive kind="unit"
+def test_fetch_archive_refuses_when_offline_is_set(monkeypatch) -> None:
+    from regolith.magnetite.client import OFFLINE_VAR
+
+    monkeypatch.setenv(OFFLINE_VAR, "1")
+    data = b"archive-bytes-v1"
+    h = _hash(data)
+    client = _mock_registry("p", {h: data}, [])
+    result = client.fetch_archive(h)
+    assert result.is_err
+    assert result.danger_err.kind == "offline"
+
+
+def test_fetch_index_offline_false_string_is_not_disabled(monkeypatch) -> None:
+    """`REGOLITH_OFFLINE=false`/`"0"` are the explicit off-values -- the
+    fetch proceeds normally against the mock transport."""
+    from regolith.magnetite.client import OFFLINE_VAR
+
+    monkeypatch.setenv(OFFLINE_VAR, "false")
+    client = _mock_registry(
+        "std.materials",
+        {},
+        [
+            {
+                "name": "std.materials",
+                "version": "1.0.0",
+                "manifest_digest": "blake3:aa",
+                "archive_hash": "blake3:bb",
+            }
+        ],
+    )
+    result = client.fetch_index("std.materials")
+    assert result.is_ok
+
+
+def test_fetch_index_offline_unset_runs_normally(monkeypatch) -> None:
+    from regolith.magnetite.client import OFFLINE_VAR
+
+    monkeypatch.delenv(OFFLINE_VAR, raising=False)
+    client = _mock_registry(
+        "std.materials",
+        {},
+        [
+            {
+                "name": "std.materials",
+                "version": "1.0.0",
+                "manifest_digest": "blake3:aa",
+                "archive_hash": "blake3:bb",
+            }
+        ],
+    )
+    result = client.fetch_index("std.materials")
+    assert result.is_ok
+
+
+# frob:tests python/regolith/magnetite/client.py::RegistryClient.fetch_index kind="unit"
+def test_fetch_index_file_transport_stays_allowed_when_offline(
+    monkeypatch, tmp_path
+) -> None:
+    """`file://` sources are not network traffic (cli/app.py's confined
+    `_FileTransport`), so they stay allowed even with `REGOLITH_OFFLINE`
+    set -- only `http(s)://` fetches are refused. Uses the real CLI
+    transport wiring (`regolith.cli.app._registry_client`) against an
+    on-disk fixture, the same pattern `test_cli_vendor.py` drives."""
+    from regolith.cli.app import _registry_client
+    from regolith.magnetite.client import OFFLINE_VAR
+
+    monkeypatch.setenv(OFFLINE_VAR, "1")
+    index_dir = tmp_path / "index"
+    index_dir.mkdir()
+    (index_dir / "std.materials").write_text(
+        json.dumps(
+            {
+                "name": "std.materials",
+                "version": "1.0.0",
+                "manifest_digest": "blake3:aa",
+                "archive_hash": "blake3:bb",
+            }
+        )
+    )
+    registry = Registry(
+        name="vendor-mirror",
+        index_url=f"file://localhost{index_dir}",
+        archive_url=f"file://localhost{tmp_path / 'archive'}",
+    )
+    client = _registry_client(registry)
+    result = client.fetch_index("std.materials")
+    assert result.is_ok
+
+
 def test_sources_route_longest_prefix_and_default() -> None:
     reg_pub = Registry(name="magnetite", index_url="i", archive_url="a")
     reg_corp = Registry(name="corp", index_url="ci", archive_url="ca")

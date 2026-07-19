@@ -14,7 +14,6 @@ from regolith.realizer.elec.kicad import pcbnew_importable
 
 
 # frob:tests python/regolith/realizer/elec/kicad.py::pcbnew_importable kind="unit"
-# frob:waive TEST005 reason="test-file fixture/helper with environment-gated branches (tool-absent paths unreachable in a kicad-less env); TEST005 measuring test code is a tool quirk (TEST001 skips test files, TEST005 does not) -- FROBLEMS 2026-07-19"
 def test_extract_from_pcb_is_honest_tool_unavailable(tmp_path: Path) -> None:
     """No fake numbers on a pcbnew-less host: a documented, gated cut.
 
