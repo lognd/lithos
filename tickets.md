@@ -1273,7 +1273,7 @@ See docs/workflow/work-orders/WO-164-realizer-capability-registry.md. AD-47. Ret
 ```yaml
 id: T-0045
 title: 'WO-165: perf-board routing capability program'
-state: queued
+state: in-progress
 kind: feature
 origin: human
 created: '2026-07-19'
@@ -1355,7 +1355,7 @@ See docs/workflow/work-orders/WO-167-dwelling-wiring-program.md. D268 item 4, ri
 ```yaml
 id: T-0048
 title: 'WO-168: std.process record schema + DFM check-set contract'
-state: in-progress
+state: done
 kind: feature
 origin: human
 created: '2026-07-19'
@@ -1366,12 +1366,20 @@ scope:
 - stdlib/**
 - tools/stdlib/**
 - docs/spec/toolchain/39-stdlib-organization.md
-evidence: []
+evidence:
+- tests/harness/test_process_records.py::test_process_record_requires_provenance
+- tests/harness/test_process_records.py::test_size_limit_refuses_bare_float
 attachments: []
 acceptance:
 - see docs/workflow/work-orders/WO-168-process-record-schema.md
 threat: null
 ```
+## Done report
+
+WO-168 landed (56c84f6b): ProcessRecord/DfmCheckSet schema with
+first-class provenance postures + named refusals w/ lift conditions;
+wire-EDM + quench-temper seeds; AD-47 wiring test; 20 tests green.
+
 See docs/workflow/work-orders/WO-168-process-record-schema.md. D269 item 1. Schema first, data second (WO-169/170/171). Provenance posture (pd_gov/gek/named_refusal) is a required first-class marker per the D269 amendment.
 
 <!-- ticket:T-0049 -->
@@ -1379,7 +1387,7 @@ See docs/workflow/work-orders/WO-168-process-record-schema.md. D269 item 1. Sche
 id: T-0049
 title: 'WO-169: process population wave 1 -- EDM + heat-treat + stamping + grinding
   + shot-peen'
-state: queued
+state: in-progress
 kind: feature
 origin: human
 created: '2026-07-19'
