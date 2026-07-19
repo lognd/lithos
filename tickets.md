@@ -335,7 +335,7 @@ scope per AD-37.
 ```yaml
 id: T-0010
 title: 'WO-136: sited equipment -- the cuprite-calcite tandem'
-state: queued
+state: in-progress
 kind: feature
 origin: agent
 created: '2026-07-18'
@@ -466,7 +466,7 @@ gate honestly.
 ```yaml
 id: T-0015
 title: 'WO-143: Moody calc-sheet figure -- diagram.moody renderer'
-state: in-progress
+state: done
 kind: feature
 origin: agent
 created: '2026-07-18'
@@ -475,12 +475,21 @@ parent: null
 scope:
 - python/regolith/emission/**
 - docs/spec/fluorite/**
-evidence: []
+evidence:
+- tests/test_wo108_demos.py::test_demo_manifest_is_complete_and_deterministic[demo20_fluid_demo]
 attachments: []
 acceptance:
 - see docs/workflow/work-orders/WO-143-moody-calc-sheet-figure.md
 threat: null
 ```
+## Done report
+
+WO-143 deliverables: renderer (40a530d3) + calc-sheet wiring proven
+in shipped output by demo20 (Moody figure on the espresso dp sheet,
+46dfbeae). Residuals: drafting-audit gating = T-0056 (strict xfail
+stands); AD-39 coordinator visual inspection folds into T-0030's
+visual-acceptance session. Caller-supplied-curves posture per D266
+unchanged.
 
 <!-- ticket:T-0016 -->
 ```yaml
