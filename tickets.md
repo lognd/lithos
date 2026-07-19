@@ -378,7 +378,7 @@ threat: null
 ```yaml
 id: T-0012
 title: 'WO-140: minor losses -- Hooper/Darby/Borda-Carnot + component-dp chain'
-state: in-progress
+state: done
 kind: feature
 origin: agent
 created: '2026-07-18'
@@ -387,7 +387,9 @@ parent: null
 scope:
 - docs/spec/fluorite/**
 - python/regolith/stdlib/**
-evidence: []
+evidence:
+- tests/harness/test_fluid_minor_loss.py::test_minor_loss_k_sum_matches_feldspars_minor_loss_dp
+- tests/harness/test_fluid_minor_loss.py::test_no_fittings_declared_is_byte_identical_to_pre_wo140
 attachments: []
 acceptance:
 - see docs/workflow/work-orders/WO-140-minor-losses.md
