@@ -17,9 +17,49 @@ flownet HeatingLoop(medium=Coolant60):          # fluorite/02 sec. 4
                                         (pump_in -> pump_out)
         supply: Pipe(from=riser.supply_run)
                                         (pump_out -> supply_hdr)
-        coil1:  HxSegment(zone=OpenOffice1.thermal)
+        # k_factor/diameter/density (T-0060): the feldspar Hardy-Cross
+        # pack's hx_segment arm now solves a K-factor-only minor-loss
+        # model (Crane TP-410 sec. A-26 "coil, finned-tube" family;
+        # feldspar T-0023, `_hx_segment_dp_and_k`) once these three
+        # scalar givens are on the edge -- GEK-tier typical values
+        # (ASHRAE Fundamentals ch. 23 "Pipe Sizing", finned hydronic
+        # coil minor-loss range), not a vendor-catalog pull: a 2-row
+        # finned hydronic coil at this loop's connection size is
+        # commonly K~=18 (mid of the 12-25 textbook range); diameter
+        # is the coil's 1in (25mm) nominal copper connection (~26.6mm
+        # ID, type-L); density is the 60/40 EG/water mix's typical
+        # ~60F liquid density (ASHRAE Fundamentals ch. 31 glycol
+        # tables) -- egw_60_40 itself stays an intentionally
+        # unresolved registry ref (tests/orchestrator/
+        # test_translate_fluid_records.py), so this literal is NOT
+        # backed by that record; it is the same GEK posture the
+        # hx_segment model's own docstring names for density.
+        # `k_factor=18unitless`: the lowering grammar only recognizes a
+        # scalar edge arg as a quantity (`regolith_lower::flownet_lower
+        # ::scalar_args`) when a Number carries an adjacent unit Ident
+        # with no intervening whitespace -- a bare dimensionless number
+        # (`18`) parses as a plain expression and is silently dropped
+        # before it ever reaches the payload. `unitless` is an explicit,
+        # honest marker (never converted/validated downstream -- both
+        # `regolith_lower` and feldspar's `_scalar_value` read only the
+        # `lo`/`hi` midpoint here, the unit string is opaque), not a
+        # fabricated physical unit. `density=1050kg_m3` (not
+        # `1050kg/m3`) for the same reason: the adjacent-unit rule only
+        # consumes a single `Ident` token, and `/` splits the text into
+        # a division expression rather than one unit ident -- the
+        # underscore spelling is a scalar-arg-only workaround, NOT a
+        # second unit spelling; every other quantity site in this file
+        # (and the corpus at large, e.g. `friction_factor`/`density_
+        # kgm3` claim ARGS in `thermosiphon.fluo`) keeps the normal
+        # `kg/m3` form because those sites lower through a different
+        # (claim-argument) path that does not require a bare Number to
+        # carry an adjacent-Ident QuantityLit.
+
+        coil1:  HxSegment(zone=OpenOffice1.thermal,
+                     k_factor=18unitless, diameter=26.6mm, density=1050kg_m3)
                                         (supply_hdr -> ret_hdr)
-        coil2:  HxSegment(zone=OpenOffice2.thermal)
+        coil2:  HxSegment(zone=OpenOffice2.thermal,
+                     k_factor=18unitless, diameter=26.6mm, density=1050kg_m3)
                                         (supply_hdr -> ret_hdr)
         ret:    Pipe(from=riser.return_run)
                                         (ret_hdr -> boiler_in)
@@ -58,10 +98,10 @@ require Hydronics:                              # fluorite/02 sec. 6
         basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
         by doc(memos/release-residuals.md)
     waive margin:
-        basis: "WO-144 F152 update: the WO-139/140/141 chain now ROUTES this claim to the feldspar Hardy-Cross pack (fluids_dp_multipath@1), superseding the old 'inputs missing' basis -- but the solver itself abstains: 'hardy_cross: unsupported feature edge_kind:hx_segment (coil1)'. coil1/coil2 are HxSegment edges (fluorite/02), a payload feature the pack's Hardy-Cross engine does not yet carry (feldspar-side solver gap, F-WO144-1, not a lithos bridge gap)"
+        basis: "T-0060 update: coil1/coil2's HxSegment edges now carry k_factor/diameter/density (Crane TP-410 K-factor minor-loss model, feldspar T-0023), so the Hardy-Cross solver no longer abstains on hx_segment coverage -- but it still abstains one edge kind earlier: 'hardy_cross: unsupported feature edge_kind:pump (pump)'. The pump edge's own curve-based head model is a feldspar-side Hardy-Cross gap (not a lithos bridge gap); the prior 'edge_kind:hx_segment' basis is stale and superseded by this narrower blocker"
         by doc(memos/release-residuals.md)
     waive balance:
-        basis: "WO-144 F152 update: a registered model now exists (fluids_flow_imbalance@1, WO-141) and the claim routes to it -- but it abstains on the SAME feldspar Hardy-Cross gap as margin: 'hardy_cross: unsupported feature edge_kind:hx_segment (coil1)' (F-WO144-1). The old 'no registered harness model' basis is stale and false; the true blocker is the solver's HxSegment coverage"
+        basis: "T-0060 update: same Hardy-Cross routing as margin (fluids_flow_imbalance@1, WO-141) -- coil1/coil2's hx_segment params now resolve, but the solver abstains on the SAME earlier gap: 'hardy_cross: unsupported feature edge_kind:pump (pump)'. The prior 'edge_kind:hx_segment' basis is stale and superseded; the true blocker is the solver's pump-curve coverage"
         by doc(memos/release-residuals.md)
     waive npsh:
         basis: "WO-144 F152 update: a registered model exists (NpshMarginModel, WO-110) and the npsh channel routes -- but 'registry(grundfos_ups32)' names a pump-curve record that does not exist anywhere in std.fluid/records/components.toml (verified 2026-07-19: only grundfos_up15_10su7p, sunon_mf40201vx_1000u_a99, delta_bfb0524hh are on file), so no NPSH_r curve resolves. The old 'no registered harness model' basis is stale and false; the true blocker is a missing catalog record, never fabricated per D224.1"

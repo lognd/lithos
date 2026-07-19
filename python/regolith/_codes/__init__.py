@@ -130,6 +130,16 @@ ALL: tuple[CodeEntry, ...] = (
         authored=True,
     ),
     CodeEntry(
+        code="E1104",
+        symbol="BRINGUP_EXPECTATION_AUTHORED_POSTURE",
+        family="BringUp",
+        meaning='An `expected_signals.json` row\'s `provenance.kind == "record"` cites a `posture = "authored"` waveform/mask record where a verified expectation is required (`check_bringup_expectation_authored_posture`, `regolith.backends.harness_pack`, WO-151).',
+        why="An authored (hand-drawn) waveform/mask record is design intent (D263.1) -- a shape the author sketched to describe INTENT, never a model-backed or measured value. Citing it as a verified bring-up expectation would let a technician trust a number that was never discharged by any solver or measurement; the record stays fully usable as a mask/stimulus profile (`stays_within`, `structure: transient`), only its eligibility as a verified pin is refused.",
+        fix='Cite a `posture = "model"` or `posture = "measured"` record instead, or drop the row from `expected_signals` and keep the authored record as a stimulus/mask reference only.',
+        example='`expected_signals.json` row `{"channel": "CLK", "provenance": {"kind": "record", "ref": "mask:Board.clk_shape"}}` where `Board.clk_shape` resolves to a `posture = "authored"` record -> E1104 names the channel and the ref.',
+        authored=True,
+    ),
+    CodeEntry(
         code="E0101",
         symbol="INCOMPATIBLE_QUANTITIES",
         family="Parse",
@@ -833,6 +843,7 @@ UNRESOLVABLE_OVERRIDE_TARGET = "E1003"
 EXPECTATION_PROVENANCE_UNRESOLVED = "E1101"
 RELEASE_GATE_REFUSES_DEBUG_EVIDENCE = "E1102"
 TAP_MAP_DISAGREEMENT = "E1103"
+BRINGUP_EXPECTATION_AUTHORED_POSTURE = "E1104"
 INCOMPATIBLE_QUANTITIES = "E0101"
 INTERVAL_RANGE_CONFUSION = "E0103"
 ILLEGAL_LOG_SUM = "E0104"

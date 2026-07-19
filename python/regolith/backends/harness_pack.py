@@ -28,7 +28,10 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict
 from typani.result import Err, Ok, Result
 
-from regolith._codes import EXPECTATION_PROVENANCE_UNRESOLVED
+from regolith._codes import (
+    BRINGUP_EXPECTATION_AUTHORED_POSTURE,
+    EXPECTATION_PROVENANCE_UNRESOLVED,
+)
 from regolith._schema.models import Obligation
 from regolith.backends.calc import CalcBook, CalcSheet, claim_text
 from regolith.backends.debug_taps import Tap, TapHeaderRecord, TapSet, tap_marker
@@ -40,20 +43,6 @@ from regolith.orchestrator.discharge import ObligationResult
 from regolith.orchestrator.translate import si_sheet_fields
 
 _log = get_logger(__name__)
-
-# `E1104` -- WO-151/D263.1: `bringup_expectation_authored_posture`.
-# PENDING-CODEGEN (this WO's implementer is scoped to the
-# `comparison.rs` Rust residual only, per dispatch; minting the real
-# `regolith-diag::code::BringUp` slot -- confirmed free at E1104 as of
-# this WO, `crates/regolith-diag/src/code.rs:620-640` shows E1101-
-# E1103 assigned -- and its `explain.rs` entry is escalated to a
-# follow-up so `make codes` can regenerate `regolith._codes` from a
-# single Rust source, per the WO-131/D247.1 house mechanism). Bare
-# string now, backfilled to the real `DiagCode` later with NO
-# grandfathering, exactly like `EXPECTATION_PROVENANCE_UNRESOLVED`'s
-# own pre-D247.2 history above.
-# frob:doc docs/modules/py-backends.md#backends-harness-pack
-BRINGUP_EXPECTATION_AUTHORED_POSTURE = "bringup_expectation_authored_posture"
 
 # charter 40 sec. 2 ranking, reused for bring-up ordering (safety-relevant
 # rails first, then clocks, buses, everything else) -- the SAME family
@@ -569,7 +558,7 @@ def check_bringup_expectation_authored_posture(
         )
         return Err(
             BackendError(
-                kind=BRINGUP_EXPECTATION_AUTHORED_POSTURE,  # E1104 (pending codegen)
+                kind=BRINGUP_EXPECTATION_AUTHORED_POSTURE,  # E1104 (WO-151/D263.1)
                 message=(
                     "expected_signals.json cites an authored-posture "
                     "waveform/mask record where a verified expectation is "

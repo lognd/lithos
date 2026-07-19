@@ -244,6 +244,28 @@ pub const ALL: &[ExplainEntry] = &[
          rev B layout shuffled net names -> E1103 names the artifact \
          digest mismatch."
     ),
+    authored!(
+        BRINGUP_EXPECTATION_AUTHORED_POSTURE,
+        "An `expected_signals.json` row's `provenance.kind == \"record\"` \
+         cites a `posture = \"authored\"` waveform/mask record where a \
+         verified expectation is required (`check_bringup_expectation_\
+         authored_posture`, `regolith.backends.harness_pack`, WO-151).",
+        "An authored (hand-drawn) waveform/mask record is design intent \
+         (D263.1) -- a shape the author sketched to describe INTENT, \
+         never a model-backed or measured value. Citing it as a verified \
+         bring-up expectation would let a technician trust a number that \
+         was never discharged by any solver or measurement; the record \
+         stays fully usable as a mask/stimulus profile (`stays_within`, \
+         `structure: transient`), only its eligibility as a verified pin \
+         is refused.",
+        "Cite a `posture = \"model\"` or `posture = \"measured\"` record \
+         instead, or drop the row from `expected_signals` and keep the \
+         authored record as a stimulus/mask reference only.",
+        "`expected_signals.json` row `{\"channel\": \"CLK\", \"provenance\": \
+         {\"kind\": \"record\", \"ref\": \"mask:Board.clk_shape\"}}` where \
+         `Board.clk_shape` resolves to a `posture = \"authored\"` record -> \
+         E1104 names the channel and the ref."
+    ),
 
     stub!(INCOMPATIBLE_QUANTITIES, "arithmetic between incompatible quantities."),
     stub!(INTERVAL_RANGE_CONFUSION, "a `[a, b]` interval and a `[i .. j]` index range were confused: both separators in one bracket, or a range endpoint carrying a unit/fractional literal (regolith/02 sec. 3)."),

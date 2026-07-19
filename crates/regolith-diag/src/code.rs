@@ -639,6 +639,15 @@ pub mod codes {
     /// (`regolith.backends.debug_taps`) -- no grandfathering (D247.2).
     // frob:doc docs/modules/regolith-diag.md#code
     pub const TAP_MAP_DISAGREEMENT: DiagCode = DiagCode::new(Family::BringUp, 3);
+    /// `E1104` -- WO-151/D263.1: an `expected_signals.json` row cites
+    /// an authored-posture (hand-drawn) waveform/mask record as a
+    /// verified expectation. BACKFILLED from the bare Python string
+    /// `bringup_expectation_authored_posture`
+    /// (`regolith.backends.harness_pack`,
+    /// `check_bringup_expectation_authored_posture`, WO-151) -- no
+    /// grandfathering (D247.2's house mechanism).
+    // frob:doc docs/modules/regolith-diag.md#code
+    pub const BRINGUP_EXPECTATION_AUTHORED_POSTURE: DiagCode = DiagCode::new(Family::BringUp, 4);
 
     /// Every registered code paired with its Rust symbol name, for the
     /// completeness sweep (D247.4) and for the generated Python
@@ -755,6 +764,10 @@ pub mod codes {
             RELEASE_GATE_REFUSES_DEBUG_EVIDENCE,
         ),
         ("TAP_MAP_DISAGREEMENT", TAP_MAP_DISAGREEMENT),
+        (
+            "BRINGUP_EXPECTATION_AUTHORED_POSTURE",
+            BRINGUP_EXPECTATION_AUTHORED_POSTURE,
+        ),
     ];
 }
 
@@ -838,6 +851,10 @@ mod tests {
             "E1102"
         );
         assert_eq!(codes::TAP_MAP_DISAGREEMENT.to_string(), "E1103");
+        assert_eq!(
+            codes::BRINGUP_EXPECTATION_AUTHORED_POSTURE.to_string(),
+            "E1104"
+        );
     }
 
     /// D247.4: `codes::ALL` is the completeness sweep's source of
@@ -859,7 +876,7 @@ mod tests {
         }
         assert_eq!(
             codes::ALL.len(),
-            79,
+            80,
             "codes::ALL count drifted; if you added a code, bump this and \
              the completeness registry in explain.rs"
         );
