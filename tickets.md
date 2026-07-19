@@ -378,7 +378,7 @@ threat: null
 ```yaml
 id: T-0012
 title: 'WO-140: minor losses -- Hooper/Darby/Borda-Carnot + component-dp chain'
-state: queued
+state: in-progress
 kind: feature
 origin: agent
 created: '2026-07-18'
@@ -398,7 +398,7 @@ threat: null
 ```yaml
 id: T-0013
 title: 'WO-141: feldspar fluids pack bridge, lithos half'
-state: queued
+state: in-progress
 kind: feature
 origin: agent
 created: '2026-07-18'
@@ -418,7 +418,7 @@ threat: null
 ```yaml
 id: T-0014
 title: 'WO-142: heat-transfer correlation growth'
-state: queued
+state: in-progress
 kind: feature
 origin: agent
 created: '2026-07-18'
@@ -438,7 +438,7 @@ threat: null
 ```yaml
 id: T-0015
 title: 'WO-143: Moody calc-sheet figure -- diagram.moody renderer'
-state: queued
+state: in-progress
 kind: feature
 origin: agent
 created: '2026-07-18'
