@@ -57,6 +57,7 @@ fn core_error(err: &regolith_api::CoreError) -> PyErr {
 /// The result of a build, handed to Python as an opaque handle whose
 /// getters marshal the underlying `regolith_api::BuildOutput`.
 #[pyclass(name = "BuildOutput")]
+// frob:doc docs/modules/regolith-py.md#pybuildoutput
 struct PyBuildOutput {
     inner: regolith_api::BuildOutput,
 }
@@ -64,22 +65,26 @@ struct PyBuildOutput {
 #[pymethods]
 impl PyBuildOutput {
     /// The diagnostics rendered to text (the one renderer, AD-7).
+    // frob:doc docs/modules/regolith-py.md#pybuildoutput-rendered
     fn rendered(&self, ansi: bool) -> PyResult<String> {
         guard(|| self.inner.rendered(ansi).to_string())
     }
 
     /// The structured payload as JSON bytes (parses into pydantic).
+    // frob:doc docs/modules/regolith-py.md#pybuildoutput-payload-json
     fn payload_json<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyBytes>> {
         let bytes = guard(|| self.inner.payload_json())?;
         Ok(PyBytes::new(py, &bytes))
     }
 
     /// True when the build produced no error-severity diagnostics.
+    // frob:doc docs/modules/regolith-py.md#pybuildoutput-ok
     fn ok(&self) -> PyResult<bool> {
         guard(|| self.inner.ok())
     }
 
     /// The number of diagnostics in the build.
+    // frob:doc docs/modules/regolith-py.md#pybuildoutput-diagnostic-count
     fn diagnostic_count(&self) -> PyResult<usize> {
         guard(|| self.inner.diagnostic_count())
     }
@@ -126,6 +131,7 @@ fn marshal_lint_config(lints: Vec<(String, String)>) -> regolith_diag::LintConfi
 /// A compile session over a project root or file set (AD-4). Opening does
 /// no work; `check`/`compile` run under `Python::detach`.
 #[pyclass(name = "CoreSession")]
+// frob:doc docs/modules/regolith-py.md#pycoresession
 struct PyCoreSession {
     inner: regolith_api::Session,
 }
@@ -134,6 +140,7 @@ struct PyCoreSession {
 impl PyCoreSession {
     /// Open a session over the given source paths (files or roots).
     #[new]
+    // frob:doc docs/modules/regolith-py.md#pycoresession-new
     fn new(paths: Vec<String>) -> PyResult<Self> {
         guard(|| {
             let files = paths.into_iter().map(Utf8PathBuf::from);
@@ -156,6 +163,7 @@ impl PyCoreSession {
     /// its own named Warning, per deliverable 4 -- this boundary never
     /// invents diagnostics).
     #[pyo3(signature = (realized_inputs=Vec::new(), lints=Vec::new()))]
+    // frob:doc docs/modules/regolith-py.md#pycoresession-check
     fn check(
         &self,
         py: Python<'_>,
@@ -178,6 +186,7 @@ impl PyCoreSession {
     /// `realized_inputs` and `lints` are the same coarse channels `check`
     /// takes.
     #[pyo3(signature = (registry_version, realized_inputs=Vec::new(), lints=Vec::new()))]
+    // frob:doc docs/modules/regolith-py.md#pycoresession-compile
     fn compile(
         &self,
         py: Python<'_>,
@@ -202,24 +211,28 @@ impl PyCoreSession {
 
 /// The compiler core version -- proves the Rust->Python crossing.
 #[pyfunction]
+// frob:doc docs/modules/regolith-py.md#core-version
 fn core_version() -> PyResult<&'static str> {
     guard(regolith_api::core_version)
 }
 
 /// The serialized-schema version the boundary speaks (AD-5).
 #[pyfunction]
+// frob:doc docs/modules/regolith-py.md#schema-version
 fn schema_version() -> PyResult<u32> {
     guard(regolith_api::schema_version)
 }
 
 /// Format source text into its canonical spelling.
 #[pyfunction]
+// frob:doc docs/modules/regolith-py.md#format
 fn format(text: &str) -> PyResult<String> {
     guard(|| regolith_api::format(text))
 }
 
 /// Dump an intermediate pipeline stage of a source file as text.
 #[pyfunction]
+// frob:doc docs/modules/regolith-py.md#debug-dump
 fn debug_dump(stage: &str, path: &str) -> PyResult<String> {
     let path = Utf8PathBuf::from(path);
     match guard(|| regolith_api::debug_dump(stage, &path))? {
@@ -234,6 +247,7 @@ fn debug_dump(stage: &str, path: &str) -> PyResult<String> {
 /// `realized_inputs` channel `check`/`compile` take.
 #[pyfunction]
 #[pyo3(signature = (paths, realized_inputs=Vec::new()))]
+// frob:doc docs/modules/regolith-py.md#debug-ir
 fn debug_ir(
     paths: Vec<String>,
     realized_inputs: Vec<(String, String, String, Vec<u8>)>,
@@ -252,6 +266,7 @@ fn debug_ir(
 /// name, leading `#` doc comment (verbatim, D115), fields, `require`
 /// claim groups, and `budget` statements.
 #[pyfunction]
+// frob:doc docs/modules/regolith-py.md#doc-extract
 fn doc_extract(path: &str) -> PyResult<String> {
     let path = Utf8PathBuf::from(path);
     match guard(|| regolith_api::doc_extract(&path))? {
@@ -264,6 +279,7 @@ fn doc_extract(path: &str) -> PyResult<String> {
 /// registry so Python-side code (`magnetite new`) never hard-codes an
 /// extension string (ground rule 6 / AD-14).
 #[pyfunction]
+// frob:doc docs/modules/regolith-py.md#extensions
 fn extensions() -> PyResult<Vec<(String, String)>> {
     guard(|| {
         regolith_api::extensions()
@@ -283,6 +299,7 @@ fn extensions() -> PyResult<Vec<(String, String)>> {
 /// `nets_json` is an infrastructure failure (`CoreError`), not a design
 /// error.
 #[pyfunction]
+// frob:doc docs/modules/regolith-py.md#check-elec-single-driver
 fn check_elec_single_driver(nets_json: &str) -> PyResult<String> {
     let result = guard(|| regolith_api::check_elec_single_driver(nets_json))?;
     let violation = result.map_err(CoreError::new_err)?;
@@ -302,6 +319,7 @@ fn check_elec_single_driver(nets_json: &str) -> PyResult<String> {
 /// test`, WO-28 deliverable 5). Returns the JSON report string; a
 /// failing fixture is data in the report, never an exception (AD-7).
 #[pyfunction]
+// frob:doc docs/modules/regolith-py.md#rules-test
 fn rules_test(paths: Vec<String>) -> PyResult<String> {
     let paths: Vec<Utf8PathBuf> = paths.into_iter().map(Utf8PathBuf::from).collect();
     match guard(|| regolith_api::rules_test(&paths))? {
@@ -314,6 +332,7 @@ fn rules_test(paths: Vec<String>) -> PyResult<String> {
 /// deliverable 5): forced attachment, every match/verdict/near-miss as
 /// a JSON report string. No build.
 #[pyfunction]
+// frob:doc docs/modules/regolith-py.md#rules-try
 fn rules_try(pack: &str, design: &str) -> PyResult<String> {
     let pack = Utf8PathBuf::from(pack);
     let design = Utf8PathBuf::from(design);
@@ -329,6 +348,7 @@ fn rules_try(pack: &str, design: &str) -> PyResult<String> {
 /// its `EventDecl` list from the real typed `OnBlock` CST instead of a
 /// forward-authored placeholder (AD-22).
 #[pyfunction]
+// frob:doc docs/modules/regolith-py.md#on-events
 fn on_events(paths: Vec<String>) -> PyResult<Vec<(String, String)>> {
     let paths: Vec<Utf8PathBuf> = paths.into_iter().map(Utf8PathBuf::from).collect();
     let refs: Vec<&camino::Utf8Path> = paths.iter().map(camino::Utf8PathBuf::as_path).collect();
@@ -344,6 +364,7 @@ fn on_events(paths: Vec<String>) -> PyResult<Vec<(String, String)>> {
 /// can match a `WaiverRecord.matched` hash to its discharge result
 /// (WO-98). Marshalling only: delegates to `regolith_api`.
 #[pyfunction]
+// frob:doc docs/modules/regolith-py.md#obligation-content-hashes
 fn obligation_content_hashes(obligations_json: &str) -> PyResult<Vec<String>> {
     match guard(|| regolith_api::obligation_content_hashes(obligations_json))? {
         Ok(hashes) => Ok(hashes),
@@ -360,6 +381,7 @@ fn obligation_content_hashes(obligations_json: &str) -> PyResult<Vec<String>> {
 /// delegates to `regolith_api::resolve_extrusion_outline` -- the arc
 /// geometry stays single-sourced in Rust (D205), no schema change.
 #[pyfunction]
+// frob:doc docs/modules/regolith-py.md#resolve-extrusion-outline
 fn resolve_extrusion_outline(paths: Vec<String>, profile: &str) -> PyResult<Option<String>> {
     let paths: Vec<Utf8PathBuf> = paths.into_iter().map(Utf8PathBuf::from).collect();
     let refs: Vec<&camino::Utf8Path> = paths.iter().map(camino::Utf8PathBuf::as_path).collect();
@@ -378,6 +400,7 @@ fn resolve_extrusion_outline(paths: Vec<String>, profile: &str) -> PyResult<Opti
 /// `None`, never a guess). Marshalling only: delegates to
 /// `regolith_api::reduce_unit_literal`.
 #[pyfunction]
+// frob:doc docs/modules/regolith-py.md#reduce-unit-literal
 fn reduce_unit_literal(magnitude: f64, unit_symbol: &str) -> PyResult<Option<f64>> {
     guard(|| regolith_api::reduce_unit_literal(magnitude, unit_symbol))
 }
@@ -387,6 +410,7 @@ fn reduce_unit_literal(magnitude: f64, unit_symbol: &str) -> PyResult<Option<f64
 /// Idempotent: the underlying global logger may only be set once, so
 /// repeat calls (e.g. re-import) are no-ops.
 #[pyfunction]
+// frob:doc docs/modules/regolith-py.md#init-logging
 fn init_logging() {
     LOG_INIT.call_once(|| {
         pyo3_log::init();
@@ -395,6 +419,7 @@ fn init_logging() {
 
 /// PyO3 module initializer for `regolith._core`.
 #[pymodule]
+// frob:doc docs/modules/regolith-py.md#core
 fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(core_version, m)?)?;
     m.add_function(wrap_pyfunction!(schema_version, m)?)?;

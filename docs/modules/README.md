@@ -25,6 +25,8 @@ Rust crates:
   (AD-7).
 - [regolith-api](regolith-api.md) -- the stable API crate.
 - [regolith-ls](regolith-ls.md) -- the LSP server.
+- [regolith-py](regolith-py.md) -- the `regolith._core` PyO3 FFI
+  crate (AD-2/AD-4, marshalling only).
 
 Python packages (python/regolith):
 

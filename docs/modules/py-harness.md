@@ -9,6 +9,17 @@ the pipeline and the model-authoring contract; individual physics
 models below are grouped by source file/subpackage rather than
 restated symbol-by-symbol.
 
+## init
+
+<a id="init"></a>
+
+`MODEL_REGISTRY_VERSION` (WO-14/15/16, AD-1): the harness model-registry
+version constant, a string (not int -- it is opaque hash input, and a
+human-readable id survives review). Threaded into `compile` so it folds
+into every evidence-cache key (BE-1/INV-1): bumping it whenever a
+discharge model is fixed/upgraded invalidates all cached evidence,
+forcing re-verification under the new models.
+
 ## adapter
 
 <a id="adapter"></a>

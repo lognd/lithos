@@ -11,6 +11,7 @@ cached evidence, forcing re-verification under the new models.
 # model is fixed/upgraded so stale evidence is never silently reused
 # (BE-1/INV-1). String, not int: it is opaque hash input, and a
 # human-readable id (e.g. a semver or content hash) survives review.
+# frob:doc docs/modules/py-harness.md#init
 MODEL_REGISTRY_VERSION = "model-registry@0.0.0"
 
 # Public surface. Imported AFTER the version constant so the submodules
