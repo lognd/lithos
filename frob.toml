@@ -45,12 +45,9 @@ exclude = [
 COV001 = "error"
 TEST001 = "error"
 TEST002 = "warn"
-# TEST003 stays warn, NOT ratcheted with COV001/TEST001/DOC001: one
-# unwaived finding remains (interface `design`, i.e. design/lithos.strata)
-# that is coordinator territory (T-0034's in-flight design/ work) --
-# ratcheting to error here would fail the build on a file this session
-# was explicitly told to leave alone. Revisit once T-0034 lands or
-# explicitly waives it.
+# TEST003 ratcheted to error with the others once the last unwaived
+# finding (interface `design`) was discharged for real by
+# tests/test_design_strata_audit.py (T-0037).
 TEST003 = "error"
 TEST005 = "warn"
 TEST006 = "warn"

@@ -1021,7 +1021,7 @@ retired, raise unit_branch_cov back toward the original 90 default.
 ```yaml
 id: T-0037
 title: 'docs: boundary charter adoption (D267-D270) + strata audit binding'
-state: in-progress
+state: done
 kind: docs
 origin: agent
 created: '2026-07-19'
@@ -1039,3 +1039,12 @@ attachments: []
 acceptance: []
 threat: null
 ```
+## Done report
+
+Boundary charter adopted: docs/spec/toolchain/44-boundary-charter.md
+(AD-43..47) + 00-architecture.md entries + design-log cycle-38
+(D267-D270 incl. exhaustive-research amendment) + index links, all
+committed ccbb3617. The design interface's TEST003 discharged by the
+new strata sys-audit integration test (1 passed in 4.38s). Fresh
+full frob check after commit: 0 errors, 0 warnings, 419 waived; sys
+audit PROVED. TEST003 ratcheted to error in the same close.
