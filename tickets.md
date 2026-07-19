@@ -452,7 +452,7 @@ threat: null
 ```yaml
 id: T-0017
 title: 'WO-146: traced-profile format spec + .rgp ratification'
-state: queued
+state: in-progress
 kind: docs
 origin: agent
 created: '2026-07-18'
@@ -612,7 +612,7 @@ left unmigrated per the WO's out-of-scope note (D264 ruling 1).
 ```yaml
 id: T-0024
 title: 'WO-154: sim/timing gate spec deltas + INV ledger entry text'
-state: queued
+state: in-progress
 kind: docs
 origin: agent
 created: '2026-07-18'
@@ -715,7 +715,7 @@ threat: null
 ```yaml
 id: T-0029
 title: 'Cycle-36: docs/README currency sweep -- charters 40/41, AD-38/39'
-state: queued
+state: in-progress
 kind: docs
 origin: agent
 created: '2026-07-18'
