@@ -1425,7 +1425,7 @@ See docs/workflow/work-orders/WO-165-perfboard-program.md. D268 item 3, smallest
 ```yaml
 id: T-0046
 title: 'WO-166: wire-EDM die-set production program'
-state: in-progress
+state: done
 kind: feature
 origin: human
 created: '2026-07-19'
@@ -1441,12 +1441,22 @@ scope:
 - python/regolith/backends/**
 - docs/spec/hematite/**
 - demos/**
-evidence: []
+evidence:
+- tests/realizer/mech/test_wire_edm.py::test_realize_refuses_a_too_sharp_corner
+- tests/harness/test_material_state.py::test_qt_transition_from_through_hardened_is_refused
 attachments: []
 acceptance:
 - see docs/workflow/work-orders/WO-166-wire-edm-die-set-program.md
 threat: null
 ```
+## Done report
+
+WO-166 all slices landed (see the edm feat commit): material states,
+profile-cut realization, die-set assembly checks, demo19 determinism
+proof; wire_edm capability registered; punch-die clearance = named
+refusal pending a citable source; language-surface entry rides the
+T-0054-class follow-up per the demo scope note.
+
 See docs/workflow/work-orders/WO-166-wire-edm-die-set-program.md. D268 item 1 + D269 sequencing. Four internal slices (a-d): material-state modeling, profile-cut program kind, die-set assembly+stamping DFM, two-station demo. Also depends on feldspar T-0018 (cross-repo, material-state MODELS) and lithos WO-169 (process records wave 1, T-0049) -- blocked_by edge to T-0049 added.
 
 <!-- ticket:T-0047 -->
