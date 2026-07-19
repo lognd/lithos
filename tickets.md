@@ -1156,7 +1156,7 @@ audit PROVED. TEST003 ratcheted to error in the same close.
 id: T-0038
 title: 'stdlib: materials records (compositions, crystal structure, price classes)
   -- D270 companion'
-state: in-progress
+state: done
 kind: feature
 origin: agent
 created: '2026-07-19'
@@ -1167,7 +1167,8 @@ scope:
 - tools/stdlib/**
 - docs/spec/toolchain/39-stdlib-organization.md
 - tests/**
-evidence: []
+evidence:
+- tests/tools/test_materials_metallurgy.py::test_every_record_constructs_a_real_feldspar_material_record
 attachments: []
 acceptance:
 - 'D270 rulings 1-3 (design-log 2026-07-19-cycle-38.md): cited community-tier records
@@ -1178,6 +1179,12 @@ acceptance:
   mild plate) with heat-treat state hooks'
 threat: null
 ```
+## Done report
+
+First slice landed: 6 die-set metallurgy records w/ gek+named-refusal
+provenance (no unverifiable PD-GOV claims), feldspar-schema
+structural proof, organization checks PASS. Later population slices
+ride the D269 waves.
 
 <!-- ticket:T-0039 -->
 ```yaml
