@@ -790,8 +790,8 @@ threat: null
 ```yaml
 id: T-0034
 title: 'design: lithos.strata system model + sys audit wiring'
-state: in-progress
-kind: feature
+state: done
+kind: docs
 origin: agent
 created: '2026-07-18'
 blocked_by: []
@@ -800,12 +800,12 @@ scope:
 - design/**
 - docs/workflow/strata-system-model.md
 - docs/index.md
-evidence: []
+evidence:
+- cmd:frob sys audit exit=0 sha256=77e509c3e692
 attachments: []
 acceptance: []
 threat: null
 ```
-
 ## Done report
 
 Landed `design/lithos.strata`: 10 nodes (rust_core, ffi_bridge,
