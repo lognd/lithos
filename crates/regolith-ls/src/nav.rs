@@ -25,6 +25,7 @@ use crate::position::LineIndex;
 
 /// One occurrence of an identifier: which file, and its byte range.
 #[derive(Debug, Clone)]
+// frob:doc docs/modules/regolith-ls.md#nav
 pub struct Occurrence {
     /// The file the occurrence was found in.
     pub file: Utf8PathBuf,
@@ -35,6 +36,7 @@ pub struct Occurrence {
 /// The identifier token text and byte range at `position` in `text`,
 /// if the cursor sits on an `Ident` token.
 #[must_use]
+// frob:doc docs/modules/regolith-ls.md#nav
 pub fn identifier_at(
     text: &str,
     index: &LineIndex,
@@ -192,6 +194,7 @@ fn walk_files(root: &Utf8Path) -> Vec<Utf8PathBuf> {
 /// the identifier at `position` in `file` (usually one; empty if the
 /// name is unresolved).
 #[must_use]
+// frob:doc docs/modules/regolith-ls.md#nav
 pub fn definitions(
     workspace_root: &Utf8Path,
     file: &Utf8Path,
@@ -217,6 +220,7 @@ pub fn definitions(
 /// Find-references: every occurrence of the identifier at `position`
 /// across every reachable file.
 #[must_use]
+// frob:doc docs/modules/regolith-ls.md#nav
 pub fn references(
     workspace_root: &Utf8Path,
     file: &Utf8Path,
@@ -242,6 +246,7 @@ pub fn references(
 /// The result of a rename attempt: either the full set of edits (one
 /// `TextEdit` per occurrence, grouped by file) or a refusal naming why
 /// (never a partial rename -- INV-18 discipline applied to tooling).
+// frob:doc docs/modules/regolith-ls.md#nav
 pub enum RenameOutcome {
     /// A safe, unambiguous set of edits, grouped by file.
     Edits(Vec<(Utf8PathBuf, Vec<TextEdit>)>),
@@ -258,6 +263,7 @@ pub enum RenameOutcome {
 /// defines the identifier at `position` (an ambiguous name has no safe
 /// single rename target).
 #[must_use]
+// frob:doc docs/modules/regolith-ls.md#nav
 pub fn rename(
     workspace_root: &Utf8Path,
     file: &Utf8Path,
@@ -317,6 +323,7 @@ pub fn rename(
 /// Convert an [`Occurrence`] list into LSP `Location`s (definitions/
 /// references responses need `Url` + `Range`, not raw byte ranges).
 #[must_use]
+// frob:doc docs/modules/regolith-ls.md#nav
 pub fn occurrences_to_locations(occurrences: Vec<Occurrence>) -> Vec<lsp_types::Location> {
     occurrences
         .into_iter()
@@ -336,6 +343,7 @@ pub fn occurrences_to_locations(occurrences: Vec<Occurrence>) -> Vec<lsp_types::
 /// caller has already handled `Ambiguous`/`NotFound` (they carry no
 /// edit).
 #[must_use]
+// frob:doc docs/modules/regolith-ls.md#nav
 pub fn edits_to_workspace_edit(
     edits: Vec<(Utf8PathBuf, Vec<TextEdit>)>,
 ) -> lsp_types::WorkspaceEdit {
@@ -369,6 +377,7 @@ mod tests {
         dir
     }
 
+    // frob:tests crates/regolith-ls/src/nav.rs::identifier_at kind="unit"
     #[test]
     fn identifier_at_a_decl_name_is_found() {
         let text = "part Widget:\n    mass: 5 g\n";
@@ -378,6 +387,8 @@ mod tests {
         assert_eq!(name, "Widget");
     }
 
+    // frob:tests crates/regolith-ls/src/nav.rs::definitions kind="unit"
+    // frob:tests crates/regolith-ls/src/nav.rs::occurrences_to_locations kind="unit"
     #[test]
     fn definitions_finds_the_single_decl_header() {
         let dir = scratch_dir("defs");
@@ -393,6 +404,7 @@ mod tests {
         std::fs::remove_dir_all(&dir).ok();
     }
 
+    // frob:tests crates/regolith-ls/src/nav.rs::references kind="unit"
     #[test]
     fn references_finds_every_occurrence_in_file() {
         let dir = scratch_dir("refs");
@@ -421,6 +433,8 @@ mod tests {
         std::fs::remove_dir_all(&dir).ok();
     }
 
+    // frob:tests crates/regolith-ls/src/nav.rs::rename kind="unit"
+    // frob:tests crates/regolith-ls/src/nav.rs::edits_to_workspace_edit kind="unit"
     #[test]
     fn rename_produces_edits_for_the_unambiguous_case() {
         let dir = scratch_dir("solo");

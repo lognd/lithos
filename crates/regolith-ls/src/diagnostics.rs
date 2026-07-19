@@ -26,6 +26,7 @@ use crate::position::LineIndex;
 /// core's own JSON-safe `BuildPayload` shape, so deserializing it back
 /// into the same type cannot fail (a failure would be a programmer bug).
 #[must_use]
+// frob:doc docs/modules/regolith-ls.md#diagnostics
 pub fn check_workspace(root: &Utf8PathBuf) -> Option<BTreeMap<Utf8PathBuf, Vec<Diagnostic>>> {
     let session = regolith_api::Session::open_root(root.clone());
     let realized_inputs = regolith_lower::RealizedInputs::new();
@@ -52,6 +53,7 @@ pub fn check_workspace(root: &Utf8PathBuf) -> Option<BTreeMap<Utf8PathBuf, Vec<D
 /// so it is fast enough to run on every keystroke while the debounced
 /// workspace-level `check_workspace` runs in the background.
 #[must_use]
+// frob:doc docs/modules/regolith-ls.md#diagnostics
 pub fn syntax_diagnostics_for_text(path: &Utf8PathBuf, text: &str) -> Vec<Diagnostic> {
     let parse = regolith_syntax::parse(text, path);
     let index = LineIndex::new(text);
@@ -151,12 +153,14 @@ fn line_index_for(file: &Utf8PathBuf) -> LineIndex {
 
 /// Convert an absolute file path to a `file://` URI.
 #[must_use]
+// frob:doc docs/modules/regolith-ls.md#diagnostics
 pub fn file_uri(path: &Utf8PathBuf) -> Option<Url> {
     Url::from_file_path(path).ok()
 }
 
 /// Convert a `file://` URI back to an absolute [`Utf8PathBuf`].
 #[must_use]
+// frob:doc docs/modules/regolith-ls.md#diagnostics
 pub fn uri_to_path(uri: &Url) -> Option<Utf8PathBuf> {
     uri.to_file_path()
         .ok()
@@ -165,7 +169,7 @@ pub fn uri_to_path(uri: &Url) -> Option<Utf8PathBuf> {
 
 #[cfg(test)]
 mod tests {
-    use super::check_workspace;
+    use super::{check_workspace, file_uri, uri_to_path};
     use camino::Utf8PathBuf;
 
     fn examples_dir(rel: &str) -> Utf8PathBuf {
@@ -173,6 +177,17 @@ mod tests {
         manifest.join("../../examples").join(rel)
     }
 
+    // frob:tests crates/regolith-ls/src/diagnostics.rs::file_uri kind="unit"
+    // frob:tests crates/regolith-ls/src/diagnostics.rs::uri_to_path kind="unit"
+    #[test]
+    fn file_uri_and_uri_to_path_round_trip_an_absolute_path() {
+        let path = examples_dir("flagships/cubesat");
+        let uri = file_uri(&path).expect("an absolute path converts to a file:// URI");
+        let back = uri_to_path(&uri).expect("the URI converts back to a path");
+        assert_eq!(back, path);
+    }
+
+    // frob:tests crates/regolith-ls/src/diagnostics.rs::check_workspace kind="unit"
     #[test]
     fn check_workspace_groups_diagnostics_by_file() {
         let root = examples_dir("flagships/cubesat");
@@ -196,6 +211,7 @@ mod tests {
     /// Deliverable 3's SLO: syntax-tier reparse of the largest corpus
     /// file publishes in under 100ms. Generous margin over the charter
     /// number so this stays a real regression guard, not a flaky timer.
+    // frob:tests crates/regolith-ls/src/diagnostics.rs::syntax_diagnostics_for_text kind="unit"
     #[test]
     fn syntax_tier_meets_the_100ms_slo_on_the_largest_corpus_file() {
         use super::syntax_diagnostics_for_text;

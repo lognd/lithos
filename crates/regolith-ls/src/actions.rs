@@ -18,6 +18,7 @@ use crate::position::LineIndex;
 /// a `replacement` becomes a `WorkspaceEdit`; a fix without a
 /// replacement surfaces disabled, carrying its message (deliverable 4).
 #[must_use]
+// frob:doc docs/modules/regolith-ls.md#actions
 pub fn code_actions_for(diagnostics: &[LspDiagnostic]) -> Vec<CodeAction> {
     let mut actions = Vec::new();
     for lsp_diag in diagnostics {
@@ -93,6 +94,7 @@ mod tests {
         }
     }
 
+    // frob:tests crates/regolith-ls/src/actions.rs::code_actions_for kind="unit"
     #[test]
     fn fix_with_replacement_becomes_a_workspace_edit() {
         let core = CoreDiagnostic::error(codes::AMBIGUOUS_SELECTION, "ambiguous")

@@ -18,6 +18,7 @@ use serde::{Deserialize, Serialize};
 /// constraints. The remainder must be zero or accounted for by declared
 /// free variables (value sources).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-sem.md#profile
 pub struct DofLedger {
     /// Total freedoms contributed by the walk's entities.
     pub freedoms: i64,
@@ -31,12 +32,14 @@ impl DofLedger {
     /// The residual DOF: `freedoms - constraints - declared_free`. Zero
     /// means fully constrained; positive means under-constrained.
     #[must_use]
+    // frob:doc docs/modules/regolith-sem.md#profile
     pub fn residual(&self) -> i64 {
         self.freedoms - self.constraints - self.declared_free
     }
 
     /// True when the sketch closes (residual is zero).
     #[must_use]
+    // frob:doc docs/modules/regolith-sem.md#profile
     pub fn is_closed(&self) -> bool {
         self.residual() == 0
     }
@@ -75,6 +78,7 @@ fn segment_constraint(seg: &Segment) -> i64 {
 /// `ConstraintsBlock` items (`regolith_syntax::walk`): an item declares a
 /// free variable iff its right-hand side is the `free` value source.
 #[must_use]
+// frob:doc docs/modules/regolith-sem.md#profile
 pub fn count_declared_free(walk: &Walk) -> i64 {
     let n = walk
         .constraints
@@ -115,6 +119,7 @@ fn declares_free(item: &str) -> bool {
 /// (participation is syntactic). It is therefore used to catch a
 /// DECLARED imbalance, not to certify exact determinacy.
 #[must_use]
+// frob:doc docs/modules/regolith-sem.md#profile
 pub fn compute_ledger(walk: &Walk, declared_free: i64) -> DofLedger {
     let mut freedoms = 0i64;
     let mut constraints = 0i64;
@@ -157,6 +162,7 @@ pub fn compute_ledger(walk: &Walk, declared_free: i64) -> DofLedger {
 /// arc's join to its neighbor) must be pinned with `tangent` or
 /// `perpendicular`, else a diagnostic listing the unpinned joints.
 #[must_use]
+// frob:doc docs/modules/regolith-sem.md#profile
 pub fn check_branch_pins(walk: &Walk) -> Vec<Diagnostic> {
     let mut unpinned = Vec::new();
     for (i, seg) in walk.segments.iter().enumerate() {
@@ -192,6 +198,7 @@ pub fn check_branch_pins(walk: &Walk) -> Vec<Diagnostic> {
 /// variables); a leftover DOF is a diagnostic naming the count and
 /// direction (under- vs over-constrained).
 #[must_use]
+// frob:doc docs/modules/regolith-sem.md#profile
 pub fn check_ledger_closes(ledger: &DofLedger) -> Vec<Diagnostic> {
     let residual = ledger.residual();
     if residual == 0 {
@@ -232,6 +239,7 @@ const SEGMENT_METRIC_HEADS: &[&str] = &["length", "radius", "angle"];
 /// those positions with datums and exports, so this increment checks
 /// only dotted metric references -- the unambiguous segment positions.
 #[must_use]
+// frob:doc docs/modules/regolith-sem.md#profile
 pub fn check_label_bindings(profile: &str, walk: &Walk) -> Vec<Diagnostic> {
     let mut bound: BTreeSet<&str> = walk
         .segments
@@ -342,6 +350,7 @@ fn step_roster(walk: &Walk) -> String {
 /// datums) are reached. Exports are feature-first re-anchored: reaching
 /// an export through the profile value directly is rejected.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-sem.md#profile
 pub struct InstantiationContext {
     /// The feature that anchors the instantiation.
     pub anchor_feature: String,
@@ -362,6 +371,7 @@ impl InstantiationContext {
     /// referenced without a feature anchor, or if `name` is not among
     /// this context's declared exports. Boxed: `Diagnostic` is large
     /// relative to the `Ok` value.
+    // frob:doc docs/modules/regolith-sem.md#profile
     pub fn resolve_export(&self, name: &str) -> Result<String, Box<Diagnostic>> {
         if self.anchor_feature.is_empty() {
             return Err(Box::new(
@@ -528,6 +538,8 @@ mod unit_tests {
     /// closes: the INV-15 conservation baseline driven from the typed CST.
     /// Two `line` segments (4 DOF) pinned by two constraints plus `close`
     /// (2) close the ledger to zero.
+    // frob:tests crates/regolith-sem/src/profile.rs::count_declared_free kind="unit"
+    // frob:tests crates/regolith-sem/src/profile.rs::compute_ledger kind="unit"
     #[test]
     fn balanced_walk_closes_from_typed_cst() {
         let src = "profile p:\n\
@@ -550,6 +562,7 @@ mod unit_tests {
     /// A deliberate INV-15 violation: the same walk with a constraint
     /// removed leaves an unabsorbed DOF, and the ledger reports the
     /// imbalance (LEDGER_IMBALANCE) -- the property's negative fixture.
+    // frob:tests crates/regolith-sem/src/profile.rs::check_ledger_closes kind="unit"
     #[test]
     fn deliberate_imbalance_is_caught() {
         let src = "profile p:\n\
@@ -590,6 +603,7 @@ mod unit_tests {
 
     /// An unpinned arc branch (no `tangent`/`perpendicular` join) is
     /// reported by branch-pin completeness (hematite/02 sec. 5).
+    // frob:tests crates/regolith-sem/src/profile.rs::check_branch_pins kind="unit"
     #[test]
     fn unpinned_arc_branch_is_flagged() {
         let unpinned = Walk {
@@ -630,6 +644,7 @@ mod unit_tests {
     /// whose base no walk-step label binds is the constructive E0442;
     /// binding the label (or the `close` label) clears it, and hole
     /// names, exports, and quantity literals never false-positive.
+    // frob:tests crates/regolith-sem/src/profile.rs::check_label_bindings kind="unit"
     #[test]
     fn unbound_segment_label_is_flagged_constructively() {
         let src = "profile p:\n\
@@ -680,6 +695,7 @@ mod unit_tests {
 
     /// Reaching an export through the profile value directly (no feature
     /// anchor) is rejected with the anchoring-rule message.
+    // frob:tests crates/regolith-sem/src/profile.rs::InstantiationContext.resolve_export kind="unit"
     #[test]
     fn export_through_profile_value_is_rejected() {
         let placeless = InstantiationContext {
@@ -697,6 +713,7 @@ mod unit_tests {
         assert_eq!(anchored.resolve_export("throat").unwrap(), "nose.throat");
     }
 
+    // frob:tests crates/regolith-sem/src/profile.rs::DofLedger.is_closed kind="unit"
     #[test]
     fn residual_and_closure() {
         let closed = DofLedger {

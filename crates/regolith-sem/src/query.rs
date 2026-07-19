@@ -18,6 +18,7 @@ use crate::entity::{EntityId, EntityKind};
 /// The cardinality intent a query terminates in.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
+// frob:doc docs/modules/regolith-sem.md#query
 pub enum CardinalityIntent {
     /// `.all` -- explicitly everything matched.
     All,
@@ -29,6 +30,7 @@ pub enum CardinalityIntent {
 
 /// The static cardinality type of a query result.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-sem.md#query
 pub enum Cardinality {
     /// Exactly one entity.
     One,
@@ -43,6 +45,7 @@ pub enum Cardinality {
 /// entity kinds it applies to. Predicates are DECLARED per domain
 /// (registry data), never hard-coded in the engine.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-sem.md#query
 pub struct Predicate {
     /// Predicate name (`parallel_to`, `direction`, `domain`).
     pub name: String,
@@ -55,6 +58,7 @@ pub struct Predicate {
 
 /// The per-domain predicate registry (declared, not hard-coded).
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-sem.md#query
 pub struct PredicateRegistry {
     predicates: IndexMap<String, Predicate>,
 }
@@ -62,6 +66,7 @@ pub struct PredicateRegistry {
 impl PredicateRegistry {
     /// An empty registry.
     #[must_use]
+    // frob:doc docs/modules/regolith-sem.md#query
     pub fn new() -> PredicateRegistry {
         PredicateRegistry {
             predicates: IndexMap::new(),
@@ -69,12 +74,14 @@ impl PredicateRegistry {
     }
 
     /// Register a predicate (domain packs call this at load).
+    // frob:doc docs/modules/regolith-sem.md#query
     pub fn register(&mut self, predicate: Predicate) {
         self.predicates.insert(predicate.name.clone(), predicate);
     }
 
     /// Look up a predicate by name.
     #[must_use]
+    // frob:doc docs/modules/regolith-sem.md#query
     pub fn get(&self, name: &str) -> Option<&Predicate> {
         self.predicates.get(name)
     }
@@ -82,6 +89,7 @@ impl PredicateRegistry {
 
 /// One operation in a query method chain.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-sem.md#query
 pub enum QueryOp {
     /// `.where(pred=..)` filter with predicate arguments (name -> value
     /// text, typed against the registry).
@@ -111,6 +119,7 @@ pub enum QueryOp {
 
 /// A query: a base name reference followed by a chain of operations.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-sem.md#query
 pub struct Query {
     /// The base name the chain starts from (`shell.edges`, `nets`).
     pub base: String,
@@ -120,6 +129,7 @@ pub struct Query {
 
 /// The resolved result of a query against a snapshot.
 #[derive(Debug, Clone, PartialEq, Eq)]
+// frob:doc docs/modules/regolith-sem.md#query
 pub struct QueryResult {
     /// The matched entities, in canonical order.
     pub matched: Vec<EntityId>,
@@ -150,6 +160,7 @@ impl Query {
     /// code belongs in `regolith-diag` and is out of this crate's
     /// scope). Returns diagnostics (empty = valid).
     #[must_use]
+    // frob:doc docs/modules/regolith-sem.md#query
     pub fn validate(&self, registry: &PredicateRegistry) -> Vec<Diagnostic> {
         let mut diags = Vec::new();
         let (_owner, kind) = base_selector(&self.base);
@@ -203,6 +214,7 @@ impl Query {
     // job. Kept in the signature (not underscored) because it names a
     // real, load-bearing part of the resolve contract.
     #[allow(clippy::only_used_in_recursion)]
+    // frob:doc docs/modules/regolith-sem.md#query
     pub fn resolve(
         &self,
         db: &crate::entity::EntityDb,
@@ -405,6 +417,43 @@ mod tests {
         });
         assert!(reg.get("direction").is_some());
         assert!(reg.get("nonesuch").is_none());
+    }
+
+    // frob:tests crates/regolith-sem/src/query.rs::Query.validate kind="unit"
+    #[test]
+    fn validate_flags_unknown_and_misapplied_predicates() {
+        let mut reg = PredicateRegistry::new();
+        reg.register(Predicate {
+            name: "direction".to_string(),
+            operand_types: vec!["net_direction".to_string()],
+            applies_to: vec![EntityKind::Net],
+        });
+
+        let ok = Query {
+            base: "nets".to_string(),
+            ops: vec![QueryOp::Where(IndexMap::new())],
+        };
+        assert!(ok.validate(&reg).is_empty(), "no ops reference predicates");
+
+        let mut unknown_args = IndexMap::new();
+        unknown_args.insert("nonesuch".to_string(), "x".to_string());
+        let unknown = Query {
+            base: "nets".to_string(),
+            ops: vec![QueryOp::Where(unknown_args)],
+        };
+        assert_eq!(unknown.validate(&reg).len(), 1, "unknown predicate flagged");
+
+        let mut misapplied_args = IndexMap::new();
+        misapplied_args.insert("direction".to_string(), "x".to_string());
+        let misapplied = Query {
+            base: "faces".to_string(),
+            ops: vec![QueryOp::Where(misapplied_args)],
+        };
+        assert_eq!(
+            misapplied.validate(&reg).len(),
+            1,
+            "predicate applies_to mismatch flagged"
+        );
     }
 
     #[test]

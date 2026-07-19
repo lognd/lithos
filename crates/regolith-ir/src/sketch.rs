@@ -20,6 +20,7 @@ use serde::{Deserialize, Serialize};
 /// parameter the closure solve resolves (INV-21).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
+// frob:doc docs/modules/regolith-ir.md#sketch
 pub enum SegmentLength {
     /// Pinned to a constraint value.
     Pinned(f64),
@@ -56,6 +57,7 @@ pub enum SegmentLength {
 /// a free arc is a separate increment), so the arc is carried for
 /// geometry, never sized by a fabricated straight chord.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-ir.md#sketch
 pub struct ArcGeometry {
     /// The bulge side as spelled (`left`/`right`).
     pub bulge: String,
@@ -78,6 +80,7 @@ pub struct ArcGeometry {
 /// cardinal line. A straight segment carries `arc: None` and is the
 /// only kind the linear closure solve sums.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-ir.md#sketch
 pub struct ClosureSegment {
     /// Segment name (for diagnostics).
     pub name: String,
@@ -96,6 +99,7 @@ pub struct ClosureSegment {
 
 /// The typed closure problem for one profile walk.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-ir.md#sketch
 pub struct SketchClosure {
     /// The profile the walk belongs to (names diagnostics/resolutions).
     pub profile: String,
@@ -120,6 +124,7 @@ pub struct SketchClosure {
 /// so the emission pass reports it, never a silent skip.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
+// frob:doc docs/modules/regolith-ir.md#sketch
 pub enum WalkPromotion {
     /// The walk promoted into a typed closure problem.
     Promoted(SketchClosure),
@@ -147,6 +152,7 @@ pub enum WalkPromotion {
 /// UNBOUND segment is skipped here: that is E0442's business
 /// (`regolith-sem` `check_label_bindings`), reported once, not twice.
 #[must_use]
+// frob:doc docs/modules/regolith-ir.md#sketch
 pub fn sketch_closure_from_walk(profile: &str, walk: &Walk) -> WalkPromotion {
     let span = tracing::info_span!("solve.sketch.promote", profile);
     let _enter = span.enter();
@@ -589,6 +595,7 @@ mod promotion_tests {
     // lengths are exact constants end to end (the INV-10 exact-cosine
     // contract), so any drift IS the bug this test exists to catch.
     #[allow(clippy::float_cmp)]
+    // frob:tests crates/regolith-ir/src/sketch.rs::sketch_closure_from_walk kind="unit"
     #[test]
     fn labeled_cardinal_walk_promotes_with_pins_frees_and_close_edge() {
         // The sheet_bracket shape: labels bind the constraint pins,

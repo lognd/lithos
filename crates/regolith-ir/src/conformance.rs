@@ -28,6 +28,7 @@ use crate::nodes::{Impl, Interface, PromiseSlot};
 ///    passes (no false positive; the entity-DB wiring that fills
 ///    `bound_kinds` is a documented WO-12 dependency).
 #[must_use]
+// frob:doc docs/modules/regolith-ir.md#conformance
 pub fn check_role_kind(iface: &Interface, imp: &Impl) -> Vec<Diagnostic> {
     let span = tracing::debug_span!("check_role_kind", interface = %iface.name);
     let _enter = span.enter();
@@ -103,6 +104,7 @@ pub fn check_role_kind(iface: &Interface, imp: &Impl) -> Vec<Diagnostic> {
 ///
 /// A mismatch is `E0410` (CAPABILITY_VS_DEMAND).
 #[must_use]
+// frob:doc docs/modules/regolith-ir.md#conformance
 pub fn check_param_match(iface: &Interface, imp: &Impl) -> Vec<Diagnostic> {
     let span = tracing::debug_span!("check_param_match", interface = %iface.name);
     let _enter = span.enter();
@@ -152,6 +154,7 @@ fn param_type_conflict(want: &crate::nodes::Param, got: &crate::nodes::Param) ->
 /// A minimal capability record for the static test pack (WO-16 supplies
 /// the real table).
 #[derive(Debug, Clone)]
+// frob:doc docs/modules/regolith-ir.md#conformance
 pub struct Capability {
     /// The demand name this capability answers.
     pub demand: String,
@@ -167,6 +170,7 @@ pub struct Capability {
 /// entry answers the same demand name, the first match in source order
 /// decides (deterministic tie-break, no `HashMap` involved).
 #[must_use]
+// frob:doc docs/modules/regolith-ir.md#conformance
 pub fn check_capability_vs_demand(demands: &[String], supplied: &[Capability]) -> Vec<Diagnostic> {
     let mut diags = Vec::new();
     for demand in demands {
@@ -196,6 +200,7 @@ pub fn check_capability_vs_demand(demands: &[String], supplied: &[Capability]) -
 /// `derived`) are left unflagged rather than guessed at, to avoid a
 /// false-positive rejection.
 #[must_use]
+// frob:doc docs/modules/regolith-ir.md#conformance
 pub fn check_refinement(base: &[PromiseSlot], refined: &[PromiseSlot]) -> Vec<Diagnostic> {
     let mut diags = Vec::new();
     for b in base {
@@ -313,6 +318,7 @@ mod tests {
     }
 
     // Widening rejected / narrowing accepted (WO-12 acceptance).
+    // frob:tests crates/regolith-ir/src/conformance.rs::check_refinement kind="unit"
     #[test]
     fn refinement_direction_enforced() {
         let base = vec![PromiseSlot {
@@ -382,6 +388,7 @@ mod tests {
         assert_eq!(check_refinement(&base, &wider).len(), 1);
     }
 
+    // frob:tests crates/regolith-ir/src/conformance.rs::check_capability_vs_demand kind="unit"
     #[test]
     fn capability_vs_demand_flags_unmet_demand() {
         let demands = vec!["sink_current".to_string(), "source_current".to_string()];
@@ -406,6 +413,7 @@ mod tests {
         assert!(check_capability_vs_demand(&[], &[]).is_empty());
     }
 
+    // frob:tests crates/regolith-ir/src/conformance.rs::check_role_kind kind="unit"
     #[test]
     fn role_kind_requires_full_coverage_no_duplicates_no_unknowns() {
         let iface = Interface {
@@ -527,6 +535,7 @@ mod tests {
 
     /// A parameter type mismatch (impl pins `d` as an `angle` where the
     /// interface declares `length`) fails param matching (WO-12 acceptance).
+    // frob:tests crates/regolith-ir/src/conformance.rs::check_param_match kind="unit"
     #[test]
     fn param_type_mismatch_fails() {
         let iface = seat_iface();
@@ -571,6 +580,8 @@ mod tests {
     /// The CST extractors populate `role_kinds` and `params` from the
     /// typed interface declaration, and role bindings + `params:` from the
     /// typed `ImplStmt` (WO-12 "populate from the typed CST").
+    // frob:tests crates/regolith-ir/src/nodes.rs::extract.Interface.from_decl kind="unit"
+    // frob:tests crates/regolith-ir/src/nodes.rs::extract.Impl.from_impl_stmt kind="unit"
     #[test]
     fn extracts_interface_and_impl_from_cst() {
         use camino::Utf8PathBuf;

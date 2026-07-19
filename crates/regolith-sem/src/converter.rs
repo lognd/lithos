@@ -46,6 +46,7 @@ use serde::{Deserialize, Serialize};
 #[derive(
     Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, JsonSchema,
 )]
+// frob:doc docs/modules/regolith-sem.md#converter
 pub enum Domain {
     /// The continuous subset (physical quantities evolving as a DAE
     /// between event instants).
@@ -57,6 +58,7 @@ pub enum Domain {
 /// The kind of a dependency edge, which fixes -- by type, not by
 /// analysis -- whether it carries a ZOH delta (INV-16 mechanism 1).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-sem.md#converter
 pub enum EdgeKind {
     /// An instantaneous `=` dependency: the target's value depends on the
     /// source's value *within the same instant*. The only edge kind that
@@ -76,6 +78,7 @@ impl EdgeKind {
     /// register commit) -- i.e. it structurally breaks any cycle it lies
     /// on. Combinational edges do not; converters and registers do.
     #[must_use]
+    // frob:doc docs/modules/regolith-sem.md#converter
     pub fn is_delta(self) -> bool {
         matches!(self, EdgeKind::Converter | EdgeKind::Register)
     }
@@ -83,6 +86,7 @@ impl EdgeKind {
 
 /// A graph node: a signal or block occupying exactly one domain.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-sem.md#converter
 pub struct Node {
     /// The signal/block name, used in diagnostics.
     pub name: String,
@@ -92,6 +96,7 @@ pub struct Node {
 
 /// A dependency edge from a producer node to a consumer node.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-sem.md#converter
 pub struct Edge {
     /// Producer node index (the value read).
     pub from: usize,
@@ -105,6 +110,7 @@ pub struct Edge {
 /// Built from parsed `.cupr` (once the behavioral bodies are typed) and
 /// then checked for within-domain combinational cycles (INV-16).
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-sem.md#converter
 pub struct ConverterGraph {
     /// The nodes, addressed by index (stable insertion order).
     pub nodes: Vec<Node>,
@@ -115,11 +121,13 @@ pub struct ConverterGraph {
 impl ConverterGraph {
     /// An empty graph.
     #[must_use]
+    // frob:doc docs/modules/regolith-sem.md#converter
     pub fn new() -> ConverterGraph {
         ConverterGraph::default()
     }
 
     /// Add a node and return its index.
+    // frob:doc docs/modules/regolith-sem.md#converter
     pub fn add_node(&mut self, name: impl Into<String>, domain: Domain) -> usize {
         let id = self.nodes.len();
         self.nodes.push(Node {
@@ -130,6 +138,7 @@ impl ConverterGraph {
     }
 
     /// Add a dependency edge between two existing node indices.
+    // frob:doc docs/modules/regolith-sem.md#converter
     pub fn add_edge(&mut self, from: usize, to: usize, kind: EdgeKind) {
         self.edges.push(Edge { from, to, kind });
     }
@@ -158,6 +167,7 @@ impl ConverterGraph {
     /// excluded). Each returned cycle is the node-index path back to its
     /// entry node. Deterministic (nodes visited in index order).
     #[must_use]
+    // frob:doc docs/modules/regolith-sem.md#converter
     pub fn combinational_cycles(&self) -> Vec<Vec<usize>> {
         // Adjacency built from cycle-forming edges only.
         let mut adj: BTreeMap<usize, Vec<usize>> = BTreeMap::new();
@@ -185,6 +195,7 @@ impl ConverterGraph {
     /// means every declared cycle is broken by a converter or register
     /// (loop-free in the combinational sense) -- the legal case.
     #[must_use]
+    // frob:doc docs/modules/regolith-sem.md#converter
     pub fn check_acyclic(&self) -> Vec<Diagnostic> {
         let cycles = self.combinational_cycles();
         if cycles.is_empty() {
@@ -267,6 +278,10 @@ mod tests {
 
     /// A genuine combinational cycle within one clock domain (`a = f(b)`,
     /// `b = g(a)`, both instantaneous) is a static error (E0105).
+    // frob:tests crates/regolith-sem/src/converter.rs::EdgeKind.is_delta kind="unit"
+    // frob:tests crates/regolith-sem/src/converter.rs::ConverterGraph.add_node kind="unit"
+    // frob:tests crates/regolith-sem/src/converter.rs::ConverterGraph.add_edge kind="unit"
+    // frob:tests crates/regolith-sem/src/converter.rs::ConverterGraph.check_acyclic kind="unit"
     #[test]
     fn within_domain_combinational_cycle_is_flagged() {
         let mut g = ConverterGraph::new();
@@ -285,6 +300,7 @@ mod tests {
     /// fixture): the feedback path passes through converters (comparator
     /// sampling the continuous plant, a dac/pwm driving it), so the loop
     /// is broken by a ZOH delta -- loop-free in the combinational sense.
+    // frob:tests crates/regolith-sem/src/converter.rs::ConverterGraph.combinational_cycles kind="unit"
     #[test]
     fn comparator_feeds_own_threshold_is_legal() {
         let mut g = ConverterGraph::new();

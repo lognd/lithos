@@ -24,6 +24,7 @@ use serde::{Deserialize, Serialize};
 /// value: "20Mops f32 sustained"}`; `latency <= 2 cycles` ->
 /// `{capability: "latency", comparator: "<=", value: "2 cycles"}`.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-ir.md#block-requirement
 pub struct CapabilityDemand {
     /// The named subject of the bound (`latency`, `context_switch`), or
     /// empty for the block-kind's implicit primary bound (an `executor`'s
@@ -43,6 +44,7 @@ pub struct CapabilityDemand {
 /// `promises:` keyword argument. The `BlockRequirement`-shaped lowering
 /// output WO-24's allocation search screens candidates against.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-ir.md#block-requirement
 pub struct BlockRequirement {
     /// The owning `architecture for <owner>:` target (the computer this
     /// block belongs to, `FlightCore`): grouping + traceability.

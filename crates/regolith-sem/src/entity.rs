@@ -18,12 +18,14 @@ use crate::symmetry::OrbitId;
 /// into source-facing output (INV: no positional/id leakage). Stable
 /// only within one build.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-sem.md#entity-db
 pub struct EntityId(pub u32);
 
 /// The broad kind of an entity (domain-tagged). Measures carry the
 /// specifics; this is the coarse classification queries dispatch on.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
+// frob:doc docs/modules/regolith-sem.md#entity-db
 pub enum EntityKind {
     /// Mech topology: a face.
     Face,
@@ -84,6 +86,7 @@ impl EntityKind {
     /// words map to [`EntityKind::Other`] so pack-defined kinds still
     /// validate.
     #[must_use]
+    // frob:doc docs/modules/regolith-sem.md#entity-db
     pub fn from_kind_word(word: &str) -> Self {
         match word {
             "faces" | "face" => EntityKind::Face,
@@ -114,6 +117,7 @@ impl EntityKind {
     /// without an entry here are not (yet) checked for unprovided
     /// fields -- absence is "not modeled", not "no fields".
     #[must_use]
+    // frob:doc docs/modules/regolith-sem.md#entity-db
     pub fn known_measure_keys(&self) -> Option<&'static [&'static str]> {
         match self {
             EntityKind::Hole => Some(&["position", "diameter", "edge_distance"]),
@@ -180,6 +184,7 @@ impl EntityKind {
     /// arm here (no schema change: `EntityKind` is unchanged, only the
     /// word-to-kind lookup grows).
     #[must_use]
+    // frob:doc docs/modules/regolith-sem.md#entity-db
     pub fn from_constructor_word(head: &str) -> Option<Self> {
         match head {
             // Round material-removal features -> Hole.
@@ -254,10 +259,12 @@ fn board_domain_measure_keys(word: &str) -> Option<&'static [&'static str]> {
 /// A named, typed measure on an entity (`area`, `direction`, `width`).
 /// String-keyed so packs extend it; values are opaque strings here and
 /// are typed by the predicate registry (WO-08).
+// frob:doc docs/modules/regolith-sem.md#entity-db
 pub type Measures = IndexMap<String, String>;
 
 /// One entity in the database.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-sem.md#entity-db
 pub struct Entity {
     /// Internal id (never source-facing).
     pub id: EntityId,
@@ -278,6 +285,7 @@ pub struct Entity {
 /// The exclusion/arbitration policy of a [`EntityKind::Region`] entity.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
+// frob:doc docs/modules/regolith-sem.md#entity-db
 pub enum RegionPolicy {
     /// Sole occupancy: any placement/route into it is a conflict unless
     /// an explicit join is declared.
@@ -291,6 +299,7 @@ pub enum RegionPolicy {
 /// construct with data-dependent effects flags it for post-realization
 /// verification.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-sem.md#entity-db
 pub struct PredictedDelta {
     /// Entities this construct creates.
     pub creates: Vec<EntityId>,
@@ -312,6 +321,7 @@ pub struct PredictedDelta {
 /// new snapshot (structural sharing is an impl detail); snapshots never
 /// mutate in place.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-sem.md#entity-db
 pub struct EntityDb {
     entities: IndexMap<EntityId, Entity>,
 }
@@ -319,6 +329,7 @@ pub struct EntityDb {
 impl EntityDb {
     /// An empty database (the pre-construction snapshot).
     #[must_use]
+    // frob:doc docs/modules/regolith-sem.md#entity-db
     pub fn empty() -> EntityDb {
         EntityDb {
             entities: IndexMap::new(),
@@ -327,18 +338,21 @@ impl EntityDb {
 
     /// Look up an entity by id.
     #[must_use]
+    // frob:doc docs/modules/regolith-sem.md#entity-db
     pub fn get(&self, id: EntityId) -> Option<&Entity> {
         self.entities.get(&id)
     }
 
     /// Number of entities in this snapshot.
     #[must_use]
+    // frob:doc docs/modules/regolith-sem.md#entity-db
     pub fn len(&self) -> usize {
         self.entities.len()
     }
 
     /// True when the snapshot is empty.
     #[must_use]
+    // frob:doc docs/modules/regolith-sem.md#entity-db
     pub fn is_empty(&self) -> bool {
         self.entities.is_empty()
     }
@@ -354,6 +368,7 @@ impl EntityDb {
     /// consume an entity in the same commit it (re-)creates under a
     /// different id.
     #[must_use]
+    // frob:doc docs/modules/regolith-sem.md#entity-db
     pub fn commit(&self, delta: &PredictedDelta, new_entities: &[Entity]) -> EntityDb {
         let mut entities = self.entities.clone();
         for entity in new_entities {
@@ -380,6 +395,7 @@ impl EntityDb {
     /// reject at serialization (a non-finite field would be an
     /// upstream compiler bug).
     #[must_use]
+    // frob:doc docs/modules/regolith-sem.md#entity-db
     pub fn snapshot_hash(&self) -> String {
         let mut ids: Vec<&EntityId> = self.entities.keys().collect();
         ids.sort();
@@ -400,6 +416,7 @@ impl EntityDb {
     /// Iterate entities in canonical (ascending id) order. Used by the
     /// query engine (WO-08) to enumerate a base selection; never expose
     /// `IndexMap`'s own iteration order here (AD-6).
+    // frob:doc docs/modules/regolith-sem.md#entity-db
     pub fn iter(&self) -> impl Iterator<Item = &Entity> {
         let mut entities: Vec<&Entity> = self.entities.values().collect();
         entities.sort_by_key(|e| e.id);
@@ -429,6 +446,7 @@ mod tests {
         assert!(EntityDb::empty().is_empty());
     }
 
+    // frob:tests crates/regolith-sem/src/entity.rs::EntityDb.snapshot_hash kind="unit"
     #[test]
     fn snapshot_hash_is_stable_across_builds_and_changes_with_entities() {
         let db1 = EntityDb::empty().commit(
@@ -483,5 +501,64 @@ mod tests {
         let json = serde_json::to_string(&e).unwrap();
         let back: Entity = serde_json::from_str(&json).unwrap();
         assert_eq!(back, e);
+    }
+
+    // frob:tests crates/regolith-sem/src/entity.rs::EntityDb.len kind="unit"
+    // frob:tests crates/regolith-sem/src/entity.rs::EntityDb.iter kind="unit"
+    #[test]
+    fn len_and_iter_reflect_committed_entities_in_ascending_id_order() {
+        let db = EntityDb::empty();
+        assert_eq!(db.len(), 0);
+
+        let db = db.commit(
+            &super::PredictedDelta {
+                creates: vec![EntityId(2), EntityId(1)],
+                modifies: vec![],
+                consumes: vec![],
+                regions_touched: vec![],
+                symmetry: None,
+                data_dependent: false,
+            },
+            &[face(2), face(1)],
+        );
+        assert_eq!(db.len(), 2);
+        let ids: Vec<u32> = db.iter().map(|e| e.id.0).collect();
+        assert_eq!(ids, vec![1, 2], "iter is canonical ascending-id order");
+    }
+
+    // frob:tests crates/regolith-sem/src/entity.rs::EntityKind.from_kind_word kind="unit"
+    #[test]
+    fn from_kind_word_maps_singular_and_plural_and_falls_back_to_other() {
+        assert_eq!(EntityKind::from_kind_word("hole"), EntityKind::Hole);
+        assert_eq!(EntityKind::from_kind_word("holes"), EntityKind::Hole);
+        assert_eq!(EntityKind::from_kind_word("nets"), EntityKind::Net);
+        assert_eq!(
+            EntityKind::from_kind_word("power_pins"),
+            EntityKind::Other("power_pins".to_string())
+        );
+    }
+
+    // frob:tests crates/regolith-sem/src/entity.rs::EntityKind.known_measure_keys kind="unit"
+    #[test]
+    fn known_measure_keys_covers_documented_kinds_and_none_for_undocumented() {
+        assert_eq!(
+            EntityKind::Hole.known_measure_keys(),
+            Some(&["position", "diameter", "edge_distance"][..])
+        );
+        assert_eq!(EntityKind::Face.known_measure_keys(), None);
+    }
+
+    // frob:tests crates/regolith-sem/src/entity.rs::EntityKind.from_constructor_word kind="unit"
+    #[test]
+    fn from_constructor_word_maps_feature_verbs_and_rejects_unknown() {
+        assert_eq!(
+            EntityKind::from_constructor_word("Bore"),
+            Some(EntityKind::Hole)
+        );
+        assert_eq!(
+            EntityKind::from_constructor_word("Bend"),
+            Some(EntityKind::Bend)
+        );
+        assert_eq!(EntityKind::from_constructor_word("Extrude"), None);
     }
 }

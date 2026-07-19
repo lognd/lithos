@@ -15,6 +15,7 @@ use crate::nodes::SystemNode;
 /// A domain ledger over a system/assembly node. Returns E0420-family
 /// diagnostics for imbalances (over/under-constraint, unfed flow,
 /// unbalanced domain crossing).
+// frob:doc docs/modules/regolith-ir.md#ledger
 pub trait Ledger {
     /// The ledger's name (for the diagnostic and the report).
     fn name(&self) -> &'static str;
@@ -26,6 +27,7 @@ pub trait Ledger {
 /// Mechanical DOF/Gruebler ledger: counts constrained vs free degrees of
 /// freedom across matings; double-axial-fixation is an over-constraint.
 #[derive(Debug, Default)]
+// frob:doc docs/modules/regolith-ir.md#ledger
 pub struct MechLedger;
 
 impl Ledger for MechLedger {
@@ -86,6 +88,7 @@ impl Ledger for MechLedger {
 /// Electrical driver/load + domain-crossing + flow ledger: every net
 /// fed, every domain crossing balanced, every flow sourced.
 #[derive(Debug, Default)]
+// frob:doc docs/modules/regolith-ir.md#ledger
 pub struct ElecLedger;
 
 impl Ledger for ElecLedger {

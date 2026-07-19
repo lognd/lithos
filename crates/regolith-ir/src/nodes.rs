@@ -14,6 +14,7 @@ use serde::{Deserialize, Serialize};
 
 /// A reference frame an interface or mating is expressed in.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-ir.md#nodes
 pub struct Frame {
     /// Frame name.
     pub name: String,
@@ -24,6 +25,7 @@ pub struct Frame {
 /// A named promise slot on an interface: a value the interface promises,
 /// backed by a value source.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-ir.md#nodes
 pub struct PromiseSlot {
     /// Slot name (`stiffness`, `i_max`).
     pub name: String,
@@ -35,6 +37,7 @@ pub struct PromiseSlot {
 /// monomorphizing) from runtime promise/demand fields (`params:`).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
+// frob:doc docs/modules/regolith-ir.md#nodes
 pub enum ParamKind {
     /// `<params>`: compile-time type parameters (monomorphized).
     Type,
@@ -46,6 +49,7 @@ pub enum ParamKind {
 /// runtime `params:` field, with an optional declared type/shape. The
 /// `ParamKind` distinguishes the two (regolith/04 sec. 1).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-ir.md#nodes
 pub struct Param {
     /// Parameter name (`d`, `f_sw`, `screw`).
     pub name: String,
@@ -59,6 +63,7 @@ pub struct Param {
 /// A contract interface: roles (with their required entity kinds),
 /// demands, promise slots, and parameters.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-ir.md#nodes
 pub struct Interface {
     /// Interface name.
     pub name: String,
@@ -82,6 +87,7 @@ pub struct Interface {
 /// An implementation of an interface: role bindings as queries plus
 /// inline promise refinement (narrowing only).
 #[derive(Debug, Clone, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-ir.md#nodes
 pub struct Impl {
     /// The interface this implements.
     pub interface: String,
@@ -118,6 +124,7 @@ mod extract {
         /// `roles:` / `demands:` / `params:` sub-blocks. Returns `None`
         /// when the declaration is unnamed.
         #[must_use]
+        // frob:doc docs/modules/regolith-ir.md#nodes
         pub fn from_decl(decl: &Decl) -> Option<Interface> {
             let name = decl.name()?;
             tracing::debug!(interface = %name, "extracting interface from CST");
@@ -167,6 +174,7 @@ mod extract {
         /// the `params:` block. `bound_kinds` is left empty -- a binding's
         /// entity kind needs the entity DB (documented WO-12 dependency).
         #[must_use]
+        // frob:doc docs/modules/regolith-ir.md#nodes
         pub fn from_impl_stmt(node: &SyntaxNode) -> Option<Impl> {
             if node.kind() != SyntaxKind::ImplStmt {
                 return None;
@@ -312,6 +320,7 @@ mod extract {
 /// A mating between two artifacts: named sides, alignment, and the DOF it
 /// removes and keeps.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-ir.md#nodes
 pub struct Mating {
     /// Mating name.
     pub name: String,
@@ -340,6 +349,7 @@ pub struct Mating {
 /// an entry it cannot compare is left indeterminate, never assumed
 /// subsumed).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-ir.md#nodes
 pub struct BoundaryEntry {
     /// Quantity name (`ambient`, `supply`, `design_life`).
     pub name: String,
@@ -359,6 +369,7 @@ pub struct BoundaryEntry {
 /// numeric magnitude when the entry parses to one (INV-8 reserve
 /// accounting only sums entries it can quantify).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-ir.md#nodes
 pub struct Reserve {
     /// Reserve name (`gpio`, `power`, `area`).
     pub name: String,
@@ -373,6 +384,7 @@ pub struct Reserve {
 /// both endpoints to be declared participants (an intent, boundary, or
 /// reserve name) -- nothing participates outside the ledger.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-ir.md#nodes
 pub struct FlowEdge {
     /// Source endpoint name.
     pub from: String,
@@ -384,6 +396,7 @@ pub struct FlowEdge {
 /// additive overlay that may only ADD content and draws only from the
 /// base's declared reserves (regolith/04 sec. 6, INV-8).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-ir.md#nodes
 pub struct Target {
     /// Target name (`debug`, `flatsat`).
     pub name: String,
@@ -399,6 +412,7 @@ pub struct Target {
 /// intent-facing unit of compute/IO load, with the compute intents it
 /// claims to realize (a trailing `realizes <intent>...` clause).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-ir.md#nodes
 pub struct Workload {
     /// Workload name.
     pub name: String,
@@ -418,6 +432,7 @@ pub struct Workload {
 
 /// A budget declared at a system/assembly node.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-ir.md#nodes
 pub struct Budget {
     /// Budget name (`mass`, `energy`, `noise`).
     pub name: String,
@@ -430,6 +445,7 @@ pub struct Budget {
 /// A system or assembly node: parts, boundary datums, connections,
 /// budgets, reserves, targets, and config variables.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-ir.md#nodes
 pub struct SystemNode {
     /// Node name.
     pub name: String,

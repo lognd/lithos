@@ -29,6 +29,7 @@ use serde::Deserialize;
 /// the fields a hover actually renders -- inputs/chain are read by the
 /// `calc` CLI viewer, not by this hover, so they are omitted here).
 #[derive(Debug, Deserialize)]
+// frob:doc docs/modules/regolith-ls.md#artifacts
 pub struct CalcSheet {
     /// The sheet's id (matches an `AuditRow::detail` for a `calc_sheet`
     /// disposition, and the shipped PDF's filename stem).
@@ -58,6 +59,7 @@ pub struct CalcSheet {
 /// One obligation's disposition in the audit index (mirrors
 /// `calc.py::AuditRow`).
 #[derive(Debug, Deserialize)]
+// frob:doc docs/modules/regolith-ls.md#artifacts
 pub struct AuditRow {
     /// The claim's declared name, or its reconstructed source text.
     pub claim_name: String,
@@ -74,6 +76,7 @@ pub struct AuditRow {
 /// summary counts are the census tree view's concern, not hover's, so
 /// only `rows` is read here).
 #[derive(Debug, Deserialize)]
+// frob:doc docs/modules/regolith-ls.md#artifacts
 pub struct AuditIndex {
     /// Every obligation's disposition row.
     pub rows: Vec<AuditRow>,
@@ -83,6 +86,7 @@ pub struct AuditIndex {
 /// sheet plus the audit index, read verbatim from `dist/calc/
 /// calc_book.json`.
 #[derive(Debug, Deserialize)]
+// frob:doc docs/modules/regolith-ls.md#artifacts
 pub struct CalcBook {
     /// Every discharged obligation's calc sheet.
     pub sheets: Vec<CalcSheet>,
@@ -96,6 +100,7 @@ pub struct CalcBook {
 /// found wins, matching the editor-side resolver
 /// (`editors/vscode/src/artifacts.ts::findDistProjects`).
 #[must_use]
+// frob:doc docs/modules/regolith-ls.md#artifacts
 pub fn find_calc_book_path(root: &Utf8Path) -> Option<Utf8PathBuf> {
     let direct = root.join("dist").join("calc").join("calc_book.json");
     if direct.is_file() {
@@ -119,6 +124,7 @@ pub fn find_calc_book_path(root: &Utf8Path) -> Option<Utf8PathBuf> {
 /// parse failure -- a malformed/partial artifact degrades to the
 /// static hover form, never a hard error (D111 discipline).
 #[must_use]
+// frob:doc docs/modules/regolith-ls.md#artifacts
 pub fn load_calc_book(path: &Utf8Path) -> Option<CalcBook> {
     let bytes = std::fs::read(path).ok()?;
     serde_json::from_slice(&bytes).ok()
@@ -137,6 +143,7 @@ fn normalize(s: &str) -> String {
 /// in `book`'s audit rows, pairing it with its calc sheet when
 /// discharged.
 #[must_use]
+// frob:doc docs/modules/regolith-ls.md#artifacts
 pub fn find_claim_row<'a>(
     book: &'a CalcBook,
     needle: &str,
@@ -159,6 +166,7 @@ pub fn find_claim_row<'a>(
 /// margin for a discharged claim, the waiver/deferral/violation detail
 /// otherwise -- consumed verbatim, never recomputed (D229).
 #[must_use]
+// frob:doc docs/modules/regolith-ls.md#artifacts
 pub fn render_claim_hover(row: &AuditRow, sheet: Option<&CalcSheet>) -> String {
     match sheet {
         Some(sheet) => format!(
@@ -214,6 +222,7 @@ mod tests {
         }"#
     }
 
+    // frob:tests crates/regolith-ls/src/artifacts.rs::find_calc_book_path kind="unit"
     #[test]
     fn finds_calc_book_at_workspace_root() {
         let dir =
@@ -245,6 +254,8 @@ mod tests {
         std::fs::remove_dir_all(&dir).ok();
     }
 
+    // frob:tests crates/regolith-ls/src/artifacts.rs::find_claim_row kind="unit"
+    // frob:tests crates/regolith-ls/src/artifacts.rs::render_claim_hover kind="unit"
     #[test]
     fn matches_a_discharged_claim_and_renders_verdict_margin() {
         let book: super::CalcBook = serde_json::from_str(fixture_book()).unwrap();
@@ -272,6 +283,7 @@ mod tests {
         assert!(find_claim_row(&book, "nonexistent claim").is_none());
     }
 
+    // frob:tests crates/regolith-ls/src/artifacts.rs::load_calc_book kind="unit"
     #[test]
     fn load_calc_book_returns_none_on_malformed_json() {
         let path = Utf8PathBuf::from_path_buf(

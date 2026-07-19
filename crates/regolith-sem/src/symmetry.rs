@@ -12,12 +12,14 @@ use serde::{Deserialize, Serialize};
 /// An orbit identifier: a set of entities equivalent under the current
 /// group (identical bus bits, pattern instances).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-sem.md#symmetry
 pub struct OrbitId(pub u32);
 
 /// A symmetry group representation. Conservative: only the forms a
 /// construct can soundly declare.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
+// frob:doc docs/modules/regolith-sem.md#symmetry
 pub enum SymmetryGroup {
     /// The trivial group (no symmetry).
     Trivial,
@@ -47,6 +49,7 @@ impl SymmetryGroup {
     /// must never be asserted, so any pair whose common subgroup is not
     /// soundly representable in this enum collapses to `Trivial`.
     #[must_use]
+    // frob:doc docs/modules/regolith-sem.md#symmetry
     pub fn intersect(&self, other: &SymmetryGroup) -> SymmetryGroup {
         use SymmetryGroup::{Continuous, Cyclic, Permutation, Trivial};
 
@@ -78,6 +81,7 @@ impl SymmetryGroup {
 /// The orbit bookkeeping over a snapshot: which entities share an orbit,
 /// and the splitting a symmetry-breaking delta forces.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-sem.md#symmetry
 pub struct OrbitTable {
     group: Option<SymmetryGroup>,
 }
@@ -85,12 +89,14 @@ pub struct OrbitTable {
 impl OrbitTable {
     /// An empty orbit table (trivial symmetry).
     #[must_use]
+    // frob:doc docs/modules/regolith-sem.md#symmetry
     pub fn new() -> OrbitTable {
         OrbitTable { group: None }
     }
 
     /// The current artifact-level group, if any has been declared.
     #[must_use]
+    // frob:doc docs/modules/regolith-sem.md#symmetry
     pub fn group(&self) -> Option<&SymmetryGroup> {
         self.group.as_ref()
     }
@@ -108,6 +114,7 @@ impl OrbitTable {
     /// singleton and `.any` is never legal across more than one
     /// candidate -- the sound default (INV-4) is to refuse.
     #[must_use]
+    // frob:doc docs/modules/regolith-sem.md#symmetry
     pub fn any_is_legal(&self, _orbit: OrbitId) -> bool {
         !matches!(self.group, None | Some(SymmetryGroup::Trivial))
     }
@@ -125,6 +132,7 @@ impl OrbitTable {
     /// `PredictedDelta.symmetry` contributions parsed from `pattern`
     /// constructs; without it the table had no way to acquire a non-
     /// trivial group from source.
+    // frob:doc docs/modules/regolith-sem.md#symmetry
     pub fn contribute(&mut self, group: SymmetryGroup) {
         self.group = Some(match self.group.take() {
             None => group,
@@ -144,6 +152,7 @@ impl OrbitTable {
     /// splitting (keeping unrelated orbits intact) needs a richer
     /// membership table and is out of this WO's scope.
     #[must_use]
+    // frob:doc docs/modules/regolith-sem.md#symmetry
     pub fn split_on_break(&self, _broken: OrbitId) -> OrbitTable {
         OrbitTable {
             group: Some(SymmetryGroup::Trivial),
@@ -160,6 +169,9 @@ mod tests {
         assert!(OrbitTable::new().group().is_none());
     }
 
+    // frob:tests crates/regolith-sem/src/symmetry.rs::SymmetryGroup.intersect kind="unit"
+    // frob:tests crates/regolith-sem/src/symmetry.rs::OrbitTable.contribute kind="unit"
+    // frob:tests crates/regolith-sem/src/symmetry.rs::OrbitTable.any_is_legal kind="unit"
     #[test]
     fn contribute_seeds_then_intersects_conservatively() {
         // First contribution seeds; a compatible second keeps the common
@@ -185,5 +197,15 @@ mod tests {
         let json = serde_json::to_string(&g).unwrap();
         let back: SymmetryGroup = serde_json::from_str(&json).unwrap();
         assert_eq!(back, g);
+    }
+
+    // frob:tests crates/regolith-sem/src/symmetry.rs::OrbitTable.split_on_break kind="unit"
+    #[test]
+    fn split_on_break_conservatively_collapses_the_whole_group() {
+        let mut t = OrbitTable::new();
+        t.contribute(SymmetryGroup::Cyclic(6));
+        let broken = t.split_on_break(super::OrbitId(0));
+        assert_eq!(broken.group(), Some(&SymmetryGroup::Trivial));
+        assert!(!broken.any_is_legal(super::OrbitId(0)));
     }
 }

@@ -10,6 +10,7 @@ use crate::position::LineIndex;
 /// replaces it with its canonical spelling, or `None` if already
 /// canonical (no-op edit).
 #[must_use]
+// frob:doc docs/modules/regolith-ls.md#formatting
 pub fn format_document(text: &str, index: &LineIndex) -> Option<TextEdit> {
     let formatted = regolith_api::format(text);
     if formatted == text {
@@ -30,6 +31,7 @@ mod tests {
     use super::format_document;
     use crate::position::LineIndex;
 
+    // frob:tests crates/regolith-ls/src/formatting.rs::format_document kind="unit"
     #[test]
     fn already_canonical_text_yields_no_edit() {
         let text = regolith_api::format("part Widget:\n    mass: 5 g\n");

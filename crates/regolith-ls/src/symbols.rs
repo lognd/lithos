@@ -9,6 +9,7 @@ use crate::position::LineIndex;
 
 /// Every top-level declaration in `text`, as an LSP outline entry.
 #[must_use]
+// frob:doc docs/modules/regolith-ls.md#symbols
 pub fn document_symbols(text: &str, index: &LineIndex) -> Vec<DocumentSymbol> {
     let path = camino::Utf8PathBuf::from("<ls>");
     let parse = regolith_syntax::parse(text, &path);
@@ -83,6 +84,7 @@ mod tests {
     use super::document_symbols;
     use crate::position::LineIndex;
 
+    // frob:tests crates/regolith-ls/src/symbols.rs::document_symbols kind="unit"
     #[test]
     fn top_level_parts_become_symbols() {
         let text = "part Widget:\n    mass: 5 g\n";

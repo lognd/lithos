@@ -12,6 +12,7 @@ use lsp_types::{Position, Range};
 /// of every line, letting byte offset <-> LSP `Position` conversion run
 /// in O(log n) without rescanning the text.
 #[derive(Debug, Clone)]
+// frob:doc docs/modules/regolith-ls.md#position
 pub struct LineIndex {
     /// Byte offset of the start of each line (line 0 starts at 0).
     line_starts: Vec<u32>,
@@ -22,6 +23,7 @@ pub struct LineIndex {
 impl LineIndex {
     /// Build a line index over `text`.
     #[must_use]
+    // frob:doc docs/modules/regolith-ls.md#position
     pub fn new(text: &str) -> LineIndex {
         let mut line_starts = vec![0u32];
         for (i, b) in text.bytes().enumerate() {
@@ -39,6 +41,7 @@ impl LineIndex {
     /// Convert a UTF-8 byte offset into an LSP UTF-16 `Position`. Offsets
     /// past the end of the text clamp to the last valid position.
     #[must_use]
+    // frob:doc docs/modules/regolith-ls.md#position
     pub fn position(&self, byte_offset: usize) -> Position {
         #[allow(clippy::cast_possible_truncation)]
         let byte_offset = (byte_offset as u32).min(self.text.len().try_into().unwrap_or(u32::MAX));
@@ -66,6 +69,7 @@ impl LineIndex {
     /// Convert an LSP UTF-16 `Position` back into a UTF-8 byte offset.
     /// Out-of-range lines/characters clamp to the nearest valid offset.
     #[must_use]
+    // frob:doc docs/modules/regolith-ls.md#position
     pub fn offset(&self, position: Position) -> usize {
         let line = (position.line as usize).min(self.line_starts.len() - 1);
         let line_start = self.line_starts[line] as usize;
@@ -87,6 +91,7 @@ impl LineIndex {
 
     /// Convert a byte range `[start, end)` into an LSP `Range`.
     #[must_use]
+    // frob:doc docs/modules/regolith-ls.md#position
     pub fn range(&self, start: usize, end: usize) -> Range {
         Range {
             start: self.position(start),
@@ -100,6 +105,7 @@ mod tests {
     use super::LineIndex;
     use lsp_types::Position;
 
+    // frob:tests crates/regolith-ls/src/position.rs::LineIndex.position kind="unit"
     #[test]
     fn ascii_single_line_round_trips() {
         let idx = LineIndex::new("hello world");

@@ -36,6 +36,7 @@ use crate::sketch::WalkPromotion;
 /// numerically resolve it (that is the harness/DFM pack's job); it only
 /// records WHAT was spelled and WHY (its provenance class).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-ir.md#feature-program
 pub struct ResolvedFeatureParam {
     /// The raw parameter text as spelled in source.
     pub text: String,
@@ -51,6 +52,7 @@ pub struct ResolvedFeatureParam {
 /// reads, `claim_scope::feature_calls_in_decl` -- one traversal, two
 /// consumers, AD-17/NO DUPLICATION).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-ir.md#feature-program
 pub struct FeatureOp {
     /// The domain kind this op materializes (`hole`, `bend`) -- mirrors
     /// `regolith_sem::EntityKind`'s two domain variants at the string
@@ -84,6 +86,7 @@ pub struct FeatureOp {
 /// plausible value, and the compiler never computes geometry.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
+// frob:doc docs/modules/regolith-ir.md#feature-program
 pub enum DerivedFact {
     /// The value, with the declared source fact cited verbatim.
     Declared {
@@ -107,6 +110,7 @@ pub enum DerivedFact {
 /// (D130) at the declared-fact level -- unit resolution and interval
 /// emission are the consumer's job.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-ir.md#feature-program
 pub struct FlowSegmentIr {
     /// The seam's per-segment environment slot, from the op kind
     /// (`bore` for a hole op).
@@ -132,6 +136,7 @@ pub struct FlowSegmentIr {
 /// source): the feature-op chain between the cavity query's named
 /// inlet and outlet port faces, in op-graph (source) order.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-ir.md#feature-program
 pub struct FlowPathIr {
     /// D130's pinned selector convention: `<stage_name>.wetted`.
     pub selector: String,
@@ -150,6 +155,7 @@ pub struct FlowPathIr {
 // `Eq` is deliberately absent: the sketch payload carries `f64`
 // headings/lengths (`PartialEq` only), matching `SketchClosure`.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+// frob:doc docs/modules/regolith-ir.md#feature-program
 pub struct FeatureProgram {
     /// The declaration name this program belongs to.
     pub part_name: String,

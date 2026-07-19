@@ -23,6 +23,7 @@ use serde::{Deserialize, Serialize};
 /// imposes a state on the net (a driver pin for `elec`, a pressure
 /// imposer for `fluid`).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-sem.md#net-core
 pub struct Terminal {
     /// The owning component's ref.
     pub component: String,
@@ -37,6 +38,7 @@ pub struct Terminal {
 /// them (AD-6: callers are responsible for deterministic input order;
 /// this module never reorders).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-sem.md#net-core
 pub struct NetEntry {
     /// The net's name.
     pub name: String,
@@ -48,6 +50,7 @@ pub struct NetEntry {
 /// terminals that triggered it (`"component.terminal"` form), and the
 /// discipline's rendered message.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-sem.md#net-core
 pub struct Violation {
     /// The offending net's name.
     pub net: String,
@@ -60,6 +63,7 @@ pub struct Violation {
 /// A net discipline: a check predicate over one net's imposer terminals.
 /// Disciplines are DATA (a predicate + message), not subclass logic --
 /// the shared traversal in [`first_violation`] is the only "core".
+// frob:doc docs/modules/regolith-sem.md#net-core
 pub trait NetDiscipline {
     /// Check one net's imposer terminals (already `"component.terminal"`
     /// formatted, in ledger order). Returns the violation message when
@@ -73,6 +77,7 @@ pub trait NetDiscipline {
 /// `regolith.realizer.elec.netlist.check_single_driver` -- the message
 /// text is byte-identical on purpose (goldens depend on it).
 #[derive(Debug, Clone, Copy, Default)]
+// frob:doc docs/modules/regolith-sem.md#net-core
 pub struct ElecDiscipline;
 
 impl NetDiscipline for ElecDiscipline {
@@ -95,6 +100,7 @@ impl NetDiscipline for ElecDiscipline {
 /// `regolith_lower::fluid` to the E0201 (`IMPOSER_FREE_SUBNET`)
 /// diagnostic (see the fluorite negative corpus `41_fluo_no_imposer`).
 #[derive(Debug, Clone, Copy, Default)]
+// frob:doc docs/modules/regolith-sem.md#net-core
 pub struct FluidDiscipline;
 
 impl NetDiscipline for FluidDiscipline {
@@ -126,6 +132,7 @@ impl NetDiscipline for FluidDiscipline {
 /// discipline-as-data plugin, so it is escalated rather than invented
 /// here; see the WO-47 report for the follow-up.
 #[derive(Debug, Clone, Copy, Default)]
+// frob:doc docs/modules/regolith-sem.md#net-core
 pub struct LoadPathDiscipline;
 
 impl NetDiscipline for LoadPathDiscipline {
@@ -150,6 +157,7 @@ impl NetDiscipline for LoadPathDiscipline {
 /// E0204. See [`LoadPathDiscipline`]'s doc comment for the reachability
 /// checks (E0205/E0206) this module does NOT cover.
 #[derive(Debug, Clone, Copy, Default)]
+// frob:doc docs/modules/regolith-sem.md#net-core
 pub struct CirculationDiscipline;
 
 impl NetDiscipline for CirculationDiscipline {
@@ -170,6 +178,7 @@ impl NetDiscipline for CirculationDiscipline {
 /// exactly: the first offending net short-circuits the whole check, it
 /// does not accumulate every violation.
 #[must_use]
+// frob:doc docs/modules/regolith-sem.md#net-core
 pub fn first_violation<D: NetDiscipline>(discipline: &D, nets: &[NetEntry]) -> Option<Violation> {
     for net in nets {
         let imposers: Vec<String> = net
@@ -204,6 +213,7 @@ mod tests {
         }
     }
 
+    // frob:tests crates/regolith-sem/src/net_core.rs::first_violation kind="unit"
     #[test]
     fn elec_single_driver_passes_clean_nets() {
         let nets = vec![NetEntry {

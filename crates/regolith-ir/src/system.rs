@@ -22,6 +22,7 @@ use crate::nodes::{BoundaryEntry, SystemNode};
 /// are tolerated envelopes). A wider enclosing envelope means the child
 /// would be used outside what it was proven under: `E0407`.
 #[must_use]
+// frob:doc docs/modules/regolith-ir.md#system
 pub fn check_boundary_subsumption(node: &SystemNode) -> Vec<Diagnostic> {
     let mut diags = Vec::new();
     for (child_name, child_entries) in &node.child_boundaries {
@@ -79,6 +80,7 @@ fn envelope_escapes(parent: &BoundaryEntry, child: &BoundaryEntry) -> Option<&'s
 /// draws (`draws: reserves`) carry no magnitude and are not summed -- the
 /// check bites only on quantified over-allocation it can prove.
 #[must_use]
+// frob:doc docs/modules/regolith-ir.md#system
 pub fn check_target_reserves(node: &SystemNode) -> Vec<Diagnostic> {
     let mut diags = Vec::new();
     for reserve in &node.reserves {
@@ -126,6 +128,7 @@ pub fn check_target_reserves(node: &SystemNode) -> Vec<Diagnostic> {
 /// participation outside the ledger -- a conservation leak, `E0420`
 /// (regolith/13 INV-15: nothing participates outside the ledger).
 #[must_use]
+// frob:doc docs/modules/regolith-ir.md#system
 pub fn check_flow_ledger(node: &SystemNode) -> Vec<Diagnostic> {
     let declared: IndexSet<&str> = node.flow_endpoints.iter().map(String::as_str).collect();
     let mut diags = Vec::new();
@@ -161,6 +164,7 @@ pub fn check_flow_ledger(node: &SystemNode) -> Vec<Diagnostic> {
 /// not race with. Two-or-more realizers of the same intent IS a
 /// violation, `E0433`, naming both sides.
 #[must_use]
+// frob:doc docs/modules/regolith-ir.md#system
 pub fn check_realization_ledger(node: &SystemNode) -> Vec<Diagnostic> {
     let mut diags = Vec::new();
     for intent in &node.compute_intents {
@@ -243,6 +247,7 @@ mod tests {
         }
     }
 
+    // frob:tests crates/regolith-ir/src/system.rs::check_boundary_subsumption kind="unit"
     #[test]
     fn boundary_within_child_is_clean() {
         let mut n = node();
@@ -279,6 +284,7 @@ mod tests {
         assert!(check_boundary_subsumption(&n).is_empty());
     }
 
+    // frob:tests crates/regolith-ir/src/system.rs::check_target_reserves kind="unit"
     #[test]
     fn reserve_within_budget_is_clean() {
         let mut n = node();
@@ -322,6 +328,7 @@ mod tests {
         assert!(d[0].message.contains("debug"));
     }
 
+    // frob:tests crates/regolith-ir/src/system.rs::check_flow_ledger kind="unit"
     #[test]
     fn flow_between_declared_endpoints_is_clean() {
         let mut n = node();
@@ -347,6 +354,7 @@ mod tests {
         assert!(d[0].message.contains("ghost"));
     }
 
+    // frob:tests crates/regolith-ir/src/system.rs::check_realization_ledger kind="unit"
     #[test]
     fn exactly_one_realization_is_clean() {
         let mut n = node();

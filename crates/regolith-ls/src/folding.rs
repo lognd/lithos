@@ -8,6 +8,7 @@ use crate::position::LineIndex;
 
 /// Folding ranges over every top-level declaration in `text`.
 #[must_use]
+// frob:doc docs/modules/regolith-ls.md#folding
 pub fn folding_ranges(text: &str, index: &LineIndex) -> Vec<FoldingRange> {
     let path = camino::Utf8PathBuf::from("<ls>");
     let parse = regolith_syntax::parse(text, &path);
@@ -44,6 +45,7 @@ mod tests {
     use super::folding_ranges;
     use crate::position::LineIndex;
 
+    // frob:tests crates/regolith-ls/src/folding.rs::folding_ranges kind="unit"
     #[test]
     fn multiline_decl_folds() {
         let text = "part Widget:\n    mass: 5 g\n    volume: 2 cm3\n";

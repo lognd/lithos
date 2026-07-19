@@ -20,6 +20,7 @@ use crate::position::LineIndex;
 /// if any. `root` is the workspace root, used to locate a shipped calc
 /// book for the artifact-fed claim half; static hover needs no root.
 #[must_use]
+// frob:doc docs/modules/regolith-ls.md#hover
 pub fn hover_at(
     text: &str,
     index: &LineIndex,
@@ -126,6 +127,7 @@ mod tests {
         Utf8PathBuf::from_path_buf(dir).unwrap()
     }
 
+    // frob:tests crates/regolith-ls/src/hover.rs::hover_at kind="unit"
     #[test]
     fn hover_over_a_decl_name_shows_kind_and_no_artifacts_tail() {
         let text = "part Widget:\n    mass: 5 g\n";

@@ -10,6 +10,7 @@ use crate::position::LineIndex;
 
 /// The token-type legend this server declares in `initialize` and every
 /// token index below is relative to (order is the wire contract).
+// frob:doc docs/modules/regolith-ls.md#semtok
 pub const LEGEND: &[SemanticTokenType] = &[
     SemanticTokenType::KEYWORD,
     SemanticTokenType::NUMBER,
@@ -27,6 +28,7 @@ const TY_VARIABLE: u32 = 4;
 /// Build the semantic-tokens legend for `initialize`'s capability
 /// response.
 #[must_use]
+// frob:doc docs/modules/regolith-ls.md#semtok
 pub fn legend() -> SemanticTokensLegend {
     SemanticTokensLegend {
         token_types: LEGEND.to_vec(),
@@ -36,6 +38,7 @@ pub fn legend() -> SemanticTokensLegend {
 
 /// Compute the full delta-encoded semantic token stream for `text`.
 #[must_use]
+// frob:doc docs/modules/regolith-ls.md#semtok
 pub fn tokens_for(text: &str, index: &LineIndex) -> Vec<SemanticToken> {
     let path = camino::Utf8PathBuf::from("<ls>");
     let parse = regolith_syntax::parse(text, &path);
@@ -148,9 +151,17 @@ fn is_keyword_kind(kind: SyntaxKind) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::tokens_for;
+    use super::{legend, tokens_for, LEGEND};
     use crate::position::LineIndex;
 
+    // frob:tests crates/regolith-ls/src/semtok.rs::legend kind="unit"
+    #[test]
+    fn legend_carries_every_declared_token_type_in_order() {
+        let l = legend();
+        assert_eq!(l.token_types, LEGEND.to_vec());
+    }
+
+    // frob:tests crates/regolith-ls/src/semtok.rs::tokens_for kind="unit"
     #[test]
     fn keywords_and_idents_are_classified() {
         let text = "part Widget:\n    mass: 5 g\n";

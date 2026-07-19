@@ -13,6 +13,7 @@ const MANIFEST: &str = "magnetite.toml";
 /// looking for `magnetite.toml`; if none is found anywhere up to the
 /// filesystem root, `opened` itself is the root (deliverable 1).
 #[must_use]
+// frob:doc docs/modules/regolith-ls.md#workspace
 pub fn discover_root(opened: &Utf8Path) -> Utf8PathBuf {
     let mut dir = if opened.is_dir() {
         Some(opened.to_path_buf())
@@ -33,6 +34,7 @@ mod tests {
     use super::discover_root;
     use camino::Utf8PathBuf;
 
+    // frob:tests crates/regolith-ls/src/workspace.rs::discover_root kind="unit"
     #[test]
     fn falls_back_to_opened_folder_when_no_manifest_found() {
         let dir = std::env::temp_dir().join(format!("regolith-ls-wsroot-{}", std::process::id()));

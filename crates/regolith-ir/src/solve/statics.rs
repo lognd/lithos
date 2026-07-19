@@ -19,6 +19,7 @@ use super::{residual_tol, solve_verified, OutwardBounds};
 /// spelling of a mating's `dof_removed` entries this solve recognizes.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
+// frob:doc docs/modules/regolith-ir.md#solve
 pub enum ReactionDir {
     /// A horizontal force reaction.
     Fx,
@@ -33,6 +34,7 @@ impl ReactionDir {
     /// into a reaction direction; `None` for labels this planar solve
     /// does not model (they stay the DOF ledger's business).
     #[must_use]
+    // frob:doc docs/modules/regolith-ir.md#solve
     pub fn parse(label: &str) -> Option<ReactionDir> {
         match label.trim().to_ascii_lowercase().as_str() {
             "fx" => Some(ReactionDir::Fx),
@@ -44,6 +46,7 @@ impl ReactionDir {
 
     /// The canonical lowercase label (`fx`/`fy`/`mz`).
     #[must_use]
+    // frob:doc docs/modules/regolith-ir.md#solve
     pub fn label(self) -> &'static str {
         match self {
             ReactionDir::Fx => "fx",
@@ -56,6 +59,7 @@ impl ReactionDir {
 /// A support point derived from one mating: its in-plane position and
 /// the reaction directions its removed DOF constrain.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-ir.md#solve
 pub struct Support {
     /// The mating this support comes from (names the reaction).
     pub mating: String,
@@ -69,6 +73,7 @@ pub struct Support {
 
 /// One external applied load: a force and moment acting at a point.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-ir.md#solve
 pub struct AppliedLoad {
     /// Load name (for the diagnostic and the fed envelope entry).
     pub name: String,
@@ -87,6 +92,7 @@ pub struct AppliedLoad {
 /// The planar statics problem for one assembly: supports (from
 /// matings, in source order) and applied loads (in source order).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-ir.md#solve
 pub struct StaticsProblem {
     /// The system/assembly node this problem was built from.
     pub system: String,
@@ -98,6 +104,7 @@ pub struct StaticsProblem {
 
 /// One computed reaction component, outward-rounded (AD-6).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-ir.md#solve
 pub struct Reaction {
     /// The mating that carries this reaction.
     pub mating: String,
@@ -110,6 +117,7 @@ pub struct Reaction {
 /// The statics solve result: reactions (empty when the solve could not
 /// run) plus any diagnostics. Diagnostics are values (AD-7).
 #[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-ir.md#solve
 pub struct StaticsSolution {
     /// Computed reactions in support source order, direction order.
     pub reactions: Vec<Reaction>,
@@ -129,6 +137,7 @@ pub struct StaticsSolution {
 /// Non-finite inputs and non-finite solutions are also `E0440`: no NaN
 /// ever escapes (AD-6).
 #[must_use]
+// frob:doc docs/modules/regolith-ir.md#solve
 pub fn solve_rigid_statics(problem: &StaticsProblem) -> StaticsSolution {
     let span = tracing::info_span!("solve.statics", system = %problem.system);
     let _enter = span.enter();
@@ -311,6 +320,7 @@ mod tests {
         );
     }
 
+    // frob:tests crates/regolith-ir/src/solve/statics.rs::solve_rigid_statics kind="unit"
     #[test]
     fn bolted_bracket_matches_the_hand_calculation() {
         let sol = solve_rigid_statics(&bracket());

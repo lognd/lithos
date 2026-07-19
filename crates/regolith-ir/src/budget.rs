@@ -29,6 +29,7 @@ fn literal_limit(vs: &ValueSource) -> Option<Qty> {
 
 /// One named contribution to a budget (an interval-valued draw).
 #[derive(Debug, Clone)]
+// frob:doc docs/modules/regolith-ir.md#budget
 pub struct Contribution {
     /// Contributor name (for the E0432 diagnostic).
     pub name: String,
@@ -45,6 +46,7 @@ pub struct Contribution {
 /// # Errors
 /// Returns an E0432 diagnostic naming the worst contributors when the
 /// budget cannot close.
+// frob:doc docs/modules/regolith-ir.md#budget
 pub fn close_budget(
     budget: &Budget,
     contributions: &[Contribution],
@@ -210,6 +212,7 @@ mod tests {
     // Well-formed close and over-budget E0432 (naming worst contributors)
     // land with the arithmetic; the interval outward-rounding lives in
     // regolith-qty (WO-03).
+    // frob:tests crates/regolith-ir/src/budget.rs::close_budget kind="unit"
     #[test]
     fn budget_closes_and_overflows() {
         let b = budget(100.0);

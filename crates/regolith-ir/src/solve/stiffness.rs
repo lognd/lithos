@@ -20,6 +20,7 @@ use super::{residual_tol, solve_verified, OutwardBounds};
 
 /// One lumped spring between two named nodes.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-ir.md#solve
 pub struct Spring {
     /// Spring name (the mating/member it models).
     pub name: String,
@@ -34,6 +35,7 @@ pub struct Spring {
 /// A lumped scalar spring network: springs in source order plus the
 /// grounded (fixed) node names.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-ir.md#solve
 pub struct StiffnessNetwork {
     /// The system/assembly the network was assembled from.
     pub system: String,
@@ -46,6 +48,7 @@ pub struct StiffnessNetwork {
 /// The effective-stiffness solve result. `k_eff` is `None` when a
 /// diagnostic prevented the solve; it is never non-finite.
 #[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-ir.md#solve
 pub struct StiffnessSolution {
     /// Effective stiffness at the queried node, outward-rounded.
     pub k_eff: Option<OutwardBounds>,
@@ -63,6 +66,7 @@ pub struct StiffnessSolution {
 /// as are a non-positive/non-finite spring constant, an unknown query
 /// node, and a grounded query node. Never a panic, never NaN.
 #[must_use]
+// frob:doc docs/modules/regolith-ir.md#solve
 pub fn effective_stiffness(net: &StiffnessNetwork, at: &str) -> StiffnessSolution {
     let span = tracing::info_span!("solve.stiffness", system = %net.system, at);
     let _enter = span.enter();
@@ -196,6 +200,7 @@ mod tests {
         }
     }
 
+    // frob:tests crates/regolith-ir/src/solve/stiffness.rs::effective_stiffness kind="unit"
     #[test]
     fn series_springs_match_the_hand_calculation() {
         let sol = effective_stiffness(&series(), "tip");

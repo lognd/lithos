@@ -124,6 +124,7 @@ const BODY_KEYWORDS: &[&str] = &[
 /// `keyword_kind` table so this list cannot silently drift from the
 /// grammar (WO-38: no second grammar, AD-24).
 #[must_use]
+// frob:doc docs/modules/regolith-ls.md#completion
 pub fn keyword_completions() -> Vec<CompletionItem> {
     keyword_items(KEYWORDS)
 }
@@ -132,6 +133,7 @@ pub fn keyword_completions() -> Vec<CompletionItem> {
 /// whether the cursor sits inside a `Decl` body or at top level, plus
 /// every in-scope declaration name in `text`.
 #[must_use]
+// frob:doc docs/modules/regolith-ls.md#completion
 pub fn completions_at(text: &str, index: &LineIndex, position: Position) -> Vec<CompletionItem> {
     let offset = index.offset(position);
     let path = camino::Utf8PathBuf::from("<ls>");
@@ -194,6 +196,7 @@ mod tests {
     use super::{completions_at, keyword_completions, BODY_KEYWORDS, KEYWORDS, TOP_LEVEL_KEYWORDS};
     use crate::position::LineIndex;
 
+    // frob:tests crates/regolith-ls/src/completion.rs::keyword_completions kind="unit"
     #[test]
     fn every_listed_keyword_is_a_real_grammar_keyword() {
         let items = keyword_completions();
@@ -207,6 +210,7 @@ mod tests {
         }
     }
 
+    // frob:tests crates/regolith-ls/src/completion.rs::completions_at kind="unit"
     #[test]
     fn top_level_position_offers_decl_starters_not_body_keywords() {
         let text = "part Widget:\n    mass: 5 g\n";

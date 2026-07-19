@@ -32,6 +32,7 @@ use regolith_util::IndexMap;
 /// `==` ban turns on (regolith/02 sec. 2: continuous quantities forbid
 /// exact equality; discrete counts permit it).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+// frob:doc docs/modules/regolith-sem.md#resolve
 pub enum QuantityClass {
     /// A unit-bearing continuous quantity (`1mm`, `3.3V`): `==` is banned.
     Continuous,
@@ -61,6 +62,7 @@ fn strip_parens(node: &SyntaxNode) -> SyntaxNode {
 /// so `Field::value` yields `None` for it -- which is why counts fall to
 /// `Unknown` and are simply never banned).
 #[must_use]
+// frob:doc docs/modules/regolith-sem.md#resolve
 pub fn classify_value(node: &SyntaxNode) -> QuantityClass {
     let n = strip_parens(node);
     if n.kind() != SyntaxKind::QuantityLit {
@@ -81,6 +83,7 @@ pub fn classify_value(node: &SyntaxNode) -> QuantityClass {
 /// declaration, keyed by field name (source order). The name-resolution
 /// table the `==` ban consults.
 #[must_use]
+// frob:doc docs/modules/regolith-sem.md#resolve
 pub fn field_classes(decl: &Decl) -> IndexMap<String, QuantityClass> {
     let mut table: IndexMap<String, QuantityClass> = IndexMap::new();
     for field in decl.fields() {
@@ -136,6 +139,7 @@ fn bin_operator(node: &SyntaxNode) -> Option<SyntaxKind> {
 /// (never literals). Discrete/count and unclassifiable operands are left
 /// alone (no false positive on legal `Count` equality).
 #[must_use]
+// frob:doc docs/modules/regolith-sem.md#resolve
 pub fn check_equality_ban(decl: &Decl, file: &Utf8PathBuf) -> Vec<Diagnostic> {
     let span = tracing::debug_span!("sem.equality_ban", subject = decl.name());
     let _enter = span.enter();
@@ -201,6 +205,9 @@ mod tests {
             .collect()
     }
 
+    // frob:tests crates/regolith-sem/src/resolve.rs::classify_value kind="unit"
+    // frob:tests crates/regolith-sem/src/resolve.rs::field_classes kind="unit"
+    // frob:tests crates/regolith-sem/src/resolve.rs::check_equality_ban kind="unit"
     #[test]
     fn equality_between_two_continuous_names_is_flagged() {
         // FE-8: `a` and `b` both resolve to continuous quantities, so

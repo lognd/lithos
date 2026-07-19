@@ -35,6 +35,7 @@ use super::{residual_tol, solve_verified, OutwardBounds};
 /// The closure solve result. Diagnostics are values (AD-7); resolved
 /// free lengths are INV-21 Cause-typed resolutions.
 #[derive(Debug, Clone, Default)]
+// frob:doc docs/modules/regolith-ir.md#sketch
 pub struct SketchSolution {
     /// The residual magnitude after closure (outward-rounded); `None`
     /// when the solve could not run.
@@ -149,6 +150,7 @@ fn accumulate_gap_and_free(sketch: &SketchClosure) -> ([f64; 2], f64, Vec<(&str,
 /// vertex coordinate (`interpreter._profile_face_with_arcs`), so
 /// `arcs[k].to_index` indexes `vertices`.
 #[derive(Debug, Clone, PartialEq, serde::Serialize)]
+// frob:doc docs/modules/regolith-ir.md#sketch
 pub struct ResolvedOutline {
     /// Vertex positions `(x, y)` in the closure unit, in walk order: the
     /// origin first, then one vertex per segment END (cumulative). The
@@ -166,6 +168,7 @@ pub struct ResolvedOutline {
 /// at `vertices[to_index]` is a real arc of `radius` bulging `sense`
 /// (`left`/`right`), never a straight chord.
 #[derive(Debug, Clone, PartialEq, serde::Serialize)]
+// frob:doc docs/modules/regolith-ir.md#sketch
 pub struct ResolvedArc {
     /// Index into [`ResolvedOutline::vertices`] of this arc's END vertex.
     pub to_index: usize,
@@ -188,6 +191,7 @@ pub struct ResolvedArc {
 /// solve cannot place). The caller verifies closure separately via
 /// [`close_walk`]; this only places the vertices a determined walk has.
 #[must_use]
+// frob:doc docs/modules/regolith-ir.md#sketch
 pub fn resolve_outline(sketch: &SketchClosure) -> Option<ResolvedOutline> {
     let span = tracing::info_span!("solve.sketch.outline", profile = %sketch.profile);
     let _enter = span.enter();
@@ -274,6 +278,7 @@ pub fn resolve_outline(sketch: &SketchClosure) -> Option<ResolvedOutline> {
 ///
 /// Non-finite inputs are `E0440`. Never a panic, never NaN out.
 #[must_use]
+// frob:doc docs/modules/regolith-ir.md#sketch
 pub fn close_walk(sketch: &SketchClosure) -> SketchSolution {
     let span = tracing::info_span!("solve.sketch", profile = %sketch.profile);
     let _enter = span.enter();
@@ -638,6 +643,7 @@ mod tests {
         }
     }
 
+    // frob:tests crates/regolith-ir/src/solve/sketch.rs::resolve_outline kind="unit"
     #[test]
     fn beam_section_outline_resolves_exact_endpoints() {
         // F123/D231/WO116-F1 acceptance: the resolved outline places
@@ -710,6 +716,7 @@ mod tests {
         }
     }
 
+    // frob:tests crates/regolith-ir/src/solve/sketch.rs::close_walk kind="unit"
     #[test]
     fn consistent_rectangle_closes_with_zero_residual() {
         let sol = close_walk(&rectangle(40.0));

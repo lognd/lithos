@@ -23,6 +23,7 @@ use crate::{
 /// The server capabilities announced at `initialize` -- exactly the
 /// LSP surface WO-38 deliverables 3-6 implement, nothing speculative.
 #[must_use]
+// frob:doc docs/modules/regolith-ls.md#server
 pub fn capabilities() -> ServerCapabilities {
     ServerCapabilities {
         text_document_sync: Some(TextDocumentSyncCapability::Kind(TextDocumentSyncKind::FULL)),
@@ -60,6 +61,7 @@ pub fn capabilities() -> ServerCapabilities {
 /// The server's mutable state: the discovered workspace root and every
 /// currently open document's full text (full-text sync v1, deliverable
 /// 1 -- files are small).
+// frob:doc docs/modules/regolith-ls.md#server
 pub struct Server {
     root: Utf8PathBuf,
     docs: HashMap<Url, String>,
@@ -69,6 +71,7 @@ impl Server {
     /// Start a server rooted at `root` (already resolved via
     /// [`workspace::discover_root`]).
     #[must_use]
+    // frob:doc docs/modules/regolith-ls.md#server
     pub fn new(root: Utf8PathBuf) -> Server {
         Server {
             root,
@@ -78,23 +81,27 @@ impl Server {
 
     /// The discovered workspace root.
     #[must_use]
+    // frob:doc docs/modules/regolith-ls.md#server
     pub fn root(&self) -> &Utf8PathBuf {
         &self.root
     }
 
     /// Record (or update) an open document's full text.
+    // frob:doc docs/modules/regolith-ls.md#server
     pub fn open(&mut self, uri: Url, text: String) {
         self.docs.insert(uri, text);
     }
 
     /// Forget a closed document (the on-disk text is now authoritative
     /// again for any subsequent workspace check).
+    // frob:doc docs/modules/regolith-ls.md#server
     pub fn close(&mut self, uri: &Url) {
         self.docs.remove(uri);
     }
 
     /// The current in-memory text for `uri`, if open.
     #[must_use]
+    // frob:doc docs/modules/regolith-ls.md#server
     pub fn text(&self, uri: &Url) -> Option<&str> {
         self.docs.get(uri).map(String::as_str)
     }
@@ -106,6 +113,7 @@ impl Server {
     /// (which reads from disk) still sees them -- see the module-level
     /// gap note in `diagnostics.rs` about the tiering cut.
     #[must_use]
+    // frob:doc docs/modules/regolith-ls.md#server
     pub fn check_diagnostics(
         &self,
     ) -> Option<std::collections::BTreeMap<Utf8PathBuf, Vec<lsp_types::Diagnostic>>> {
@@ -125,6 +133,7 @@ impl Server {
 
     /// `textDocument/hover`.
     #[must_use]
+    // frob:doc docs/modules/regolith-ls.md#server
     pub fn hover(&self, uri: &Url, position: Position) -> Option<lsp_types::Hover> {
         let text = self.resolve_text(uri)?;
         let index = LineIndex::new(&text);
@@ -133,6 +142,7 @@ impl Server {
 
     /// `textDocument/documentSymbol`.
     #[must_use]
+    // frob:doc docs/modules/regolith-ls.md#server
     pub fn document_symbols(&self, uri: &Url) -> Option<DocumentSymbolResponse> {
         let text = self.resolve_text(uri)?;
         let index = LineIndex::new(&text);
@@ -143,6 +153,7 @@ impl Server {
 
     /// `textDocument/foldingRange`.
     #[must_use]
+    // frob:doc docs/modules/regolith-ls.md#server
     pub fn folding_ranges(&self, uri: &Url) -> Option<Vec<lsp_types::FoldingRange>> {
         let text = self.resolve_text(uri)?;
         let index = LineIndex::new(&text);
@@ -151,6 +162,7 @@ impl Server {
 
     /// `textDocument/formatting`.
     #[must_use]
+    // frob:doc docs/modules/regolith-ls.md#server
     pub fn format(&self, uri: &Url) -> Option<Vec<lsp_types::TextEdit>> {
         let text = self.resolve_text(uri)?;
         let index = LineIndex::new(&text);
@@ -163,6 +175,7 @@ impl Server {
 
     /// `textDocument/semanticTokens/full`.
     #[must_use]
+    // frob:doc docs/modules/regolith-ls.md#server
     pub fn semantic_tokens(&self, uri: &Url) -> Option<SemanticTokensResult> {
         let text = self.resolve_text(uri)?;
         let index = LineIndex::new(&text);
@@ -174,6 +187,7 @@ impl Server {
 
     /// `textDocument/codeAction`.
     #[must_use]
+    // frob:doc docs/modules/regolith-ls.md#server
     pub fn code_actions(
         &self,
         diags: &[lsp_types::Diagnostic],
@@ -188,6 +202,7 @@ impl Server {
     /// keywords + in-scope decl names; registry ids are a named cut,
     /// see `completion.rs`).
     #[must_use]
+    // frob:doc docs/modules/regolith-ls.md#server
     pub fn completions(&self, uri: &Url, position: Position) -> Vec<lsp_types::CompletionItem> {
         let Some(text) = self.resolve_text(uri) else {
             return completion::keyword_completions();
@@ -199,6 +214,7 @@ impl Server {
     /// `textDocument/definition` (deliverable 6): every reachable
     /// definition of the identifier under the cursor.
     #[must_use]
+    // frob:doc docs/modules/regolith-ls.md#server
     pub fn definition(&self, uri: &Url, position: Position) -> Option<Vec<lsp_types::Location>> {
         let path = uri_to_path(uri)?;
         let text = self.resolve_text(uri)?;
@@ -210,6 +226,7 @@ impl Server {
     /// `textDocument/references` (deliverable 6): every occurrence of
     /// the identifier under the cursor, across every reachable file.
     #[must_use]
+    // frob:doc docs/modules/regolith-ls.md#server
     pub fn references(&self, uri: &Url, position: Position) -> Option<Vec<lsp_types::Location>> {
         let path = uri_to_path(uri)?;
         let text = self.resolve_text(uri)?;
@@ -225,6 +242,7 @@ impl Server {
     /// ambiguous (more than one reachable file defines it) -- the
     /// caller surfaces this as an LSP error response, never a partial
     /// edit.
+    // frob:doc docs/modules/regolith-ls.md#server
     pub fn rename(
         &self,
         uri: &Url,
@@ -261,6 +279,7 @@ impl Server {
 /// falling back to the current directory when the client gave neither
 /// (deliverable 1).
 #[must_use]
+// frob:doc docs/modules/regolith-ls.md#server
 pub fn root_from_initialize(params: &lsp_types::InitializeParams) -> Utf8PathBuf {
     #[allow(deprecated)] // `root_uri` still the only single-folder signal a v1-3 client sends
     let root_uri = params.root_uri.as_ref();
@@ -287,6 +306,7 @@ mod tests {
         manifest.join("../../examples").join(rel)
     }
 
+    // frob:tests crates/regolith-ls/src/server.rs::Server.hover kind="unit"
     #[test]
     fn hover_reads_from_open_buffer_over_disk() {
         let mut server = Server::new(examples_dir("flagships/cubesat"));
@@ -300,6 +320,7 @@ mod tests {
         assert!(hover.is_some());
     }
 
+    // frob:tests crates/regolith-ls/src/server.rs::Server.document_symbols kind="unit"
     #[test]
     fn document_symbols_over_a_corpus_file() {
         let dir = examples_dir("flagships/cubesat");
@@ -331,5 +352,122 @@ mod tests {
         assert!(server.text(&uri).is_some());
         server.close(&uri);
         assert!(server.text(&uri).is_none());
+    }
+
+    /// A scratch workspace with one well-formed `.hema` file, for the
+    /// handler tests below that need a real on-disk root (`definition`/
+    /// `references`/`rename`/`check_diagnostics` all resolve paths).
+    fn scratch_workspace(src: &str) -> (Utf8PathBuf, Url) {
+        let dir = std::env::temp_dir().join(format!(
+            "regolith-ls-server-test-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::SystemTime::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        let dir = Utf8PathBuf::from_path_buf(dir).unwrap();
+        std::fs::create_dir_all(&dir).unwrap();
+        let file = dir.join(format!("widget.{}", Language::Hematite.extension()));
+        std::fs::write(&file, src).unwrap();
+        let uri = Url::from_file_path(&file).unwrap();
+        (dir, uri)
+    }
+
+    // frob:tests crates/regolith-ls/src/server.rs::Server.open kind="unit"
+    // frob:tests crates/regolith-ls/src/server.rs::Server.check_diagnostics kind="unit"
+    #[test]
+    fn check_diagnostics_runs_the_real_pipeline_over_the_workspace() {
+        let (dir, _uri) = scratch_workspace("part Widget:\n    mass: 5 g\n");
+        let server = Server::new(dir);
+        let diags = server.check_diagnostics();
+        assert!(diags.is_some(), "a well-formed workspace still checks");
+    }
+
+    // frob:tests crates/regolith-ls/src/server.rs::Server.folding_ranges kind="unit"
+    #[test]
+    fn folding_ranges_over_an_open_buffer() {
+        let (dir, uri) = scratch_workspace("part Widget:\n    mass: 5 g\n");
+        let mut server = Server::new(dir);
+        server.open(uri.clone(), "part Widget:\n    mass: 5 g\n".to_string());
+        let ranges = server.folding_ranges(&uri).expect("folding ranges");
+        assert!(!ranges.is_empty());
+    }
+
+    // frob:tests crates/regolith-ls/src/server.rs::Server.semantic_tokens kind="unit"
+    #[test]
+    fn semantic_tokens_over_an_open_buffer() {
+        let (dir, uri) = scratch_workspace("part Widget:\n    mass: 5 g\n");
+        let mut server = Server::new(dir);
+        server.open(uri.clone(), "part Widget:\n    mass: 5 g\n".to_string());
+        let tokens = server.semantic_tokens(&uri);
+        assert!(tokens.is_some());
+    }
+
+    // frob:tests crates/regolith-ls/src/server.rs::Server.code_actions kind="unit"
+    #[test]
+    fn code_actions_with_no_diagnostics_is_empty() {
+        let (dir, _uri) = scratch_workspace("part Widget:\n    mass: 5 g\n");
+        let server = Server::new(dir);
+        assert!(server.code_actions(&[]).is_empty());
+    }
+
+    // frob:tests crates/regolith-ls/src/server.rs::Server.completions kind="unit"
+    #[test]
+    fn completions_without_an_open_buffer_falls_back_to_keywords() {
+        let (dir, uri) = scratch_workspace("part Widget:\n    mass: 5 g\n");
+        let server = Server::new(dir);
+        let items = server.completions(&uri, Position::new(0, 0));
+        assert!(!items.is_empty());
+    }
+
+    // frob:tests crates/regolith-ls/src/server.rs::Server.definition kind="unit"
+    #[test]
+    fn definition_finds_the_decl_header() {
+        let src = "part Widget:\n    mass: 5 g\n";
+        let (dir, uri) = scratch_workspace(src);
+        let mut server = Server::new(dir);
+        server.open(uri.clone(), src.to_string());
+        let locs = server.definition(&uri, Position::new(0, 6));
+        assert!(locs.is_some());
+    }
+
+    // frob:tests crates/regolith-ls/src/server.rs::Server.references kind="unit"
+    #[test]
+    fn references_finds_every_occurrence() {
+        let src = "part Widget:\n    mass: 5 g\n";
+        let (dir, uri) = scratch_workspace(src);
+        let mut server = Server::new(dir);
+        server.open(uri.clone(), src.to_string());
+        let locs = server.references(&uri, Position::new(0, 6));
+        assert!(locs.is_some());
+    }
+
+    // frob:tests crates/regolith-ls/src/server.rs::Server.rename kind="unit"
+    #[test]
+    fn rename_of_an_unknown_position_is_an_error() {
+        let src = "part Widget:\n    mass: 5 g\n";
+        let (dir, uri) = scratch_workspace(src);
+        let mut server = Server::new(dir);
+        server.open(uri.clone(), src.to_string());
+        let result = server.rename(&uri, Position::new(1, 4), "Renamed");
+        assert!(
+            result.is_err(),
+            "renaming a field name, not a decl, refuses"
+        );
+    }
+
+    // frob:tests crates/regolith-ls/src/server.rs::root_from_initialize kind="unit"
+    #[test]
+    fn root_from_initialize_prefers_root_uri_over_cwd() {
+        let (dir, _uri) = scratch_workspace("part Widget:\n    mass: 5 g\n");
+        let root_uri = Url::from_file_path(&dir).unwrap();
+        #[allow(deprecated)]
+        let params = lsp_types::InitializeParams {
+            root_uri: Some(root_uri),
+            ..Default::default()
+        };
+        let root = super::root_from_initialize(&params);
+        assert_eq!(root, dir);
     }
 }

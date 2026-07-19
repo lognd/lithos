@@ -16,12 +16,14 @@ use crate::entity::EntityId;
 
 /// A stage identifier within a pipeline.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-sem.md#stage
 pub struct StageId(pub u32);
 
 /// How a stage enters: from one parent, joining several piece-parents,
 /// or an import entry stage.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
+// frob:doc docs/modules/regolith-sem.md#stage
 pub enum StageEntry {
     /// `from=<parent>`: a single-parent continuation.
     From(StageId),
@@ -38,6 +40,7 @@ pub enum StageEntry {
 
 /// One stage in the pipeline.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-sem.md#stage
 pub struct Stage {
     /// Stage id.
     pub id: StageId,
@@ -52,6 +55,7 @@ pub struct Stage {
 
 /// The stage graph of an artifact.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-sem.md#stage
 pub struct StageGraph {
     stages: IndexMap<StageId, Stage>,
 }
@@ -59,6 +63,7 @@ pub struct StageGraph {
 impl StageGraph {
     /// An empty graph.
     #[must_use]
+    // frob:doc docs/modules/regolith-sem.md#stage
     pub fn new() -> StageGraph {
         StageGraph {
             stages: IndexMap::new(),
@@ -66,6 +71,7 @@ impl StageGraph {
     }
 
     /// Add a stage.
+    // frob:doc docs/modules/regolith-sem.md#stage
     pub fn add(&mut self, stage: Stage) {
         self.stages.insert(stage.id, stage);
     }
@@ -81,6 +87,7 @@ impl StageGraph {
     /// # Panics
     /// Never in practice: every in-degree entry is inserted before any
     /// edge can reference it.
+    // frob:doc docs/modules/regolith-sem.md#stage
     pub fn topo_order(&self) -> Result<Vec<StageId>, Vec<Diagnostic>> {
         let mut parents: IndexMap<StageId, Vec<StageId>> = IndexMap::new();
         let mut dangling = Vec::new();
@@ -155,6 +162,7 @@ impl StageGraph {
 /// A scope within a stage/setup: `then [label] [on <region>]:`. Scopes
 /// form a DAG and read committed snapshots only.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-sem.md#stage
 pub struct Scope {
     /// Optional scope label.
     pub label: Option<String>,
@@ -167,6 +175,7 @@ pub struct Scope {
 /// A machining/assembly setup: ordered, with held entities and optional
 /// refixturing.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-sem.md#stage
 pub struct Setup {
     /// Position in the setup order.
     pub order: u32,
@@ -180,6 +189,7 @@ pub struct Setup {
 /// A piece in a multi-piece (weldment/panel) unified DB, with per-piece
 /// provenance.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-sem.md#stage
 pub struct Piece {
     /// Piece name.
     pub name: String,
@@ -201,6 +211,7 @@ pub struct Piece {
 /// scope child edge. Every such scope is flagged, naming the siblings
 /// it is reachable from.
 #[must_use]
+// frob:doc docs/modules/regolith-sem.md#stage
 pub fn check_sibling_reads(scopes: &[Scope]) -> Vec<Diagnostic> {
     let mut parent_of: IndexMap<usize, Vec<usize>> = IndexMap::new();
     for (idx, scope) in scopes.iter().enumerate() {
@@ -244,8 +255,97 @@ pub fn check_sibling_reads(scopes: &[Scope]) -> Vec<Diagnostic> {
 
 #[cfg(test)]
 mod tests {
-    use super::{Stage, StageEntry, StageGraph, StageId};
+    use super::{check_sibling_reads, Scope, Stage, StageEntry, StageGraph, StageId};
 
+    // frob:tests crates/regolith-sem/src/stage.rs::StageGraph.topo_order kind="unit"
+    #[test]
+    fn topo_order_sorts_parents_before_children_and_flags_cycles_and_dangling_parents() {
+        let mut g = StageGraph::new();
+        g.add(Stage {
+            id: StageId(0),
+            label: "src".to_string(),
+            entry: StageEntry::Import {
+                path: "stock.hema".to_string(),
+                sealed: true,
+            },
+            process: None,
+        });
+        g.add(Stage {
+            id: StageId(1),
+            label: "cut".to_string(),
+            entry: StageEntry::From(StageId(0)),
+            process: None,
+        });
+        assert_eq!(g.topo_order().unwrap(), vec![StageId(0), StageId(1)]);
+
+        let mut dangling = StageGraph::new();
+        dangling.add(Stage {
+            id: StageId(1),
+            label: "cut".to_string(),
+            entry: StageEntry::From(StageId(0)),
+            process: None,
+        });
+        assert!(dangling.topo_order().is_err(), "missing parent id");
+
+        let mut cyclic = StageGraph::new();
+        cyclic.add(Stage {
+            id: StageId(0),
+            label: "a".to_string(),
+            entry: StageEntry::From(StageId(1)),
+            process: None,
+        });
+        cyclic.add(Stage {
+            id: StageId(1),
+            label: "b".to_string(),
+            entry: StageEntry::From(StageId(0)),
+            process: None,
+        });
+        assert!(cyclic.topo_order().is_err(), "two-stage cycle");
+    }
+
+    // frob:tests crates/regolith-sem/src/stage.rs::check_sibling_reads kind="unit"
+    #[test]
+    fn check_sibling_reads_flags_a_scope_reachable_from_two_parents() {
+        // scope 0 and 1 are unrelated siblings both listing scope 2 as a
+        // bare child edge -- the diamond a `joins=`/`align:` must declare
+        // explicitly, never implicitly.
+        let scopes = vec![
+            Scope {
+                label: Some("a".to_string()),
+                on_region: None,
+                children: vec![2],
+            },
+            Scope {
+                label: Some("b".to_string()),
+                on_region: None,
+                children: vec![2],
+            },
+            Scope {
+                label: Some("joined".to_string()),
+                on_region: None,
+                children: vec![],
+            },
+        ];
+        let diags = check_sibling_reads(&scopes);
+        assert_eq!(diags.len(), 1);
+        assert!(diags[0].message.contains("joined"));
+
+        let clean = vec![
+            Scope {
+                label: Some("a".to_string()),
+                on_region: None,
+                children: vec![1],
+            },
+            Scope {
+                label: Some("b".to_string()),
+                on_region: None,
+                children: vec![],
+            },
+        ];
+        assert!(check_sibling_reads(&clean).is_empty());
+    }
+
+    // frob:tests crates/regolith-sem/src/stage.rs::StageGraph.add kind="unit"
     #[test]
     fn stage_graph_round_trips_json() {
         let mut g = StageGraph::new();

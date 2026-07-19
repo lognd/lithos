@@ -22,6 +22,7 @@ use serde::{Deserialize, Serialize};
 /// A computed scalar with outward-rounded bounds (AD-6): the true
 /// value of the solved quantity lies within `[lo, hi]`, both finite.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+// frob:doc docs/modules/regolith-ir.md#solve
 pub struct OutwardBounds {
     /// Lower bound (rounded down one ULP from the computed value).
     pub lo: f64,
@@ -34,6 +35,7 @@ impl OutwardBounds {
     /// when the value is NaN or infinite (the caller converts that into
     /// a singular-system diagnostic, never lets it escape).
     #[must_use]
+    // frob:doc docs/modules/regolith-ir.md#solve
     pub fn around(value: f64) -> Option<OutwardBounds> {
         if !value.is_finite() {
             return None;
@@ -104,6 +106,7 @@ fn residual_tol(b_norm: f64) -> f64 {
 mod tests {
     use super::{residual_tol, solve_verified, OutwardBounds};
 
+    // frob:tests crates/regolith-ir/src/solve/mod.rs::OutwardBounds.around kind="unit"
     #[test]
     fn outward_bounds_straddle_the_value() {
         let b = OutwardBounds::around(1.5).unwrap();
