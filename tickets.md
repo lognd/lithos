@@ -266,7 +266,7 @@ recovered; stash list verified empty at merge.
 ```yaml
 id: T-0008
 title: 'WO-133: power lowering + PowerNetPayload + claim routing'
-state: in-progress
+state: done
 kind: feature
 origin: agent
 created: '2026-07-18'
@@ -282,12 +282,21 @@ scope:
 - examples/**
 - docs/spec/cuprite/**
 - docs/modules/**
-evidence: []
+evidence:
+- tests/orchestrator/test_translate_power.py::TestDemandLoad::test_routes_with_declared_inputs
+- tests/orchestrator/test_translate_power.py::TestDemandLoad::test_defers_by_name_when_input_missing
 attachments: []
 acceptance:
 - see docs/workflow/work-orders/WO-133-power-lowering.md
 threat: null
 ```
+## Done report
+
+WO-133 complete across two slices: SCHEMA-31 payload+claim_target
+(3895d4ff, D272 bump owner) and lowering/routing/guards (303615e3,
+F-WO133-1 grammar extension + E0216/E0217). Census automatic via
+registry+audit index. 2303 py + 895 rs tests green.
+
 ### Progress (2026-07-19)
 
 Schema slice LANDED (see the SCHEMA_VERSION-31 commit): PowerNetPayload
