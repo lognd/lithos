@@ -1,0 +1,392 @@
+// lithos.strata -- lithos's real system topology, modeled from the code
+// (lane L6, frob-adoption campaign). lithos is a spec-first engineering-
+// design toolchain: a Rust workspace (crates/**) doing parse/sem/lower/
+// schema/oblig compute, one FFI seam into it (python/regolith/compiler.py,
+// AD-4), the rest of python/regolith orchestrating builds/backends/
+// realizers/magnetite/cli, committed stdlib record packages, health/codegen
+// tooling, demos/examples that run the toolchain end to end, a VS Code
+// extension talking to the Rust LSP over stdio, the external feldspar
+// solver pack discovered through the regolith.plugins entry point, and
+// external EDA/HDL binaries (kicad-cli, verilator/iverilog) driven through
+// the procio subprocess seam.
+//
+// Coordinator draft verified against real code (lane L6):
+//   - AD-4 CONFIRMED: `grep -rn "_core" python/regolith --include=*.py`
+//     shows exactly one non-comment, non-.pyi import site --
+//     python/regolith/compiler.py:23 `from regolith import _core`. Every
+//     other hit is a docstring/comment referencing the rule (backends/
+//     framework.py, __init__.py, backends/__init__.py, backends/ship.py,
+//     realizer/elec/netlist.py, logging_setup.py) or an unrelated
+//     `..._core` identifier (net_core, vdd_core -- schema field names, not
+//     the FFI module). The draft's noflow claim holds as written; no AD-4
+//     violation found.
+//   - regolith_py is kept as ONE node, not split by subpackage (draft's
+//     own suggestion, taken): backends/cli/harness/orchestrator/realizer/
+//     magnetite/docgen cross-import each other in both directions (e.g.
+//     cli imports orchestrator+backends+harness; orchestrator imports
+//     harness.models+magnetite; realizer imports harness+backends;
+//     backends imports _schema+logging_setup). A node-per-subpackage
+//     partition would fight this real cycle and surface as SYS003 noise
+//     for no design payoff -- coarsened per the draft's own note.
+//   - `may "eval"` on regolith_py: VERIFIED there is no literal `eval(`
+//     call anywhere in python/regolith. The only entry-point/dynamic-load
+//     site is plugins.py's `entry_points(group=PLUGIN_ENTRY_POINT_GROUP)`
+//     (importlib.metadata discovery of out-of-wheel packs, AD-26) --
+//     genuine dynamic code loading, same "eval" kind feldspar's
+//     solve/packs.py declares for the identical pattern. Declared for
+//     that reason, not for a builtin eval call.
+//   - `may "exec"`/`may "env"`/`may "fs"` on regolith_py: VERIFIED.
+//     procio.py is the one process-invocation seam (WO-153) -- run_argv/
+//     run_tool spawn resolved binaries (kicad-cli, verilator/iverilog via
+//     toolenv.py's registry) with a MANDATORY explicit timeout; env reads
+//     are config.py (REGOLITH_* overrides), logging_setup.py (REGOLITH_LOG),
+//     cli/color.py (NO_COLOR/TERM); fs writes span backends/ (artifact
+//     store), magnetite/ (registry cache, lockfile), orchestrator/
+//     (evidence/payload store, plan cache), realizer/ (build outputs) --
+//     too broad and load-bearing to narrow below package granularity.
+//   - kicad_cli node's real call sites: realizer/elec/kicad.py,
+//     kicad_wrapper.py, fake_kicad.py (test double), backends/elec.py,
+//     backends/elec_fabset.py. verilator/iverilog sites: harness/models/
+//     hdl/verilator_adapter.py, harness/models/hdl/models.py,
+//     backends/hdl.py. Both families route through procio.py/toolenv.py
+//     (WO-153, WO-202) -- modeled as one regolith_py -> external-tools
+//     flow per external node (kicad_cli, hdl_tools), matching the draft's
+//     shape rather than a flow per call site.
+//
+// frob:doc docs/workflow/strata-system-model.md#what-this-is
+// frob:ticket T-0034
+module lithos
+
+// -- nodes --------------------------------------------------------------
+
+// Rust workspace: crates/** (syntax registry, sem, lower, ir, oblig, qty,
+// diag, api, util, ls, py-bindings) plus fuzz/** (cargo-fuzz targets,
+// test-only). Pure compute in the compiler crates; regolith-ls is an LSP
+// server (stdio protocol -- not a subprocess/exec capability, no fs/net
+// writes beyond reading the workspace it's told to serve) so it stays
+// inside this node rather than splitting out, per the coarsening note.
+// frob:doc docs/workflow/strata-system-model.md#what-this-is
+// frob:ticket T-0034
+node rust_core : trusted {
+    clearance Internal;
+    code "crates/**" "fuzz/**";
+    // fs: crates/regolith-ls/tests/integration.rs writes a scratch
+    // workspace file under a temp dir to drive the LSP server end to
+    // end -- test-only, not a runtime write path.
+    may "fs";
+    // env: crates/regolith-ls/src/main.rs reads REGOLITH_LS_LOG to set
+    // its tracing filter (the LSP server's own log-level knob); the
+    // remaining `std::env::` hits across crates/** are test-only
+    // (`std::env::temp_dir()`/`current_dir()` scratch dirs).
+    may "env";
+    // ffi: crates/regolith-py is the compiled pyo3 binding crate --
+    // the Rust-side half of AD-4's bridge (ffi_bridge/compiler.py is
+    // the Python-side half). Real capability, correctly observed here.
+    may "ffi";
+}
+
+// The ONE FFI bridge (AD-4, verified above): only compiler.py imports
+// regolith._core.
+// frob:doc docs/workflow/strata-system-model.md#what-this-is
+// frob:ticket T-0034
+node ffi_bridge : trusted {
+    clearance Internal;
+    code "python/regolith/compiler.py";
+    // ffi: imports the compiled _core.abi3.so pyo3 extension. Real but
+    // scanner-invisible (no needle for compiled-extension imports),
+    // kept declared -- see the companion doc's known-gaps section
+    // (same posture as feldspar's core_api node).
+    may "ffi";
+    waive "SYS101:ffi" reason "the ffi capability is real (compiler.py:23 imports the compiled regolith._core.abi3.so extension, AD-4's one bridge) but scanner-invisible -- no needle for a compiled-extension import exists in the capability scanner; kept declared rather than dropped, same known gap feldspar's core_api node documents for its own _feldspar import";
+    waive "SYS100:eval" reason "scanner false positive: compiler.py's only 'eval' hit is the English word 'evaluated' inside a docstring (line 540, 'its verdict, evaluated detail...'), not a builtin eval() call -- verified by grep, no eval( call site exists in compiler.py";
+}
+
+// The python package minus compiler.py: orchestrator, harness (model
+// registry), realizer (mech/elec/firmware), backends (drawings/elec/
+// firmware/cost/ship), magnetite (package manager client), cli, docgen,
+// plugins seam, toolenv registry, procio subprocess seam, config,
+// logging setup, _schema (generated pydantic models), _codes. Kept as
+// one node (see the coarsening note above).
+// frob:doc docs/workflow/strata-system-model.md#what-this-is
+// frob:ticket T-0034
+node regolith_py : trusted {
+    clearance Internal;
+    // Every file/subpackage under python/regolith EXCEPT compiler.py
+    // (that file's own glob lives on ffi_bridge, above) -- tier-2 code
+    // binding requires exactly one node to attest for any given file, so
+    // this glob is enumerated one level deep rather than "**" to avoid
+    // an ambiguous double-match against ffi_bridge's compiler.py glob.
+    code "python/regolith/__init__.py" "python/regolith/_codes/**"
+        "python/regolith/_core.pyi" "python/regolith/_schema/**"
+        "python/regolith/_schema_base.py" "python/regolith/backends/**"
+        "python/regolith/cli/**" "python/regolith/config.py"
+        "python/regolith/docgen/**" "python/regolith/errors.py"
+        "python/regolith/harness/**" "python/regolith/logging_setup.py"
+        "python/regolith/magnetite/**" "python/regolith/orchestrator/**"
+        "python/regolith/plugins.py" "python/regolith/procio.py"
+        "python/regolith/progress.py" "python/regolith/realizer/**"
+        "python/regolith/toolenv.py";
+    // eval: plugins.py's importlib.metadata entry-point discovery
+    // (regolith.plugins group, AD-26) -- dynamic loading of out-of-wheel
+    // packs, not a builtin eval() call (verified: no `eval(` call site
+    // exists in the package).
+    may "eval";
+    // exec: procio.py/toolenv.py resolve and spawn external binaries
+    // (kicad-cli, verilator, iverilog) with a mandatory explicit timeout
+    // (WO-153).
+    may "exec";
+    // env: config.py (REGOLITH_* overrides), logging_setup.py
+    // (REGOLITH_LOG), cli/color.py (NO_COLOR/TERM).
+    may "env";
+    // fs: artifact/evidence/payload stores, magnetite registry cache and
+    // lockfile, realized build outputs.
+    may "fs";
+    // net: magnetite/client.py's RegistryClient fetches package indexes
+    // and content-addressed archives over httpx (INV-22: every fetch is
+    // hash-verified against the caller's pin, never trusted on receipt);
+    // cli/app.py wires the same httpx-backed client (plus a confined
+    // file:// transport for offline/vendor-mirror sources) into the CLI.
+    may "net";
+    waive "LINT004" reason "no real disable flag exists yet for procio.py's subprocess spawning (exec) or magnetite/client.py's RegistryClient network fetches (net) -- REGOLITH_LOG/REGOLITH_UPDATE_GOLDEN/REGOLITH_OPTIMIZE_BUDGET_EVALS/REGOLITH_DEBUG_TAPS are unrelated knobs, none gate exec or net -- T-0035 is the follow-on ticket to add REGOLITH_NO_EXEC/REGOLITH_OFFLINE, mirroring feldspar's FELDSPAR_CCX/FELDSPAR_NGSPICE precedent (a path override is not a disable flag either)" ticket "T-0035";
+}
+
+// Committed stdlib record packages (data, never executed) plus their
+// generators.
+// frob:doc docs/workflow/strata-system-model.md#what-this-is
+// frob:ticket T-0034
+node stdlib_records : trusted {
+    clearance Internal;
+    code "stdlib/**" "tools/stdlib/**";
+    // fs: generators write the committed record files under stdlib/.
+    may "fs";
+    waive "SYS100:eval" reason "scanner false positive: tools/stdlib/gen_iapws_water.py's 'eval' hits are the English words evaluated/evaluated-at inside docstrings/comments (IAPWS-97 correlation text), not a builtin eval() call -- verified by grep, no eval( call site exists under stdlib/** or tools/stdlib/**";
+}
+
+// Health/QA and codegen tooling (fleet census, schema generation).
+// frob:doc docs/workflow/strata-system-model.md#what-this-is
+// frob:ticket T-0034
+node tooling : trusted {
+    clearance Internal;
+    code "tools/health/**" "tools/codegen/**";
+    may "exec";
+    may "fs";
+    // env: tools/health/__main__.py and tools/health/fleet.py read
+    // REGOLITH_UPDATE_GOLDEN to opt into rewriting golden fixtures.
+    may "env";
+    waive "LINT004" reason "no real disable flag exists yet for these scripts' subprocess spawning (cargo/pytest/health-check invocations) -- T-0035 is the follow-on ticket, same REGOLITH_NO_EXEC flag as regolith_py's waiver" ticket "T-0035";
+}
+
+// Demos + examples: proof packs that run the toolchain end to end,
+// writing manifests/PROOF.md/gerbers/etc. under demos/out/**.
+// frob:doc docs/workflow/strata-system-model.md#what-this-is
+// frob:ticket T-0034
+node demos : trusted {
+    clearance Internal;
+    code "demos/**" "examples/**";
+    may "exec";
+    may "fs";
+    may "env";
+    waive "SYS100:eval" reason "scanner false positive: demos/**'s 'eval' hits are the English words evaluator/evaluated/evaluate (optimizer callback naming: 'evaluator', 'thickness_evaluator_for') inside identifiers/comments, not a builtin eval() call -- verified by grep, no eval( call site exists under demos/**";
+    waive "LINT004" reason "demos shell out only through the same regolith_py/procio.py seam -- no real disable flag exists yet, T-0035 is the follow-on ticket (same REGOLITH_NO_EXEC flag as regolith_py's waiver)" ticket "T-0035";
+}
+
+// VS Code extension (TypeScript), talks to regolith-ls over LSP stdio.
+// frob:doc docs/workflow/strata-system-model.md#what-this-is
+// frob:ticket T-0034
+node vscode_ext : trusted {
+    clearance Internal;
+    code "editors/vscode/**";
+    // exec: cli-runner.ts/.js spawns the `regolith` CLI (and grammar/
+    // golden-generation scripts spawn tools) from the extension's dev
+    // and test harness -- real dev-tooling exec, not runtime-server
+    // behavior (the running extension itself only talks LSP over
+    // stdio, per the node comment above).
+    may "exec";
+    // fs: test fixtures write/read artifact files (artifacts.test.*,
+    // server-path.test.*) and the grammar-goldens generator script
+    // writes generated goldens.
+    may "fs";
+    // env: dev/test scripts and the extension's own activation read
+    // environment configuration (server path resolution, CI flags).
+    may "env";
+    waive "LINT004" reason "no real disable flag exists yet for cli-runner.ts's regolith-CLI spawn or the grammar/golden-generation dev scripts -- T-0035 is the follow-on ticket (a TypeScript-side analog of the same REGOLITH_NO_EXEC flag)" ticket "T-0035";
+}
+
+// External solver pack: feldspar, discovered via the regolith.plugins
+// entry point (sibling checkout, its own repo/strata model). No code
+// glob here -- external, see the companion doc's known-gaps section.
+// frob:doc docs/workflow/strata-system-model.md#known-gaps-not-gamed-away
+// frob:ticket T-0034
+node feldspar_pack : trusted {
+    clearance Internal;
+}
+
+// External EDA binary: kicad-cli, resolved via toolenv.py's registry and
+// spawned through procio.py (realizer/elec/kicad.py, kicad_wrapper.py,
+// backends/elec.py, backends/elec_fabset.py).
+// frob:doc docs/workflow/strata-system-model.md#known-gaps-not-gamed-away
+// frob:ticket T-0034
+node kicad_cli : trusted {
+    clearance Internal;
+}
+
+// External HDL toolchain: verilator (lint/sim) and iverilog, resolved
+// via toolenv.py and spawned through procio.py (harness/models/hdl/
+// verilator_adapter.py, harness/models/hdl/models.py, backends/hdl.py).
+// frob:doc docs/workflow/strata-system-model.md#known-gaps-not-gamed-away
+// frob:ticket T-0034
+node hdl_tools : trusted {
+    clearance Internal;
+}
+
+// The human/CI operator: whoever invokes `regolith ...` (regolith_py's
+// CLI), `make health`/tools scripts (tooling), a demo script (demos), or
+// the VS Code extension (vscode_ext). No code glob -- this is the entry
+// point INTO the modeled system, not code inside it; named so the
+// THREAT003 CWE-78 assumptions below have a real "outermost caller" to
+// name, mirroring feldspar's regolith_consumer node.
+// frob:doc docs/workflow/strata-system-model.md#known-gaps-not-gamed-away
+// frob:ticket T-0034
+node operator : foreign {
+    clearance Internal;
+}
+
+// -- flows ----------------------------------------------------------------
+
+// frob:doc docs/workflow/strata-system-model.md#what-this-is
+// frob:ticket T-0034
+flow f_bridge_rust : ffi_bridge -> rust_core { label Internal; }
+// frob:doc docs/workflow/strata-system-model.md#what-this-is
+// frob:ticket T-0034
+flow f_py_bridge : regolith_py -> ffi_bridge { label Internal; }
+// frob:doc docs/workflow/strata-system-model.md#what-this-is
+// frob:ticket T-0034
+flow f_py_stdlib : regolith_py -> stdlib_records { label Internal; }
+// frob:doc docs/workflow/strata-system-model.md#what-this-is
+// frob:ticket T-0034
+flow f_py_feldspar : regolith_py -> feldspar_pack { label Internal; }
+// frob:doc docs/workflow/strata-system-model.md#what-this-is
+// frob:ticket T-0034
+flow f_py_kicad : regolith_py -> kicad_cli { label Internal; }
+// frob:doc docs/workflow/strata-system-model.md#what-this-is
+// frob:ticket T-0034
+flow f_py_hdl : regolith_py -> hdl_tools { label Internal; }
+// frob:doc docs/workflow/strata-system-model.md#what-this-is
+// frob:ticket T-0034
+flow f_tooling_py : tooling -> regolith_py { label Internal; }
+// tools/health/consistency.py and docs_agreement.py import
+// tools.stdlib.organization directly (cross-checking stdlib records
+// against generator metadata).
+// frob:doc docs/workflow/strata-system-model.md#what-this-is
+// frob:ticket T-0034
+flow f_tooling_stdlib : tooling -> stdlib_records { label Internal; }
+// tools/health/consistency.py and demos.py import demos.run_all
+// (fleet census/health checks run the demo suite in-process).
+// frob:doc docs/workflow/strata-system-model.md#what-this-is
+// frob:ticket T-0034
+flow f_tooling_demos : tooling -> demos { label Internal; }
+// frob:doc docs/workflow/strata-system-model.md#what-this-is
+// frob:ticket T-0034
+flow f_demos_py : demos -> regolith_py { label Internal; }
+// frob:doc docs/workflow/strata-system-model.md#what-this-is
+// frob:ticket T-0034
+flow f_vscode_rust : vscode_ext -> rust_core { label Internal; }
+
+// The operator entry points: a human/CI process invokes the CLI
+// (regolith_py), a health/codegen script (tooling), a demo (demos), or
+// opens the VS Code extension (vscode_ext).
+// frob:doc docs/workflow/strata-system-model.md#known-gaps-not-gamed-away
+// frob:ticket T-0034
+flow f_operator_py : operator -> regolith_py { label Internal; rate 10 req/s; }
+// frob:doc docs/workflow/strata-system-model.md#known-gaps-not-gamed-away
+// frob:ticket T-0034
+flow f_operator_tooling : operator -> tooling { label Internal; rate 10 req/s; }
+// frob:doc docs/workflow/strata-system-model.md#known-gaps-not-gamed-away
+// frob:ticket T-0034
+flow f_operator_demos : operator -> demos { label Internal; rate 10 req/s; }
+// frob:doc docs/workflow/strata-system-model.md#known-gaps-not-gamed-away
+// frob:ticket T-0034
+flow f_operator_vscode : operator -> vscode_ext { label Internal; rate 10 req/s; }
+
+// -- claims -----------------------------------------------------------
+
+// NOTE on AD-4: a naive `noflow regolith_py -> rust_core` claim is
+// structurally WRONG here and was dropped after `frob sys audit`
+// refuted it -- regolith_py legitimately reaches rust_core through
+// f_py_bridge + f_bridge_rust (regolith_py calls into ffi_bridge, which
+// calls into rust_core); that path IS the point of the bridge, not a
+// violation. AD-4's real guarantee -- that NO code other than
+// compiler.py ever imports regolith._core directly -- is a code-level
+// property (verified above by direct grep: zero non-comment hits
+// outside compiler.py) enforced by `make guard-core`'s grep gate, not
+// something this flow-graph model can express as a noflow claim (the
+// compiled _core.abi3.so extension sits at python/regolith/_core.abi3.so,
+// outside the crates/** glob, so tier-2 import conformance can't see it
+// either -- see the companion doc's known-gaps section, same posture as
+// feldspar's core_api ffi capability). The reach claim below documents
+// the intended path instead.
+// frob:doc docs/workflow/strata-system-model.md#known-gaps-not-gamed-away
+// frob:ticket T-0034
+assert c_reaches_rust_via_bridge reach regolith_py -> rust_core
+
+// The rust core is a pure-compute leaf: it never drives external
+// binaries or the solver pack.
+// frob:doc docs/workflow/strata-system-model.md#what-this-is
+// frob:ticket T-0034
+assert c_rust_pure_kicad noflow rust_core -> kicad_cli
+// frob:doc docs/workflow/strata-system-model.md#what-this-is
+// frob:ticket T-0034
+assert c_rust_pure_hdl noflow rust_core -> hdl_tools
+// frob:doc docs/workflow/strata-system-model.md#what-this-is
+// frob:ticket T-0034
+assert c_rust_pure_feldspar noflow rust_core -> feldspar_pack
+
+// The toolchain reaches its external engines (the point of the system).
+// frob:doc docs/workflow/strata-system-model.md#what-this-is
+// frob:ticket T-0034
+assert c_py_reaches_kicad reach regolith_py -> kicad_cli
+// frob:doc docs/workflow/strata-system-model.md#what-this-is
+// frob:ticket T-0034
+assert c_demos_reach_rust reach demos -> rust_core
+
+// stdlib records never execute anything: record packages are data.
+// frob:doc docs/workflow/strata-system-model.md#what-this-is
+// frob:ticket T-0034
+assert c_stdlib_no_exec noflow stdlib_records -> kicad_cli
+
+// -- assumptions (capability-driven obligations, honestly discharged) --
+
+// Every `may "exec"` node drags in CWE-78 (command injection); THREAT003
+// requires the discharging claim's body to be
+// `NoFlow(src=<foreign source>, dst=<the capability-holding node>)` --
+// the `operator` node (the human/CI entry point) is that foreign source
+// here, mirroring feldspar's regolith_consumer assumes.
+//
+// regolith_py: verified (procio.py, toolenv.py) run_argv/run_tool spawn
+// argv built from a toolenv-resolved binary path (shutil.which, cached)
+// plus typed ToolArgs.emit() argv fragments -- never a shell string,
+// never user-authored text concatenated into argv; every spawn carries
+// a mandatory explicit timeout (WO-153, D264).
+// frob:doc docs/workflow/strata-system-model.md#known-gaps-not-gamed-away
+// frob:ticket T-0034
+assume "weakness:CWE-78:regolith_py" noflow operator -> regolith_py owner logan review "2026-10-18"
+
+// demos: shells out only through the same regolith_py/procio.py seam
+// (no demo constructs its own argv).
+// frob:doc docs/workflow/strata-system-model.md#known-gaps-not-gamed-away
+// frob:ticket T-0034
+assume "weakness:CWE-78:demos" noflow operator -> demos owner logan review "2026-10-18"
+
+// tooling: tools/health/tools/codegen scripts shell out via fixed argv
+// (cargo, pytest, health-check binaries) with no interpolated operator
+// input.
+// frob:doc docs/workflow/strata-system-model.md#known-gaps-not-gamed-away
+// frob:ticket T-0034
+assume "weakness:CWE-78:tooling" noflow operator -> tooling owner logan review "2026-10-18"
+
+// vscode_ext: cli-runner.ts spawns the `regolith` binary with a fixed
+// verb/flag set plus the workspace-resolved file path, never a raw
+// shell string built from editor input.
+// frob:doc docs/workflow/strata-system-model.md#known-gaps-not-gamed-away
+// frob:ticket T-0034
+assume "weakness:CWE-78:vscode_ext" noflow operator -> vscode_ext owner logan review "2026-10-18"

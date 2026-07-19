@@ -779,7 +779,137 @@ scope:
 evidence: []
 attachments: []
 acceptance:
-- 'INV-19: anchor the promises-not-actuals seam (harness_lower.rs / translate.py) after reading the escalation-edge wiring'
-- 'INV-27: decide the anchor posture for an absence-proof invariant (owner input) or record anchor-less-by-design'
+- 'INV-19: anchor the promises-not-actuals seam (harness_lower.rs / translate.py)
+  after reading the escalation-edge wiring'
+- 'INV-27: decide the anchor posture for an absence-proof invariant (owner input)
+  or record anchor-less-by-design'
 threat: null
 ```
+
+<!-- ticket:T-0034 -->
+```yaml
+id: T-0034
+title: 'design: lithos.strata system model + sys audit wiring'
+state: in-progress
+kind: feature
+origin: agent
+created: '2026-07-18'
+blocked_by: []
+parent: null
+scope:
+- design/**
+- docs/workflow/strata-system-model.md
+- docs/index.md
+evidence: []
+attachments: []
+acceptance: []
+threat: null
+```
+
+## Done report
+
+Landed `design/lithos.strata`: 10 nodes (rust_core, ffi_bridge,
+regolith_py, stdlib_records, tooling, demos, vscode_ext, feldspar_pack,
+kicad_cli, hdl_tools, operator), 14 flows, 9 claims, 4 assumes, 6
+in-design waives, plus `docs/workflow/strata-system-model.md` (companion
+doc: node rationale, the AD-4 flow-graph-vs-code-property distinction,
+and a "known gaps, not gamed away" section) and one new link from
+`docs/index.md`.
+
+Divergences from the coordinator draft, each verified against real code:
+- AD-4 CONFIRMED by direct grep (`grep -rn "_core" python/regolith
+  --include=*.py`): `compiler.py:23` is the only non-comment `_core`
+  import. The draft's `assert c_only_bridge_ffi noflow regolith_py ->
+  rust_core` was REFUTED by `frob sys audit` on first run -- that path is
+  the bridge's whole point, not a violation of it. Replaced with `assert
+  c_reaches_rust_via_bridge reach regolith_py -> rust_core`; AD-4's real
+  guarantee (no file but compiler.py imports `_core`) is a code-level
+  property enforced by `make guard-core`'s grep gate, not something the
+  flow graph can independently prove (the compiled `_core.abi3.so` sits
+  outside `crates/**`, so tier-2 conformance can't see that import
+  either).
+- regolith_py kept as ONE node (draft's own suggestion, taken): verified
+  backends/cli/harness/orchestrator/realizer/magnetite/docgen cross-import
+  each other in both directions; a per-subpackage split would fight that
+  real cycle and surface as SYS003 noise.
+- ffi_bridge's code glob had to be the single file `compiler.py` rather
+  than folded into `python/regolith/**`, and regolith_py's glob had to be
+  enumerated one level deep (excluding compiler.py) -- tier-2 code
+  binding requires exactly one node per file; the naive nested-glob
+  version produced `AmbiguousCodeBinding`.
+- Added a `hdl_tools` node (verilator/iverilog, distinct from `kicad_cli`)
+  since the real call sites are disjoint (harness/models/hdl/*,
+  backends/hdl.py vs. realizer/elec/*, backends/elec*.py).
+- Added an `operator` node (`trust foreign`) purely so THREAT003's
+  mitigation-chokepoint check has a real foreign-trust source for the
+  four `weakness:CWE-78:<node>` assumes -- mirrors feldspar's
+  `regolith_consumer`.
+- Added two SYS003-driven flows not in the draft: `tooling ->
+  stdlib_records` (tools/health/consistency.py, docs_agreement.py import
+  `tools.stdlib.organization`) and `tooling -> demos`
+  (tools/health/consistency.py, demos.py import `demos.run_all`).
+
+Audit gaps closed (fix vs. waive):
+- FIXED (real capability declared): `net` on regolith_py
+  (magnetite/client.py's httpx RegistryClient, cli/app.py's file://
+  transport); `fs`/`env`/`ffi` on rust_core (regolith-ls integration test
+  fs write, REGOLITH_LS_LOG env read, regolith-py pyo3 crate); `env` on
+  tooling (REGOLITH_UPDATE_GOLDEN); `exec`/`fs`/`env` on vscode_ext
+  (cli-runner spawns, test-fixture fs, dev-script env).
+- WAIVED (scanner false positive, `SYS100:eval`): ffi_bridge,
+  stdlib_records, demos -- all three are the English word
+  "eval"/"evaluated"/"evaluator" inside comments/docstrings/identifiers,
+  verified by grep to have zero real `eval(` call sites.
+- WAIVED (scanner blind spot, `SYS101:ffi`): ffi_bridge -- the ffi
+  capability is real (compiler.py:23) but the scanner has no needle for
+  a compiled-extension import; same posture as feldspar's core_api node.
+- WAIVED (`LINT004`, no real kill-switch yet): regolith_py, demos,
+  tooling, vscode_ext -- no REGOLITH_NO_EXEC/REGOLITH_OFFLINE flag exists
+  today (existing REGOLITH_* vars are unrelated knobs, verified by grep).
+  Filed **T-0035** as the follow-on ticket to add one, mirroring
+  feldspar's FELDSPAR_CCX/FELDSPAR_NGSPICE precedent (T-0016 there).
+- DISCHARGED (`THREAT003` CWE-78, assume+owner+review): regolith_py,
+  demos, tooling, vscode_ext -- each `assume "weakness:CWE-78:<node>"
+  noflow operator -> <node> owner logan review "2026-10-18"`. Verified
+  (procio.py/toolenv.py): every spawn's argv is built from a
+  toolenv-resolved binary path plus typed `ToolArgs.emit()` fragments,
+  never a shell string, never operator-authored text concatenated into
+  argv, always with a mandatory explicit timeout (WO-153, D264).
+
+AD-4 finding: NONE -- confirmed clean by direct grep, no violation.
+
+Bindings added in source: none needed (no `frob:channel`/`frob:boundary`/
+`frob:secret` comments were required; every capability closed via the
+strata model's own `may`/`waive` clauses).
+
+FROBLEMS.md entries: none needed -- no gap required an out-of-band
+FROBLEMS record; every finding closed via fix or in-design waive with a
+named follow-on ticket (T-0035).
+
+Verification: `frob sys audit` exits 0, "PROVED (4 waived) -- zero
+UNWAIVED gaps" for both self-conformance and exhaustiveness views.
+`frob check --only gates` after the change: 0 errors, 388 warnings, 299
+waived (pre-change baseline: 0 errors, 387 warnings, 299 waived -- 1 net
+new warning, outside `design/**`/`docs/workflow/strata-system-model.md`/
+`docs/index.md`, same PERF/COV/TEST rule-id families as baseline). 0
+SYS-family (SYS001-004) violations. DOC001/DOC002 both 0, unchanged.
+cargo-check/clippy/fmt/test all pass (869 tests).
+
+<!-- ticket:T-0035 -->
+```yaml
+id: T-0035
+title: add REGOLITH_NO_EXEC/REGOLITH_OFFLINE kill-switch flags for procio/toolenv
+  exec+net capabilities
+state: queued
+kind: feature
+origin: agent
+created: '2026-07-18'
+blocked_by: []
+parent: null
+scope: []
+evidence: []
+attachments: []
+acceptance: []
+threat: null
+```
+Follow-on from T-0034 (lithos.strata system model): frob sys audit's LINT004 flags regolith_py/demos/tooling/vscode_ext for holding exec (and regolith_py's net) capability with no declared kill-switch attr. No REGOLITH_NO_EXEC or REGOLITH_OFFLINE flag exists today (grep verified: only REGOLITH_LOG/REGOLITH_UPDATE_GOLDEN/REGOLITH_OPTIMIZE_BUDGET_EVALS/REGOLITH_DEBUG_TAPS exist, none of which disable subprocess spawning or network fetches). Add a real disable flag honored by procio.py's run_argv/run_tool and magnetite/client.py's RegistryClient, then update design/lithos.strata to name it and drop the in-design LINT004 waivers.

@@ -40,6 +40,10 @@ document under `docs/` reachable by markdown link, not to duplicate
   ledger -- verbatim project history, never edited.
 - [docs/workflow/research/README.md](workflow/research/README.md)
   -- standalone research/market/benchmark notes.
+- [docs/workflow/strata-system-model.md](workflow/strata-system-model.md)
+  -- companion doc for `design/lithos.strata` (the system topology
+  model): node/flow rationale, the AD-4 flow-graph-vs-code-property
+  distinction, and every known scanner gap (fixed vs. in-design waived).
 
 ## Modules (crate contracts)
 
