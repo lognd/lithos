@@ -33,7 +33,7 @@ _OTHER_INPUTS = (
 
 
 def _fluid_context(medium_records: list[str]) -> FluidContext:
-    payload = {
+    payload: dict[str, object] = {
         "flownets": {
             "BrewPath": {
                 "medium": {

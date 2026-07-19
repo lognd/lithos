@@ -28,7 +28,7 @@ from regolith.realizer.elec.pinmux import (
     PinmuxResult,
     PinOption,
 )
-from regolith.realizer.firmware.contract import c_identifier
+from regolith.realizer.firmware.contract import FirmwareDesign, c_identifier
 from regolith.realizer.firmware.linker import PartitionDecl, check_partition_overlap
 from regolith.realizer.mech.model import clear_realized_geometry_cache
 from regolith.realizer.mech.schema import FeatureProgram, Point2
@@ -139,14 +139,24 @@ def test_check_partition_overlap_finds_first_overlapping_pair() -> None:
             name="app", region="flash", start=0x1000, size=0x1000, cause=cause
         ),
     )
-    ok_design = type("D", (), {"partitions": non_overlapping})()
+    ok_design = FirmwareDesign(
+        name="d",
+        family="stm32g0",
+        pinmux=PinmuxResult(assignments=()),
+        partitions=non_overlapping,
+    )
     assert check_partition_overlap(ok_design).is_ok
 
     overlapping = (
         PartitionDecl(name="a", region="flash", start=0, size=0x1000, cause=cause),
         PartitionDecl(name="b", region="flash", start=0x800, size=0x1000, cause=cause),
     )
-    bad_design = type("D", (), {"partitions": overlapping})()
+    bad_design = FirmwareDesign(
+        name="d",
+        family="stm32g0",
+        pinmux=PinmuxResult(assignments=()),
+        partitions=overlapping,
+    )
     result = check_partition_overlap(bad_design)
     assert result.is_err
 

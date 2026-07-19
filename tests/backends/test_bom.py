@@ -240,9 +240,13 @@ def test_resolve_cost_estimates_from_store(tmp_path):
     """`resolve_cost_estimates` resolves `report.cost_estimates` digests
     from the discharge-time PayloadStore into per-subject estimates,
     preferring the build's resolved profile."""
-    from types import SimpleNamespace
 
     from regolith.backends.ship import resolve_cost_estimates
+    from regolith.orchestrator.orchestrate import (
+        BuildReport,
+        BuildTier,
+        StagedBuildReport,
+    )
     from regolith.orchestrator.payload_store import PayloadStore
 
     store = PayloadStore(str(tmp_path))
@@ -260,11 +264,14 @@ def test_resolve_cost_estimates_from_store(tmp_path):
     )
     d_shop = store.put(estimate.model_dump_json().encode("utf-8"))
     d_rush = store.put(other.model_dump_json().encode("utf-8"))
-    report = SimpleNamespace(
-        final=SimpleNamespace(
+    report = StagedBuildReport(
+        final=BuildReport(
+            tier=BuildTier.CHECK,
+            ok=True,
             cost_estimates=(("flat_plate/shop", d_shop), ("flat_plate/rush", d_rush)),
             cost_profile="shop",
-        )
+        ),
+        iterations=1,
     )
     resolved = resolve_cost_estimates(report, str(tmp_path))
     assert set(resolved) == {"flat_plate"}
@@ -273,12 +280,16 @@ def test_resolve_cost_estimates_from_store(tmp_path):
 
 
 def test_resolve_cost_estimates_empty_when_no_pairs(tmp_path):
-    from types import SimpleNamespace
-
     from regolith.backends.ship import resolve_cost_estimates
+    from regolith.orchestrator.orchestrate import (
+        BuildReport,
+        BuildTier,
+        StagedBuildReport,
+    )
 
-    report = SimpleNamespace(
-        final=SimpleNamespace(cost_estimates=(), cost_profile=None)
+    report = StagedBuildReport(
+        final=BuildReport(tier=BuildTier.CHECK, ok=True),
+        iterations=1,
     )
     assert resolve_cost_estimates(report, str(tmp_path)) == {}
 

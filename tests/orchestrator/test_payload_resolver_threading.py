@@ -24,13 +24,21 @@ from __future__ import annotations
 
 import json
 
-from regolith._schema.models import PayloadRef
+from regolith._schema.models import Obligation, PayloadRef
 from regolith.harness import ClaimSense, DischargeRequest, ModelRegistry, ModelSignature
 from regolith.harness.errors import HarnessError
 from regolith.harness.model import Model, Prediction
 from regolith.orchestrator import discharge_all, discharge_one
 from regolith.orchestrator.cache import EvidenceStore
+from regolith.orchestrator.costing import CostContext
+from regolith.orchestrator.dfm_staging import DfmContext
+from regolith.orchestrator.fluid_resolve import FluidContext
+from regolith.orchestrator.frame_resolve import FrameContext
+from regolith.orchestrator.material_resolve import MaterialContext
 from regolith.orchestrator.payload_store import PayloadResolver, PayloadStore
+from regolith.orchestrator.plan_staging import PlanContext
+from regolith.orchestrator.si_stackups import SiContext
+from regolith.orchestrator.translate import Deferral
 from typani.result import Ok, Result
 
 _PAYLOAD_CLAIM_KIND = "dp"
@@ -176,8 +184,18 @@ def test_discharge_one_threads_the_build_payload_store_to_the_model(tmp_path) ->
 
     real_translate = discharge_module.translate
 
-    def _translate_with_payload(ob, **_kwargs):  # type: ignore[no-untyped-def]
-        lowered = real_translate(ob)
+    def _translate_with_payload(
+        obligation: Obligation,
+        *,
+        cost_context: CostContext | None = None,
+        dfm_context: DfmContext | None = None,
+        frame_context: FrameContext | None = None,
+        plan_context: PlanContext | None = None,
+        si_context: SiContext | None = None,
+        material_context: MaterialContext | None = None,
+        fluid_context: FluidContext | None = None,
+    ) -> Result[DischargeRequest, Deferral]:
+        lowered = real_translate(obligation)
         if lowered.is_err:
             return lowered
         request = lowered.danger_ok
@@ -194,7 +212,7 @@ def test_discharge_one_threads_the_build_payload_store_to_the_model(tmp_path) ->
         )
 
     original = discharge_module.translate
-    discharge_module.translate = _translate_with_payload
+    discharge_module.translate = _translate_with_payload  # ty: ignore[invalid-assignment] -- monkeypatching a module-level function; ty treats a `def`-bound name as non-reassignable even with a matching signature
     try:
         result = discharge_one(
             obligation,
@@ -258,9 +276,19 @@ def test_discharge_all_threads_the_payload_store_across_a_multi_obligation_pass(
 
     real_translate = discharge_module.translate
 
-    def _translate_attach_payload_for_dp(ob, **_kwargs):  # type: ignore[no-untyped-def]
-        lowered = real_translate(ob)
-        if lowered.is_err or ob.claim.name != _PAYLOAD_CLAIM_KIND:
+    def _translate_attach_payload_for_dp(
+        obligation: Obligation,
+        *,
+        cost_context: CostContext | None = None,
+        dfm_context: DfmContext | None = None,
+        frame_context: FrameContext | None = None,
+        plan_context: PlanContext | None = None,
+        si_context: SiContext | None = None,
+        material_context: MaterialContext | None = None,
+        fluid_context: FluidContext | None = None,
+    ) -> Result[DischargeRequest, Deferral]:
+        lowered = real_translate(obligation)
+        if lowered.is_err or obligation.claim.name != _PAYLOAD_CLAIM_KIND:
             return lowered
         request = lowered.danger_ok
         return Ok(
@@ -275,7 +303,7 @@ def test_discharge_all_threads_the_payload_store_across_a_multi_obligation_pass(
             )
         )
 
-    discharge_module.translate = _translate_attach_payload_for_dp
+    discharge_module.translate = _translate_attach_payload_for_dp  # ty: ignore[invalid-assignment] -- monkeypatching a module-level function; ty treats a `def`-bound name as non-reassignable even with a matching signature
     try:
         results = discharge_all(
             obligations,

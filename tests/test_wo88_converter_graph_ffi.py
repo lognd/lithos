@@ -42,7 +42,7 @@ _POINT = {"v_in": 12.0, "v_out": 5.0, "f_sw": 500e3, "l": 22e-6, "c_out": 47e-6}
 
 
 def _payload() -> dict:
-    result = compiler.check([_SAMPLED_BUCK])
+    result = compiler.check((_SAMPLED_BUCK,))
     assert result.is_ok, result
     return json.loads(result.danger_ok.payload_json)
 
@@ -74,7 +74,7 @@ def test_require_obligations_carry_the_converter_graph_ref() -> None:
     seen_require = 0
     for raw in payload["obligations"]:
         ob = Obligation.model_validate(raw)
-        refs = [r for r in ob.payloads if r.kind == GRAPH_KIND]
+        refs = [r for r in (ob.payloads or ()) if r.kind == GRAPH_KIND]
         if ob.claim.name in require_names:
             assert refs, f"{ob.claim.name} missing converter_graph ref"
             assert refs[0].origin == "DigitalBuck"
@@ -92,7 +92,7 @@ def test_orchestrator_stores_the_graph_for_resolution(tmp_path: Path) -> None:
     obligations = tuple(Obligation.model_validate(o) for o in payload["obligations"])
     store = PayloadStore(str(tmp_path))
     _put_converter_graph_payloads(store, payload, obligations)
-    ref = next(r for o in obligations for r in o.payloads if r.kind == GRAPH_KIND)
+    ref = next(r for o in obligations for r in (o.payloads or ()) if r.kind == GRAPH_KIND)
     resolved = store.resolve(ref.digest)
     assert resolved.is_ok, resolved
     graph = ConverterGraph.model_validate_json(resolved.danger_ok)

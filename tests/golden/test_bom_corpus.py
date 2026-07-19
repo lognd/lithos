@@ -68,7 +68,7 @@ def _bom_projection(path: str, tmp_root: Path) -> list[dict[str, object]]:
         flownets=flownets,
     )
     model = derive_bom_rows(inputs)
-    rows = [
+    rows: list[dict[str, object]] = [
         {
             "subject": row.subject,
             "kind": row.kind,

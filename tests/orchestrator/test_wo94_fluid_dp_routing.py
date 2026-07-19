@@ -19,27 +19,28 @@ import json
 from pathlib import Path
 
 from regolith import compiler
-from regolith._schema.models import Obligation
+from regolith._schema.models import ClaimForm1, Obligation
 from regolith.harness import default_registry
 from regolith.orchestrator import discharge_all
 from regolith.orchestrator.cache import EvidenceStore
+from regolith.orchestrator.discharge import ObligationResult
 
 _FIXTURE = Path(__file__).parent / "data" / "wo94_fluid_dp_fixture.fluo"
 
 
 def _obligations() -> list[Obligation]:
-    result = compiler.check([str(_FIXTURE)])
+    result = compiler.check((str(_FIXTURE),))
     assert result.is_ok, f"check({_FIXTURE!r}) returned Err: {result}"
     payload = json.loads(result.danger_ok.payload_json)
     return [Obligation.model_validate(raw) for raw in payload["obligations"]]
 
 
-def _discharge_by_name() -> dict[str, object]:
+def _discharge_by_name() -> dict[str, ObligationResult]:
     obligations = _obligations()
     results = discharge_all(
         obligations, registry=default_registry(), store=EvidenceStore()
     )
-    by_name: dict[str, object] = {}
+    by_name: dict[str, ObligationResult] = {}
     for obligation, result in zip(obligations, results, strict=True):
         name = obligation.claim.name
         if name is not None:
@@ -67,6 +68,9 @@ def test_fluid_dp_claim_missing_inputs_defers_honestly() -> None:
     obligations = _obligations()
     dp_ob = next(o for o in obligations if o.claim.name == "dp")
     form = dp_ob.claim.form
+    assert isinstance(form, ClaimForm1), (
+        f"expected a scalar-comparison form, got {form!r}"
+    )
     patched_lhs = form.lhs.replace(", density_kgm3=965", "")
     patched = dp_ob.model_copy(
         update={

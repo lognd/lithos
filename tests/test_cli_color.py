@@ -104,7 +104,7 @@ def test_cli_check_accepts_color_option(tmp_path: Path) -> None:
 def _run_check(source: Path, *flags: str, env_extra: dict[str, str] | None = None):
     """Run the real `regolith check` console entry point in a subprocess so
     stdout and stderr are captured as separate byte streams (WO-107)."""
-    env = {**os.environ}
+    env: dict[str, str] = {**os.environ}
     env.pop("NO_COLOR", None)
     if env_extra:
         env.update(env_extra)

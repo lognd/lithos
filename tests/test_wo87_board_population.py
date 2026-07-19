@@ -24,6 +24,7 @@ from __future__ import annotations
 import json
 import logging
 from pathlib import Path
+from typing import Any
 
 import pytest
 from regolith import compiler
@@ -60,7 +61,7 @@ def _records_input() -> compiler.RealizedInput:
     )
 
 
-def _check(*roots: str) -> dict[str, object]:
+def _check(*roots: str) -> dict[str, Any]:
     result = compiler.check(tuple(roots), realized_inputs=(_records_input(),))
     assert result.is_ok, f"check returned Err: {result}"
     return json.loads(result.danger_ok.payload_json)
@@ -83,7 +84,7 @@ def test_hazard_board_trips_every_family_with_attribution() -> None:
     payload = _check(_PACKS, _HAZARD)
     messages = [
         d["message"]
-        for d in payload["diagnostics"]  # type: ignore[index]
+        for d in payload["diagnostics"]
         if "violated" in d["message"] or "advises against" in d["message"]
     ]
     _log.info("hazard firings: %d", len(messages))
@@ -111,7 +112,7 @@ def test_fixed_twin_renders_zero_diagnostics() -> None:
     assert payload["diagnostics"] == [], payload["diagnostics"]
     deferred = {
         o["claim"]["name"]
-        for o in payload["obligations"]  # type: ignore[index]
+        for o in payload["obligations"]
     }
     assert deferred == {
         "erc(pdn_decoupling.shunt_cap_placement)",
@@ -139,7 +140,7 @@ def test_decoupling_pattern_unblocks_through_the_same_pass(tmp_path: Path) -> No
     payload = _check(pack, str(board))
     fired = [
         d["message"]
-        for d in payload["diagnostics"]  # type: ignore[index]
+        for d in payload["diagnostics"]
         if "std.elec.patterns.decoupling_shape" in d["message"]
     ]
     assert fired and "`v3v3`" in fired[0], payload["diagnostics"]
@@ -165,12 +166,12 @@ def test_mainboard_mx_forms_and_evaluates_board_correctness() -> None:
     the two honest realized-tier deferrals form, and no family fires a
     violation (the flagship's declared bring-up hardware is correct)."""
     payload = _check(str(REPO_ROOT / "examples" / "flagships" / "mainboard_mx"), _PACKS)
-    names = [o["claim"]["name"] for o in payload["obligations"]]  # type: ignore[index]
+    names = [o["claim"]["name"] for o in payload["obligations"]]
     bc = [n for n in names if any(f"({f}." in n for f in _FAMILIES)]
     assert bc, f"no board-correctness obligation formed: {names}"
     violations = [
         d["message"]
-        for d in payload["diagnostics"]  # type: ignore[index]
+        for d in payload["diagnostics"]
         if "violated" in d["message"]
     ]
     assert violations == [], violations

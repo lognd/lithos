@@ -152,16 +152,10 @@ def test_flow_area_mismatch_against_bore_is_a_named_error() -> None:
 def test_dangling_bore_reference_is_a_named_error() -> None:
     """A `bore` ref naming no feature op in the program is a named error."""
     program = coolant_bracket_program()
-    bad_segment = (
-        program.flow_paths[0]
-        .segments[0]
-        .model_copy(
-            update={
-                "bore": program.flow_paths[0]
-                .segments[0]
-                .bore.model_copy(update={"feature": "does_not_exist"})
-            }
-        )
+    original_bore = program.flow_paths[0].segments[0].bore
+    assert original_bore is not None, "fixture segment must declare a bore ref"
+    bad_segment = program.flow_paths[0].segments[0].model_copy(
+        update={"bore": original_bore.model_copy(update={"feature": "does_not_exist"})}
     )
     bad_program = program.model_copy(
         update={

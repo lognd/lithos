@@ -249,9 +249,15 @@ def test_spotcheck_all_families(fleet_captures: dict[str, Capture]) -> None:
             continue
         oracle, source = entry
         if family in _PAYLOAD_ORACLES:
-            recomputed = oracle(call.payloads)
+            # `oracle` is one of a heterogeneous union of callables (each
+            # family's own oracle signature); the `family in
+            # _PAYLOAD_ORACLES` runtime check picks the right arm, but ty
+            # cannot narrow a dict-membership test to a callable union
+            # member -- a genuine limitation on this dynamic-dispatch
+            # test idiom, not a real type error (D226 oracle table).
+            recomputed = oracle(call.payloads)  # ty: ignore[invalid-argument-type]
         else:
-            recomputed = oracle(call.inputs)
+            recomputed = oracle(call.inputs)  # ty: ignore[invalid-argument-type]
         assert call.value is not None and call.eps is not None
         assert call.margin is not None
         remargin = structural.margin(

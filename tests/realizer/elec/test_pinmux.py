@@ -9,6 +9,7 @@ wording.
 
 from __future__ import annotations
 
+from regolith.realizer.elec.errors import LockedPinInfeasible, NoFeasiblePinmux
 from regolith.realizer.elec.pinmux import (
     AlternateFunctionTable,
     FlowDemand,
@@ -112,6 +113,7 @@ def test_infeasible_lock_names_pin_and_demand() -> None:
     result = assign_pinmux(demands, table)
     assert result.is_err
     err = result.danger_err
+    assert isinstance(err, LockedPinInfeasible)
     assert err.pin == "pb7"
     assert err.flow == "u_mcu.uart2.tx"
 
@@ -134,6 +136,7 @@ def test_dma_capable_spi_contention_names_both_flows() -> None:
     result = assign_pinmux(demands, table)
     assert result.is_err
     err = result.danger_err
+    assert isinstance(err, NoFeasiblePinmux)
     assert set(err.flows) == {"u_mcu.spi_a", "u_mcu.spi_b"}
     assert "u_mcu.spi_a" in err.message
     assert "u_mcu.spi_b" in err.message

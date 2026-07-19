@@ -25,6 +25,8 @@ decision, not hardcoded.
 
 from __future__ import annotations
 
+from typing import Any
+
 import pytest
 
 pytest.importorskip(
@@ -63,7 +65,7 @@ _COST_4L_CHEAP = {"jlc04161h_7628": 2.0, "jlc06161h_7628": 5.0, "jlc04161h_1080"
 _COST_6L_CHEAP = {"jlc04161h_7628": 5.0, "jlc06161h_7628": 2.0, "jlc04161h_1080": 1.0}
 
 
-def _compiled_choice_point() -> dict[str, object]:
+def _compiled_choice_point() -> dict[str, Any]:
     result = compiler.check((str(_SI_BOARD),))
     assert result.is_ok, result
     payload = json.loads(result.danger_ok.payload_json)
@@ -139,7 +141,7 @@ def _run(cost_table: Mapping[str, float], tmp_path: Path):
         nogood_cache=NogoodCache(),
     )
     assert trace.termination.value == "converged"
-    store = PayloadStore(tmp_path)
+    store = PayloadStore(str(tmp_path))
     digest = store_trace(store, trace)
     row = winner_lock_row(trace, _SUBJECT, "cost", digest)
     assert row.is_ok, row

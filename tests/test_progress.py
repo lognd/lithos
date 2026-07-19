@@ -55,7 +55,7 @@ def test_log_progress_emits_parseable_line(caplog: pytest.LogCaptureFixture) -> 
         )
     assert len(caplog.records) == 1
     record = caplog.records[0]
-    event = record.progress_event
+    event = record.progress_event  # ty: ignore[unresolved-attribute] -- progress_event is attached to LogRecord dynamically by the progress logging adapter, never declared on stdlib LogRecord
     assert isinstance(event, pr.ProgressEvent)
     assert event.v == pr.PROGRESS_WIRE_VERSION
     assert event.phase == "discharge"
@@ -86,7 +86,7 @@ def test_log_progress_subject_whitespace_is_collapsed(
             total=1,
             started=pr.start(),
         )
-    event = caplog.records[0].progress_event
+    event = caplog.records[0].progress_event  # ty: ignore[unresolved-attribute] -- progress_event is attached to LogRecord dynamically by the progress logging adapter, never declared on stdlib LogRecord
     assert event.subject == "two_words"
     assert pr.parse_line(caplog.records[0].getMessage()) is not None
 
@@ -96,7 +96,7 @@ def test_indeterminate_event_round_trips(caplog: pytest.LogCaptureFixture) -> No
         pr.log_progress(
             phase="scan", subject="x", done=None, total=None, started=pr.start()
         )
-    event = caplog.records[0].progress_event
+    event = caplog.records[0].progress_event  # ty: ignore[unresolved-attribute] -- progress_event is attached to LogRecord dynamically by the progress logging adapter, never declared on stdlib LogRecord
     assert event.indeterminate
     parsed = pr.parse_line(caplog.records[0].getMessage())
     assert parsed is not None

@@ -153,6 +153,7 @@ def test_pocket_grid_with_no_positive_cell_is_a_named_err() -> None:
         )
     )
     assert result.is_err
+    assert isinstance(result.danger_err, GeometryFailure)
     assert "no positive pocket cell" in result.danger_err.message
 
 
@@ -170,6 +171,7 @@ def test_shell_thicker_than_the_solid_is_a_named_err() -> None:
         _program(ShellOp(name="hollow", thickness=ResolvedParam(value=0.010)))
     )
     assert result.is_err
+    assert isinstance(result.danger_err, GeometryFailure)
     assert "leaves no interior" in result.danger_err.message
 
 
@@ -232,6 +234,7 @@ def test_rect_pocket_larger_than_the_solid_is_a_named_err() -> None:
         )
     )
     assert result.is_err
+    assert isinstance(result.danger_err, GeometryFailure)
     assert "does not fit" in result.danger_err.message
 
 
@@ -259,6 +262,7 @@ def test_removal_ops_on_an_empty_stage_are_named_errs() -> None:
         )
         result = realize_feature_program(program)
         assert result.is_err, op
+        assert isinstance(result.danger_err, GeometryFailure)
         assert "prior solid" in result.danger_err.message
 
 

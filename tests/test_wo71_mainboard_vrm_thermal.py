@@ -39,7 +39,7 @@ import pytest
 
 pytest.importorskip("feldspar")
 
-from feldspar.library import thermal_transient  # noqa: E402
+from feldspar.heat import thermal_transient  # noqa: E402
 from feldspar.solve import SolverRegistry  # noqa: E402
 
 # Declared numbers (docstring lists each one's source).

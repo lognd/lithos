@@ -29,7 +29,7 @@ _UAV_TALON = Path("examples/flagships/uav_talon")
 
 
 def _obligations() -> list[Obligation]:
-    result = compiler.check([str(_UAV_TALON)])
+    result = compiler.check((str(_UAV_TALON),))
     assert result.is_ok, f"check(uav_talon) returned Err: {result}"
     payload = json.loads(result.danger_ok.payload_json)
     return [Obligation.model_validate(raw) for raw in payload["obligations"]]
@@ -86,5 +86,5 @@ def test_uav_talon_check_stays_clean() -> None:
     """Adding the CG claim does not regress `regolith check` over
     uav_talon: the WO's zero-fleet-regression acceptance criterion for
     this flagship specifically -- structural check stays `Ok`."""
-    result = compiler.check([str(_UAV_TALON)])
+    result = compiler.check((str(_UAV_TALON),))
     assert result.is_ok, result

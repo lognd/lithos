@@ -133,7 +133,10 @@ def test_verify_algorithm_mismatch_is_invalid(tmp_path) -> None:
     # is closed, so this is the only way to reach the mismatch arm).
     foreign = att.model_copy(
         update={
-            "algorithm": SignatureAlgorithm.model_construct(root="rsa"),  # type: ignore[arg-type]
+            # Deliberately bypassing the closed enum via model_construct
+            # to reach the mismatch arm (the schema enum has no other value);
+            # a genuine ty limitation on this validation-bypass test idiom.
+            "algorithm": SignatureAlgorithm.model_construct(root="rsa"),  # ty: ignore[invalid-argument-type]
         }
     )
     status = verify_attestation(ev, foreign, _designating(key, TrustTier.TESTED))

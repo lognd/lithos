@@ -15,6 +15,7 @@ ed., property table A.5's 20 C row; supply at standard atmosphere
 from __future__ import annotations
 
 import pytest
+from regolith.harness.errors import DomainError
 from regolith.harness.model import DischargeRequest
 from regolith.harness.models.npsh_margin import CLAIM_KIND, INPUTS, NpshMarginModel
 from regolith.harness.quantity import Interval, bits_to_f64
@@ -88,6 +89,7 @@ def test_domain_guards_are_error_values() -> None:
     assert bad_density.is_err
     gauge_pressure = model.estimate(_request(p_supply_pa=0.0))
     assert gauge_pressure.is_err
+    assert isinstance(gauge_pressure.danger_err, DomainError)
     assert "ABSOLUTE" in gauge_pressure.danger_err.message
 
 

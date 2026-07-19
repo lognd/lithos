@@ -43,6 +43,7 @@ import logging
 import re
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 import pytest
 from regolith import compiler
@@ -102,7 +103,7 @@ def _parse_header(path: Path) -> NegativeHeader:
     )
 
 
-def _diagnostic_codes(payload: dict[str, object]) -> list[str]:
+def _diagnostic_codes(payload: dict[str, Any]) -> list[str]:
     """Render each diagnostic's `{family, offset}` code as `E0301`-style
     text, matching `regolith_diag::DiagCode`'s `Display` (family base +
     offset, zero-padded to 4 digits)."""
@@ -117,7 +118,7 @@ def _diagnostic_codes(payload: dict[str, object]) -> list[str]:
         "lint": 800,
     }
     codes = []
-    for diag in payload["diagnostics"]:  # type: ignore[index]
+    for diag in payload["diagnostics"]:
         code = diag["code"]
         family = code["family"]
         number = bases[family] + code["offset"]

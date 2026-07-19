@@ -15,6 +15,7 @@ landed after this suite's original v1-payload-gap note.)"""
 from __future__ import annotations
 
 from pathlib import Path
+from typing import cast
 
 import pytest
 from regolith._schema.models import (
@@ -684,7 +685,8 @@ def test_declared_embedment_reads_the_transfer_depth() -> None:
     frame = _column_frame(n_posts=2)
     transfers = frame["transfers"]
     assert isinstance(transfers, list)
-    transfers.append(
+    transfers_list = cast("list[dict[str, object]]", transfers)
+    transfers_list.append(
         {
             "id": "p1_e1",
             "kind": "EmbeddedPost",
@@ -1143,7 +1145,8 @@ def test_footbridge_deflect_flips_to_a_real_discharged_verdict() -> None:
         r for r in report.results if r.evidence is not None and r.deferral is None
     ]
     assert any(
-        r.evidence.model_id.startswith("beam_simple_span_deflection_udl")
+        r.evidence is not None
+        and r.evidence.model_id.startswith("beam_simple_span_deflection_udl")
         and r.evidence.status.value == "discharged"
         for r in discharged
     ), report.results

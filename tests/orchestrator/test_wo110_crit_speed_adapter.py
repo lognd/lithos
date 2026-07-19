@@ -17,6 +17,7 @@ from regolith._schema.models import Obligation
 from regolith.harness import default_registry
 from regolith.orchestrator import discharge_all
 from regolith.orchestrator.cache import EvidenceStore
+from regolith.orchestrator.discharge import ObligationResult
 from regolith.orchestrator.translate import (
     _CRIT_SPEED_KIND,
     _CRIT_SPEED_PORTS,
@@ -28,15 +29,15 @@ _FIXTURE = Path(__file__).parent / "data" / "wo110_crit_speed_fixture.hema"
 _PACK_LOADED = _CRIT_SPEED_KIND in default_registry()._by_kind
 
 
-def _discharge_by_name() -> dict[str, object]:
-    result = compiler.check([str(_FIXTURE)])
+def _discharge_by_name() -> dict[str, ObligationResult]:
+    result = compiler.check((str(_FIXTURE),))
     assert result.is_ok, f"check({_FIXTURE!r}) returned Err: {result}"
     payload = json.loads(result.danger_ok.payload_json)
     obligations = [Obligation.model_validate(raw) for raw in payload["obligations"]]
     results = discharge_all(
         obligations, registry=default_registry(), store=EvidenceStore()
     )
-    by_name: dict[str, object] = {}
+    by_name: dict[str, ObligationResult] = {}
     for obligation, res in zip(obligations, results, strict=True):
         if obligation.claim.name is not None:
             by_name[obligation.claim.name] = res

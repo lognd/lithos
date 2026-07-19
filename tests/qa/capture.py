@@ -38,6 +38,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass, field
 
 from regolith.harness.model import DischargeRequest, Model
+from regolith.orchestrator.payload_store import PayloadResolver
 
 
 @dataclass(frozen=True)
@@ -87,13 +88,14 @@ def _bits_to_f64(bits: int) -> float:
     return struct.unpack("<d", struct.pack("<Q", bits))[0]
 
 
-def _resolve_payloads(request: DischargeRequest, kwargs: dict) -> dict[str, bytes]:
+def _resolve_payloads(
+    request: DischargeRequest, resolver: PayloadResolver | None
+) -> dict[str, bytes]:
     """Fetch every payload port's raw bytes via the call's own resolver.
 
     Data only: the resolver is the orchestrator's content-addressed
     byte store; no record model is constructed here.
     """
-    resolver = kwargs.get("resolver")
     if resolver is None or not request.payloads:
         return {}
     out: dict[str, bytes] = {}
@@ -114,8 +116,23 @@ def capture_discharge_calls() -> Iterator[Capture]:
     cap = Capture()
     original = Model.discharge
 
-    def wrapped(self: Model, request: DischargeRequest, **kwargs: object):
-        result = original(self, request, **kwargs)
+    def wrapped(
+        self: Model,
+        request: DischargeRequest,
+        *,
+        registry_version: str,
+        pack_name: str = "regolith",
+        pack_version: str | None = None,
+        resolver: PayloadResolver | None = None,
+    ):
+        result = original(
+            self,
+            request,
+            registry_version=registry_version,
+            pack_name=pack_name,
+            pack_version=pack_version,
+            resolver=resolver,
+        )
         value = eps = margin = None
         status = None
         if result.is_ok:
@@ -132,7 +149,7 @@ def capture_discharge_calls() -> Iterator[Capture]:
                 sense_upper=self.signature.sense.upper,
                 inputs={k: (iv.lo, iv.hi) for k, iv in request.inputs.items()},
                 limit=request.limit,
-                payloads=_resolve_payloads(request, dict(kwargs)),
+                payloads=_resolve_payloads(request, resolver),
                 value=value,
                 eps=eps,
                 margin=margin,

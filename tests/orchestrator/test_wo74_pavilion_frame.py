@@ -47,14 +47,16 @@ def test_pavilion_frame_checks_clean_and_discharges_strength_and_deflection() ->
     # civil.utilization (beam_utilization_interaction) over the
     # NDS strength combination sweep:
     assert any(
-        r.evidence.model_id.startswith("beam_utilization_interaction")
+        r.evidence is not None
+        and r.evidence.model_id.startswith("beam_utilization_interaction")
         and r.evidence.status.value == "discharged"
         for r in discharged
     ), report.results
     # mech.deflection (beam_simple_span_deflection_udl) over the
     # G1 girder, NDS service combination:
     assert any(
-        r.evidence.model_id.startswith("beam_simple_span_deflection_udl")
+        r.evidence is not None
+        and r.evidence.model_id.startswith("beam_simple_span_deflection_udl")
         and r.evidence.status.value == "discharged"
         for r in discharged
     ), report.results

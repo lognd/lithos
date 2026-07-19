@@ -101,7 +101,7 @@ def _run(cost_table: dict[str, dict[str, float]], tmp_path: Path):
         screen=screen,
         nogood_cache=NogoodCache(),
     )
-    store = PayloadStore(tmp_path)
+    store = PayloadStore(str(tmp_path))
     digest = store_trace(store, trace)
     row_result = winner_lock_row(
         trace, "decoder_board.AddressDecodeGlue", "cost", digest

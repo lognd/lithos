@@ -75,11 +75,16 @@ _WIDGET = _pricing("src.widget", "widget", [(1.0, 10.0, 12.0), (50.0, 8.0, 9.0)]
 # frob:tests python/regolith/harness/models/cost_common.py::price_break_at
 def test_price_break_selection() -> None:
     record = _WIDGET.pricing
-    assert price_break_at(record, 1.0) is not None
-    assert price_break_at(record, 1.0).min_qty == 1.0  # type: ignore[union-attr]
-    assert price_break_at(record, 100.0).min_qty == 50.0  # type: ignore[union-attr]
+    break_1 = price_break_at(record, 1.0)
+    assert break_1 is not None
+    assert break_1.min_qty == 1.0
+    break_100 = price_break_at(record, 100.0)
+    assert break_100 is not None
+    assert break_100.min_qty == 50.0
     # Below every threshold: the smallest-quantity price still applies.
-    assert price_break_at(record, 0.5).min_qty == 1.0  # type: ignore[union-attr]
+    break_half = price_break_at(record, 0.5)
+    assert break_half is not None
+    assert break_half.min_qty == 1.0
 
 
 def test_bom_estimate_prices_lines_and_declares_exclusions() -> None:

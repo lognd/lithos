@@ -23,22 +23,23 @@ import json
 from pathlib import Path
 
 from regolith import compiler
-from regolith._schema.models import Obligation
+from regolith._schema.models import ClaimForm1, Obligation
 from regolith.harness import default_registry
 from regolith.orchestrator import discharge_all
 from regolith.orchestrator.cache import EvidenceStore
+from regolith.orchestrator.discharge import ObligationResult
 
 _FIXTURE = Path(__file__).parent / "data" / "wo72_bolted_joint_bearing_fixture.hema"
 
 
 def _obligations() -> list[Obligation]:
-    result = compiler.check([str(_FIXTURE)])
+    result = compiler.check((str(_FIXTURE),))
     assert result.is_ok, f"check({_FIXTURE!r}) returned Err: {result}"
     payload = json.loads(result.danger_ok.payload_json)
     return [Obligation.model_validate(raw) for raw in payload["obligations"]]
 
 
-def _discharge_by_name() -> dict[str, object]:
+def _discharge_by_name() -> dict[str, ObligationResult]:
     obligations = _obligations()
     results = discharge_all(
         obligations, registry=default_registry(), store=EvidenceStore()
@@ -47,7 +48,7 @@ def _discharge_by_name() -> dict[str, object]:
     # `ObligationResult` (keyed by `subject_ref`/content hash instead),
     # so pair each result up with its source obligation by list order
     # (`discharge_all` discharges in source order, INV-10).
-    by_name: dict[str, object] = {}
+    by_name: dict[str, ObligationResult] = {}
     for obligation, result in zip(obligations, results, strict=True):
         name = obligation.claim.name
         if name is not None:
@@ -89,6 +90,9 @@ def test_bolted_joint_claim_missing_inputs_defers_honestly() -> None:
     # if a caller forgot it -- rebuild the obligation's form with one
     # fewer keyword argument, reusing the real predicate text otherwise.
     form = clamp_ob.claim.form
+    assert isinstance(form, ClaimForm1), (
+        f"expected a scalar-comparison form, got {form!r}"
+    )
     stripped_rhs = form.rhs
     patched_lhs = form.lhs.replace(", k_clamp=1.1e9", "")
     patched = clamp_ob.model_copy(

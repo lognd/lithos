@@ -23,23 +23,24 @@ from regolith.harness.models.beam_bending import CLAIM_KIND as _CANTILEVER_KIND
 from regolith.harness.models.cost_common import CLAIM_KIND as _COST_KIND
 from regolith.orchestrator import discharge_all
 from regolith.orchestrator.cache import EvidenceStore
+from regolith.orchestrator.discharge import ObligationResult
 
 _FIXTURE = Path(__file__).parent / "data" / "wo109_cantilever_deflection_fixture.hema"
 
 
 def _obligations() -> list[Obligation]:
-    result = compiler.check([str(_FIXTURE)])
+    result = compiler.check((str(_FIXTURE),))
     assert result.is_ok, f"check({_FIXTURE!r}) returned Err: {result}"
     payload = json.loads(result.danger_ok.payload_json)
     return [Obligation.model_validate(raw) for raw in payload["obligations"]]
 
 
-def _discharge_by_name() -> dict[str, object]:
+def _discharge_by_name() -> dict[str, ObligationResult]:
     obligations = _obligations()
     results = discharge_all(
         obligations, registry=default_registry(), store=EvidenceStore()
     )
-    by_name: dict[str, object] = {}
+    by_name: dict[str, ObligationResult] = {}
     for obligation, result in zip(obligations, results, strict=True):
         name = obligation.claim.name
         if name is not None:

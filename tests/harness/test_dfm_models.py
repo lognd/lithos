@@ -11,6 +11,7 @@ from pathlib import Path
 
 import pytest
 from regolith._schema.models import PayloadRef
+from regolith.harness.errors import DomainError
 from regolith.harness.model import DischargeRequest
 from regolith.harness.models.cam.records import Aabb, MachineRecord, ToolRecord
 from regolith.harness.models.dfm.checks import check_stock_fit, check_tool_fit
@@ -224,4 +225,5 @@ def test_missing_payload_port_abstains(store: PayloadStore) -> None:
     # `Model.discharge` surfaces the gap as an error VALUE; the registry
     # maps it to `#abstained` indeterminate evidence (never a pass).
     assert result.is_err
+    assert isinstance(result.danger_err, DomainError)
     assert "dfm_tools" in result.danger_err.message

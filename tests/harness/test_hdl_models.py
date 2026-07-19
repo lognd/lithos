@@ -127,6 +127,7 @@ def test_hdl_build_vhdl_defers_named_reason(store: PayloadStore) -> None:
     model = HdlBuildModel()
     result = model.discharge(req, registry_version="test", resolver=store.resolver())
     assert result.is_err
+    assert isinstance(result.danger_err, DomainError)
     assert "VHDL" in result.danger_err.message
     assert "ghdl" in result.danger_err.message
 
@@ -140,9 +141,15 @@ def test_hdl_build_vhdl_defer_teaches_ghdl_install_when_absent(
     import regolith.harness.models.hdl.models as hdl_models
     from regolith import toolenv
 
-    def _forced_absent(name: str, **kwargs: object) -> toolenv.ToolStatus:
-        kwargs.pop("which_fn", None)
-        return toolenv.resolve(name, which_fn=lambda n: None, **kwargs)  # type: ignore[arg-type]
+    def _forced_absent(
+        name: str, *, use_cache: bool = True, probe_version: bool = True
+    ) -> toolenv.ToolStatus:
+        return toolenv.resolve(
+            name,
+            which_fn=lambda n: None,
+            use_cache=use_cache,
+            probe_version=probe_version,
+        )
 
     monkeypatch.setattr(hdl_models, "resolve_tool", _forced_absent)
     fx = FIXTURES_BY_ID["fsm_traffic"]
@@ -151,6 +158,7 @@ def test_hdl_build_vhdl_defer_teaches_ghdl_install_when_absent(
     model = HdlBuildModel()
     result = model.discharge(req, registry_version="test", resolver=store.resolver())
     assert result.is_err
+    assert isinstance(result.danger_err, DomainError)
     message = result.danger_err.message
     assert "ghdl not found" in message
     assert "apt" in message or "conda-forge" in message

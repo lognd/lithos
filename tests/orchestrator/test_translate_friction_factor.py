@@ -40,7 +40,7 @@ _WATER_MU = 5.96e-4
 
 
 def _fluid_context() -> FluidContext:
-    payload = {
+    payload: dict[str, object] = {
         "flownets": {
             "TestLoop": {
                 "medium": {"records": [{"name": "water_iapws_liquid", "digest": ""}]}

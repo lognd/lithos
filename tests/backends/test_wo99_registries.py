@@ -31,7 +31,9 @@ from regolith.backends.renderer_plugin import (
     RegistryBundle,
     load_renderer_plugins,
 )
+from regolith.errors import BackendError
 from regolith.plugins import DuplicatePluginId, PluginKind, PluginManifest
+from typani.result import Result
 
 
 class _FakeEntryPoint:
@@ -65,10 +67,16 @@ def _empty_inputs() -> BackendInputs:
 
 
 # frob:tests python/regolith/backends/registry.py::default_producer_registry kind="unit"
+def _unused_produce(
+    subject: str, inputs: BackendInputs
+) -> Result[DrawingModel, BackendError]:
+    raise NotImplementedError("never invoked; registration-error path only")
+
+
 def test_producer_registry_duplicate_kind_is_loud() -> None:
     """A second registration of the same kind is an `Err`, never a shadow."""
     registry = default_producer_registry()
-    dup = ProducerRegistration("mech", lambda s, i: None, lambda i: ())  # type: ignore[arg-type,return-value]
+    dup = ProducerRegistration("mech", _unused_produce, lambda i: ())
     result = registry.register(dup)
     assert result.is_err
     assert result.danger_err == "mech"
@@ -90,7 +98,7 @@ def test_auto_specs_walks_the_producer_registry() -> None:
     registry.register(
         ProducerRegistration(
             "toy",
-            lambda s, i: None,  # type: ignore[arg-type,return-value]
+            _unused_produce,
             lambda i: ("alpha", "beta"),
         )
     )

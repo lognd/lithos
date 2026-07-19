@@ -8,6 +8,9 @@ frozen-copy arithmetic itself (W2a frob-adoption sweep, TEST001).
 
 from __future__ import annotations
 
+from typing import cast
+
+from regolith._schema.models import Evidence
 from regolith.orchestrator.cache import CacheStats, EvidenceStore
 from regolith.orchestrator.nogood_cache import NogoodStats
 
@@ -35,7 +38,11 @@ def test_cache_stats_with_miss_advances_only_misses() -> None:
 # frob:tests python/regolith/orchestrator/cache.py::EvidenceStore.as_dict
 def test_evidence_store_as_dict_is_sorted_key_snapshot() -> None:
     """`as_dict()` returns entries sorted by key, a deterministic snapshot."""
-    store = EvidenceStore(entries={"b": "evidence-b", "a": "evidence-a"})  # type: ignore[arg-type]
+    # `as_dict`'s sort-by-key behavior is opaque to the stored value type,
+    # so plain sentinel strings stand in for real `Evidence` values here;
+    # `cast` records that honestly instead of a bare arg-type suppression.
+    entries = cast("dict[str, Evidence]", {"b": "evidence-b", "a": "evidence-a"})
+    store = EvidenceStore(entries=entries)
     snapshot = store.as_dict()
     assert list(snapshot.keys()) == ["a", "b"]
     assert snapshot == {"a": "evidence-a", "b": "evidence-b"}

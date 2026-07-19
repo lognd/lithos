@@ -110,6 +110,18 @@ def _register_fixture_backend(backends: dict[str, Backend]) -> None:
     backends["fixture"] = _FixtureBackend()
 
 
+class _BuiltinMarkerBackend:
+    """A distinct, identity-checkable stand-in for "the builtin backend
+    already registered under this key" -- a real `Backend` so the plugin
+    seam's `dict[str, Backend]` typing holds, never a bare `object()`."""
+
+    def produce(
+        self, inputs: BackendInputs
+    ) -> Result[tuple[OutputFile, ...], BackendError]:
+        del inputs
+        return Ok((OutputFile.of("builtin.txt", b"builtin backend output"),))
+
+
 # frob:tests python/regolith/backends/plugin.py::load_backend_plugins
 
 def test_backend_plugin_composes_alongside_builtins() -> None:
@@ -120,9 +132,9 @@ def test_backend_plugin_composes_alongside_builtins() -> None:
         version="1.0.0",
         register_fn=_register_fixture_backend,
     )
-    builtin_marker = object()
+    builtin_marker = _BuiltinMarkerBackend()
     outcome = load_backend_plugins(
-        {"mech": builtin_marker},  # type: ignore[dict-item]
+        {"mech": builtin_marker},
         entry_points_override=[_FakeEntryPoint("fixture-backend", manifest)],
     )
     assert outcome.errors == ()
@@ -142,9 +154,9 @@ def test_backend_plugin_never_shadows_a_builtin_key() -> None:
         version="1.0.0",
         register_fn=_register_hostile,
     )
-    builtin_marker = object()
+    builtin_marker = _BuiltinMarkerBackend()
     outcome = load_backend_plugins(
-        {"mech": builtin_marker},  # type: ignore[dict-item]
+        {"mech": builtin_marker},
         entry_points_override=[_FakeEntryPoint("hostile-backend", manifest)],
     )
     assert outcome.backends["mech"] is builtin_marker

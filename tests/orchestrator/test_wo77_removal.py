@@ -26,6 +26,7 @@ from regolith import compiler
 from regolith.orchestrator.optimize import (
     ChoicePointDomain,
     EvalOutcome,
+    OptimizationTrace,
     optimize_continuous_golden_section,
     optimize_discrete,
     store_trace,
@@ -59,7 +60,7 @@ _STIFFNESS_FLOOR = 250.0
 
 
 def _check_fixture() -> dict:
-    out = compiler.check([_FIXTURE, _PACK])
+    out = compiler.check((_FIXTURE, _PACK,))
     assert out.is_ok, out
     return json.loads(out.danger_ok.payload_json)
 
@@ -140,7 +141,7 @@ def test_the_optimizer_pins_count_and_thickness_with_a_trace(tmp_path) -> None:
     as `cause: optimize(mass, trace=<digest>)` lockfile rows."""
     counts, t_bounds = _bounds_from_fixture()
     store = PayloadStore(str(tmp_path))
-    inner_traces: dict[str, object] = {}
+    inner_traces: dict[str, OptimizationTrace] = {}
     realizations = 0
 
     def thickness_evaluator_for(count: int):
@@ -201,10 +202,7 @@ def test_the_optimizer_pins_count_and_thickness_with_a_trace(tmp_path) -> None:
     assert winner_count == str(counts[0]), pairs
     # Every objective number came from a REAL OCCT realization -- the
     # inner traces' spent budgets account for every interpreter call.
-    assert realizations == sum(
-        t.budget_spent
-        for t in inner_traces.values()  # type: ignore[attr-defined]
-    )
+    assert realizations == sum(t.budget_spent for t in inner_traces.values())
 
     # The count winner pins with cause optimize(mass, trace=<digest>).
     count_digest = store_trace(store, trace)
@@ -215,17 +213,18 @@ def test_the_optimizer_pins_count_and_thickness_with_a_trace(tmp_path) -> None:
 
     # ... and so does the winning count's thickness (the inner trace).
     inner = inner_traces[winner_count]
-    thickness_digest = store_trace(store, inner)  # type: ignore[arg-type]
+    thickness_digest = store_trace(store, inner)
     t_row = winner_lock_row(
-        inner,  # type: ignore[arg-type]
+        inner,
         "RibbedPanel.lightening.thickness",
         "mass",
         thickness_digest,
     )
     assert t_row.is_ok, t_row
     assert t_row.danger_ok.cause == f"optimize(mass, trace={thickness_digest})"
+    assert inner.winner is not None
     winner_t_m = float(
-        dict(item.root for item in inner.candidates[inner.winner].assignment)["x"]  # type: ignore[attr-defined,index]
+        dict(item.root for item in inner.candidates[inner.winner].assignment)["x"]
     )
     # The stiffness floor puts the optimum near (K/count)^(1/3) mm.
     expected_t_m = (_STIFFNESS_FLOOR / int(winner_count)) ** (1.0 / 3.0) / 1000.0
@@ -245,7 +244,7 @@ def test_dfm_rows_fire_on_an_infeasible_literal_twin(tmp_path) -> None:
         "        then:\n"
         "            lightening = Ribs(count=6, pitch=6mm, thickness=1mm)\n"
     )
-    out = compiler.check([str(twin), _PACK])
+    out = compiler.check((str(twin), _PACK,))
     assert out.is_ok, out
     payload = json.loads(out.danger_ok.payload_json)
     messages = [d["message"] for d in payload["diagnostics"]]
@@ -262,7 +261,7 @@ def test_promotion_honesty_across_the_four_families(caplog) -> None:
     """WO-77 d3: literal PocketGrid/Shell parts promote and REALIZE with
     no hand-authored program; the bounded-Ribs part and the Lattice
     part stay pending with NAMED reasons (never guessed geometry)."""
-    out = compiler.check([_FIXTURE, _PACK])
+    out = compiler.check((_FIXTURE, _PACK,))
     assert out.is_ok, out
     with caplog.at_level(logging.INFO, logger="regolith.orchestrator.programs"):
         programs = emitted_realizer_programs(out.danger_ok.payload_json)
@@ -277,6 +276,7 @@ def test_promotion_honesty_across_the_four_families(caplog) -> None:
         # The removal genuinely removed material: less volume than the
         # blank alone.
         blank = program.stages[0].features[0]
+        assert isinstance(blank, BlankOp), f"expected a blank feature, got {blank!r}"
         blank_volume_mm3 = (
             abs(
                 (blank.sketch.outline[2].x - blank.sketch.outline[0].x)

@@ -14,10 +14,14 @@ import json
 from regolith._schema.models import (
     Claim,
     ClaimForm1,
+    DrawingModel,
     Form,
     Given,
     Obligation,
+    RealizedAssembly,
+    RealizedGeometry,
 )
+from regolith.backends.artifacts import NativeArtifactStore
 from regolith.backends.bom import BomModel, BomRow, MaterialRecord, MaterialRecordSet
 from regolith.backends.calc import (
     build_calc_book,
@@ -38,6 +42,7 @@ from regolith.backends.drawings.renderer import (
 )
 from regolith.backends.drawings.style import NEUTRAL_STYLE
 from regolith.backends.elec_fabset import _GerberWriter, kicad_layers_arg
+from regolith.backends.framework import BackendInputs, OutputFile
 from regolith.backends.package import acceptance_ledger_placeholder
 from regolith.backends.parity import assumed_waived_rows, classify_lockfile
 from regolith.backends.registry import (
@@ -46,7 +51,9 @@ from regolith.backends.registry import (
     RendererRegistration,
     RendererRegistry,
 )
+from regolith.errors import BackendError
 from regolith.orchestrator.lockfile import Lockfile, LockRow, LockSection
+from typani.result import Result
 
 
 # frob:tests python/regolith/backends/calc.py::inputs_from_claim_kwargs kind="unit"
@@ -209,9 +216,21 @@ def test_register_bom_renderers_registers_all_four_formats() -> None:
 
 # frob:tests python/regolith/backends/registry.py::ProducerRegistry.registrations kind="unit"
 def test_producer_registry_registrations_lists_in_registration_order() -> None:
+    def _unused_produce(
+        subject: str, inputs: BackendInputs
+    ) -> Result[DrawingModel, BackendError]:
+        raise NotImplementedError("never invoked; registration order only")
+
+    def _no_subjects(inputs: BackendInputs) -> tuple[str, ...]:
+        return ()
+
     registry = ProducerRegistry()
-    reg_a = ProducerRegistration(kind="mech", produce=lambda *a, **k: None, subjects=())
-    reg_b = ProducerRegistration(kind="fluid", produce=lambda *a, **k: None, subjects=())
+    reg_a = ProducerRegistration(
+        kind="mech", produce=_unused_produce, subjects=_no_subjects
+    )
+    reg_b = ProducerRegistration(
+        kind="fluid", produce=_unused_produce, subjects=_no_subjects
+    )
     assert registry.register(reg_a).is_ok
     assert registry.register(reg_b).is_ok
     assert registry.registrations() == (reg_a, reg_b)
@@ -230,8 +249,17 @@ def test_renderer_registry_for_family_lists_only_that_family() -> None:
 def test_renderer_registry_register_realized_is_keyed_by_family() -> None:
     from regolith.backends.registry import RealizedRendererRegistration
 
+    def _unused_render(
+        subject: str,
+        geometry: RealizedGeometry | RealizedAssembly,
+        store: NativeArtifactStore,
+    ) -> Result[tuple[OutputFile, ...], BackendError]:
+        raise NotImplementedError("never invoked; registration keying only")
+
     registry = RendererRegistry()
-    reg = RealizedRendererRegistration(format_id="glb", over="3d.part", render=lambda *a, **k: ())
+    reg = RealizedRendererRegistration(
+        format_id="glb", over="3d.part", render=_unused_render
+    )
     assert registry.register_realized(reg).is_ok
     # A duplicate id in the same realized family is a loud Err, never a
     # silent shadow (the same discipline the drawing renderers hold).

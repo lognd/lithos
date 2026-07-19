@@ -8,6 +8,8 @@ determinism claim (INV-30), resume, and budget exhaustion.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+
 from regolith.orchestrator.nogood_cache import NogoodCache
 from regolith.orchestrator.optimize import (
     ChoicePointDomain,
@@ -29,7 +31,7 @@ def _discrete_domains() -> tuple[ChoicePointDomain, ...]:
     )
 
 
-def _fake_cost(assignment: dict[str, str]) -> float:
+def _fake_cost(assignment: Mapping[str, str]) -> float:
     """A deterministic fake "total_cost" for a complete assignment."""
     cost = 0.0
     cost += {"ti": 1.0, "onsemi": 0.5}[assignment["vendor"]]
@@ -38,13 +40,13 @@ def _fake_cost(assignment: dict[str, str]) -> float:
     return cost
 
 
-def _fake_screen(prefix: dict[str, str]) -> bool:
+def _fake_screen(prefix: Mapping[str, str]) -> bool:
     """The injected infeasible combination: vendor=onsemi + package=bga
     is infeasible regardless of grade (a real blame-set-shaped cut)."""
     return not (prefix.get("vendor") == "onsemi" and prefix.get("package") == "bga")
 
 
-def _fake_evaluator(assignment: dict[str, str]) -> EvalOutcome:
+def _fake_evaluator(assignment: Mapping[str, str]) -> EvalOutcome:
     feasible = not (assignment["vendor"] == "onsemi" and assignment["package"] == "bga")
     return EvalOutcome(
         feasible=feasible,
@@ -101,7 +103,9 @@ def test_discrete_never_retries_a_recorded_nogood() -> None:
     )
     stores_after_first = cache.stats.stores
 
-    def _screen_should_not_be_called_for_pruned_prefix(prefix: dict[str, str]) -> bool:
+    def _screen_should_not_be_called_for_pruned_prefix(
+        prefix: Mapping[str, str],
+    ) -> bool:
         # If the driver still asked the screen about the pruned prefix,
         # this returns the same False -- but the cache-hit path must
         # short-circuit BEFORE this is ever called for that key.
@@ -277,7 +281,7 @@ def test_infeasible_domain_reports_infeasible_never_a_silent_success() -> None:
     domains = (ChoicePointDomain(subject="vendor", candidates=("onsemi",)),)
     domains = domains + (ChoicePointDomain(subject="package", candidates=("bga",)),)
 
-    def _always_infeasible(_assignment: dict[str, str]) -> EvalOutcome:
+    def _always_infeasible(_assignment: Mapping[str, str]) -> EvalOutcome:
         return EvalOutcome(
             feasible=False, objective_vector=(0.0,), verdict_summary="no"
         )
@@ -306,7 +310,7 @@ def test_winner_lock_row_carries_optimize_cause_with_trace_digest() -> None:
 def test_infeasible_trace_refuses_to_pin_a_winner() -> None:
     domains = (ChoicePointDomain(subject="vendor", candidates=("onsemi",)),)
 
-    def _always_infeasible(_assignment: dict[str, str]) -> EvalOutcome:
+    def _always_infeasible(_assignment: Mapping[str, str]) -> EvalOutcome:
         return EvalOutcome(
             feasible=False, objective_vector=(0.0,), verdict_summary="no"
         )

@@ -145,7 +145,7 @@ def test_subject_with_flownet_basis_forms_a_real_staged_request(
     (tmp_path / "records").mkdir()
     (tmp_path / "records" / "cost.toml").write_text(_RECORDS)
     (tmp_path / "loop.fluo").write_text(_FLUO)
-    checked = compiler.check([str(tmp_path / "loop.fluo")])
+    checked = compiler.check((str(tmp_path / "loop.fluo"),))
     assert checked.is_ok
     payload = json.loads(checked.danger_ok.payload_json)
     store = PayloadStore(str(tmp_path))

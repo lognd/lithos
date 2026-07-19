@@ -30,6 +30,7 @@ from regolith._schema.models import (
     MemberRole6,
     ObjectiveDirection1,
     OptimizationTrace,
+    Provenance2,
     RealizedGeometry,
     RecordRef,
     Reference,
@@ -361,6 +362,7 @@ class TestMechProducer:
         assert view_digest.startswith("local-blake3:")
         for sheet in model.sheets:
             for dim in sheet.dimensions:
+                assert isinstance(dim.provenance, Provenance2)
                 assert dim.provenance.digest.startswith("local-blake3:")
 
 

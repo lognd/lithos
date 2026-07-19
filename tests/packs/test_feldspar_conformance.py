@@ -203,6 +203,7 @@ def test_thin_margin_stress_claim_discharged_by_fea_pack_via_build(
     ]
     assert fea_results, "the feldspar model must have discharged the claim"
     result = fea_results[0]
+    assert result.evidence is not None
     assert result.evidence.status.value == "discharged"
     assert result.evidence.coverage is not None
     # Signed AND verified against the designated key set: `Valid(tier)`,

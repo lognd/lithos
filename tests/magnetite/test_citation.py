@@ -8,11 +8,24 @@ a runtime `if not citation: raise` check a caller could route around).
 
 from __future__ import annotations
 
+from typing import TypedDict
+
 import pytest
 from pydantic import ValidationError
 from regolith.magnetite.citation import Citation, Cited, CitedInterval, MeasCondition
 
-_CITATION_KWARGS = dict(
+
+class _CitationKwargs(TypedDict):
+    manufacturer: str
+    document: str
+    revision: str
+    date: str
+    page: int
+    table: str
+    url: str
+
+
+_CITATION_KWARGS: _CitationKwargs = dict(
     manufacturer="Texas Instruments",
     document="SLASE54D",
     revision="D",
@@ -23,6 +36,11 @@ _CITATION_KWARGS = dict(
 )
 
 
+def _citation() -> Citation:
+    """Build the shared test `Citation`."""
+    return Citation(**_CITATION_KWARGS)
+
+
 def test_citation_constructs_with_every_field() -> None:
     citation = Citation(**_CITATION_KWARGS)
     assert citation.document == "SLASE54D"
@@ -30,10 +48,9 @@ def test_citation_constructs_with_every_field() -> None:
 
 
 def test_citation_rejects_missing_field() -> None:
-    kwargs = dict(_CITATION_KWARGS)
-    del kwargs["page"]
+    kwargs = {k: v for k, v in _CITATION_KWARGS.items() if k != "page"}
     with pytest.raises(ValidationError):
-        Citation(**kwargs)
+        Citation(**kwargs)  # ty: ignore[invalid-argument-type] -- deliberately missing `page`; that is the assertion under test
 
 
 def test_cited_requires_a_citation_at_construction() -> None:
@@ -41,11 +58,11 @@ def test_cited_requires_a_citation_at_construction() -> None:
     entirely is a pydantic validation error, not a silently-accepted
     uncited value."""
     with pytest.raises(ValidationError):
-        Cited(value=4.1)  # type: ignore[call-arg]
+        Cited(value=4.1)  # ty: ignore[missing-argument] -- deliberately omitting citation; that is the assertion under test
 
 
 def test_cited_constructs_with_value_and_citation() -> None:
-    cited = Cited(value=4.1, citation=Citation(**_CITATION_KWARGS), confirmed=True)
+    cited = Cited(value=4.1, citation=_citation(), confirmed=True)
     assert cited.value == 4.1
     assert cited.confirmed is True
     assert cited.citation.document == "SLASE54D"
@@ -54,13 +71,13 @@ def test_cited_constructs_with_value_and_citation() -> None:
 def test_cited_confirmed_defaults_false() -> None:
     """An auto-extracted value that has not yet been reviewed defaults
     to `confirmed=False` (D257 ruling 3's human-in-the-loop gate)."""
-    cited = Cited(value=1, citation=Citation(**_CITATION_KWARGS))
+    cited = Cited(value=1, citation=_citation())
     assert cited.confirmed is False
 
 
 def test_cited_interval_requires_a_citation() -> None:
     with pytest.raises(ValidationError):
-        CitedInterval(lo=-0.3, hi=4.1, unit="V")  # type: ignore[call-arg]
+        CitedInterval(lo=-0.3, hi=4.1, unit="V")  # ty: ignore[missing-argument] -- deliberately omitting citation; that is the assertion under test
 
 
 def test_cited_interval_carries_a_symbolic_bound() -> None:
@@ -71,7 +88,7 @@ def test_cited_interval_carries_a_symbolic_bound() -> None:
         lo=-0.3,
         hi="VCC + 0.3 V",
         unit="V",
-        citation=Citation(**_CITATION_KWARGS),
+        citation=_citation(),
         confirmed=True,
     )
     assert interval.hi == "VCC + 0.3 V"
@@ -85,7 +102,7 @@ def test_cited_interval_carries_a_meas_condition() -> None:
         lo=0.0,
         hi=8.0,
         unit="MHz",
-        citation=Citation(**_CITATION_KWARGS),
+        citation=_citation(),
         conditions=MeasCondition(note="NWAITSx = 0 (no FRAM wait states)"),
         confirmed=True,
     )
@@ -93,7 +110,7 @@ def test_cited_interval_carries_a_meas_condition() -> None:
         lo=0.0,
         hi=16.0,
         unit="MHz",
-        citation=Citation(**_CITATION_KWARGS),
+        citation=_citation(),
         conditions=MeasCondition(note="NWAITSx = 1 (FRAM wait states)"),
         confirmed=True,
     )
@@ -102,6 +119,6 @@ def test_cited_interval_carries_a_meas_condition() -> None:
 
 
 def test_models_are_frozen() -> None:
-    citation = Citation(**_CITATION_KWARGS)
+    citation = _citation()
     with pytest.raises(ValidationError):
-        citation.page = 30  # type: ignore[misc]
+        citation.page = 30  # ty: ignore[invalid-assignment] -- deliberately mutating a frozen model; that is the assertion under test
