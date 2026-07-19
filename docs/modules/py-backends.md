@@ -52,7 +52,10 @@ also carries `path_patterns: tuple[PathPattern, ...]` (WO-161, AD-46):
 the per-file relpath-narrowing rules that used to live in
 `artifact_index.classify`'s hand-written if/elif ladder (now deleted),
 matched in order via `match_path_pattern` -- one dispatch path, not two
-independently-drifting ones.
+independently-drifting ones. `wiring_map` (svg default) and `cutlist`
+(table default) are the two families WO-165's perf-board program adds,
+registered the same way every other family is (`default_artifact_family_registry`,
+mirrored into `backends/package.py`'s `FAMILY_DIRS`).
 
 <a id="backends-capabilities"></a>
 ### `backends/capabilities.py`
@@ -76,7 +79,14 @@ kicad-cli-then-fake two-tier ladder for elec) -- no behavior change to
 either realizer. `get_capability` is the lookup surface a future
 capability program (wire-EDM die-set, perf-board routing, dwelling
 wiring, D268) uses instead of hard-coding process records/DFM checks/
-tool adapters per domain.
+tool adapters per domain. `perfboard` (WO-165) is the third
+registration and the FIRST NEW capability program (mech/elec were a
+descriptive retrofit): `PerfboardNetlist`/`board_assignment.realized`/
+the `wiring_map`+`cutlist` artifact families/a single deterministic
+tool-adapter tier (no external tool, the assignment runs in-process)/
+the `std.process.perfboard_assembly` pending process-record namespace
+(WO-170 populates the real records)/`check_no_shared_holes`/
+`perfboard.assignment_complete`.
 
 <a id="backends-plugin"></a>
 ### `backends/plugin.py`
@@ -212,6 +222,22 @@ fabricated geometry. Every emitted `OutputFile` is explicitly tagged
 `provenance=deterministic, tool=None` (WO-160, AD-45) -- this tier's
 own honesty contract stated at construction time, never left to the
 artifact index's untagged default.
+
+<a id="backends-perfboard"></a>
+### `backends/perfboard.py`
+
+The perf-board manufacturing package: wiring map + cut list (WO-165,
+AD-47 sec. 5). Mirrors `ElecBackend`'s shape (subject-bound,
+`produce(inputs) -> Result[...]`) over `BackendInputs.board_assignments`
+(the `board_assignment.realized` kind, WO-163) instead of `layouts`.
+No external tool runs -- every emitted file is `tier="deterministic"`
+(WO-160/AD-45), never a claimed `real_tool`. The wiring map is
+projected via `regolith.backends.drawings.producers.perfboard_wiring_map`
+and rendered through the SAME `DrawingModel` -> svg path every other
+track uses (AD-27, "reuse, never invent a new renderer"); the cut list
+is a CSV bill of wire lengths by gauge (`DimensionedValue`-carrying per
+D262/INV-34; v1 assumes one gauge, `DEFAULT_JUMPER_GAUGE_AWG`, a named
+simplification) plus a `board_dimensions.json` sibling.
 
 <a id="backends-firmware"></a>
 ### `backends/firmware.py`

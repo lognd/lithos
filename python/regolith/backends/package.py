@@ -77,6 +77,12 @@ FAMILY_DIRS = (
     # the tap map lands with WO-125; procedure/expected-signals/capture
     # configs land with WO-126. Absent on every release-profile package.
     "harness",
+    # WO-165 (AD-47 sec. 5, D268 item 3): the perf-board program's two
+    # families -- the wiring map (rendered svg + json) and the wire
+    # cut list (CSV + board-dimensions JSON). Absent on any package
+    # whose spec names no perf-board substrate.
+    "wiring_map",
+    "cutlist",
 )
 
 

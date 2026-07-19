@@ -53,6 +53,8 @@ from regolith._schema.models import (
     FramePayload,
     HarnessPayload,
     Kind,
+    Kind1,
+    Kind2,
     Kind3,
     Kind5,
     MemberRole1,
@@ -63,6 +65,7 @@ from regolith._schema.models import (
     MemberRole6,
     MemberRole7,
     OptimizationTrace,
+    Point,
     RealizedGeometry,
     Sheet,
     SheetSize1,
@@ -84,6 +87,7 @@ from regolith._schema.models import (
 )
 from regolith.backends.drawings.layout import layered_positions, standoff_ladder
 from regolith.logging_setup import get_logger
+from regolith.realizer.elec.board_assignment import RealizedBoardAssignment
 
 _Entity = SegmentEntity | Entity2 | Entity3 | SymbolEntity
 
@@ -934,4 +938,106 @@ def si_table(subject: str, rows: tuple[SiSheetRow, ...]) -> DrawingModel:
         tables=[table],
     )
     _log.info("SI table producer: %s -> %d row(s)", subject, len(rows))
+    return DrawingModel(subject=subject, sheets=[sheet])
+
+
+# frob:doc docs/modules/py-backends.md#drawings-producers
+def perfboard_wiring_map(
+    subject: str, assignment: RealizedBoardAssignment
+) -> DrawingModel:
+    """Project a `RealizedBoardAssignment` (WO-163/165, perf-board
+    substrate) into a human-followable wiring-map sheet: one small
+    circle per component anchor hole (a real through-hole, not a
+    schematic symbol -- the perf-board grid itself IS the layout), a
+    reference-designator annotation beside each, and one straight
+    segment per jumper/wire run, labeled with its net name at the
+    segment midpoint.
+
+    Reuses the SAME `DrawingModel` -> svg/dxf/pdf renderer machinery
+    every other track's producer feeds (WO-165 deliverable 4: "reuse
+    the existing drawing/rendering backend machinery ... rather than
+    inventing a new renderer") -- this function only projects, it
+    never draws bytes itself.
+    """
+    source_bytes = assignment.model_dump_json(by_alias=True).encode("utf-8")
+    digest = _digest_of(source_bytes)
+
+    hole_radius_mm = 0.5  # a real perf-board plated-hole radius, honest v1 constant
+    entities: list[_Entity] = []
+    entity_indices: list[EntityIndice] = []
+    annotations: list[Annotation] = []
+
+    for comp in assignment.components:
+        row_s, _, col_s = comp.anchor_hole.partition(",")
+        x, y = float(col_s), float(row_s)
+        entities.append(
+            Entity2(
+                kind=Kind1.arc,
+                center=[x, y],
+                radius=hole_radius_mm,
+                start_angle=0.0,
+                end_angle=6.283185307179586,
+            )
+        )
+        entity_indices.append(EntityIndice(len(entities) - 1))
+        annotations.append(
+            Annotation(
+                text=comp.reference,
+                anchor=[x + hole_radius_mm, y + hole_radius_mm],
+                text_height_mm=2.0,
+                datum_refs=[],
+                per=None,
+            )
+        )
+
+    for wire in assignment.wires:
+        from_row_s, _, from_col_s = wire.from_hole.partition(",")
+        to_row_s, _, to_col_s = wire.to_hole.partition(",")
+        from_pt = [float(from_col_s), float(from_row_s)]
+        to_pt = [float(to_col_s), float(to_row_s)]
+        entities.append(
+            Entity3(kind=Kind2.polyline, points=[Point(from_pt), Point(to_pt)])
+        )
+        entity_indices.append(EntityIndice(len(entities) - 1))
+        midpoint = [(from_pt[0] + to_pt[0]) / 2.0, (from_pt[1] + to_pt[1]) / 2.0]
+        annotations.append(
+            Annotation(
+                text=f"{wire.net} ({wire.length_mm:.2f} mm)",
+                anchor=midpoint,
+                text_height_mm=2.0,
+                datum_refs=[],
+                per=None,
+            )
+        )
+
+    view = View(
+        name="wiring_map",
+        plane="schematic",
+        scale=1.0,
+        source=ViewSource(
+            source_digest=digest, source_kind="board_assignment.realized"
+        ),
+        entity_indices=entity_indices,
+    )
+    sheet = Sheet(
+        size=SheetSize2.ansi_b,
+        title_block=TitleBlock(
+            title=f"{subject} perf-board wiring map",
+            drawing_number=f"WMAP-{subject}",
+            revision="A",
+            scale_label="NTS",
+            subject=subject,
+        ),
+        views=[view],
+        entities=entities,
+        dimensions=[],
+        annotations=annotations,
+        tables=[],
+    )
+    _log.info(
+        "perfboard wiring map producer: %s -> %d component(s), %d wire(s)",
+        subject,
+        len(assignment.components),
+        len(assignment.wires),
+    )
     return DrawingModel(subject=subject, sheets=[sheet])

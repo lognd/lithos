@@ -164,6 +164,26 @@ model rather than a schemars-sourced type for now (D211 sequencing:
 WO-147 owns the cycle-37 SCHEMA_VERSION bump and was still open at this
 WO's dispatch) -- see the module docstring for the promotion note.
 
+<a id="elec-perfboard"></a>
+### `realizer/elec/perfboard.py`
+
+The perf-board substrate + jumper/wire assignment realizer (WO-165,
+AD-47 sec. 5, D268 item 3): the first NEW capability program through
+the registry (`backends/capabilities.py`), and the first real consumer
+of the `board_assignment.realized` seam. `PerfboardSubstrate` is a
+fixed-hole-grid substrate at the cited 0.1in/2.54mm standard pitch
+(`PERFBOARD_HOLE_PITCH_MM`); `PerfboardNetlist` is this program's own
+minimal input IR (a netlist already resolved to per-pin grid-hole
+placement -- see the module docstring for why no existing in-memory
+netlist IR is reused). `assign_jumpers` is a deterministic v1
+Manhattan point-to-point chain assignment (no routing-around-obstacles
+solve, a named WO-165 non-goal); `check_no_shared_holes` is the one
+real DFM check the capability registration requires (no two components
+share an anchor hole; no two different nets' BARE jumper ends share a
+hole -- a wire terminating at a component's own pin is normal and not
+flagged). `realize_perfboard` composes both into a
+`RealizedBoardAssignment` (`substrate_kind="perfboard"`).
+
 ## Firmware realizer
 
 <a id="firmware-init"></a>

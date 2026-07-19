@@ -516,6 +516,14 @@ def default_artifact_family_registry() -> ArtifactFamilyRegistry:
         ("harness", "markdown"),
         ("evidence", "json"),
         ("ledgers", "json"),
+        # WO-165 (AD-47 sec. 5, D268 item 3): the perf-board program's
+        # two families -- the human-followable wiring map (an svg
+        # default, the same `DrawingModel` -> svg path every drawing
+        # family uses) and the wire cut list (a table default: a CSV
+        # bill of wire lengths by gauge plus a board-dimensions JSON
+        # sibling, both narrowed by the common extension baseline).
+        ("wiring_map", "svg"),
+        ("cutlist", "table"),
     )
     for family, viewer in builtins:
         patterns = (

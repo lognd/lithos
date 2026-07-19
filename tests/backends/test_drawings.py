@@ -65,6 +65,7 @@ from regolith.backends.drawings.producers import (
     fluid_pid,
     mech_part_drawing,
     opt_trace,
+    perfboard_wiring_map,
 )
 from regolith.backends.drawings.renderer import render_svg
 from regolith.backends.drawings.renderer_dxf import render_dxf
@@ -1074,3 +1075,38 @@ class TestRendererFurnitureConsistency:
         assert pdf.count(b" re\n") == 3
         for text in self._FIELD_TEXTS:
             assert pdf.count(b"(" + text + b") Tj") == 1, text
+
+
+# frob:tests python/regolith/backends/drawings/producers.py::perfboard_wiring_map kind="unit"
+def test_perfboard_wiring_map_projects_components_and_wires() -> None:
+    from regolith.realizer.elec.board_assignment import (
+        ComponentAssignment,
+        RealizedBoardAssignment,
+        WireAssignment,
+    )
+
+    assignment = RealizedBoardAssignment(
+        netlist_hash="h",
+        board_outline_ref="ref",
+        substrate_kind="perfboard",
+        components=(
+            ComponentAssignment(reference="LED1", footprint="LED_3mm", anchor_hole="2,2"),
+        ),
+        wires=(
+            WireAssignment(net="vcc", from_hole="0,0", to_hole="2,2", length_mm=5.08),
+        ),
+    )
+    model = perfboard_wiring_map("perfboard_demo", assignment)
+    assert model.subject == "perfboard_demo"
+    sheet = model.sheets[0]
+    assert sheet.title_block.subject == "perfboard_demo"
+    assert len(sheet.views) == 1
+    assert sheet.views[0].plane == "schematic"
+    # One arc (component) + one polyline (wire).
+    assert len(sheet.entities) == 2
+    # One reference-designator annotation + one net-label annotation.
+    assert any(a.text == "LED1" for a in sheet.annotations)
+    assert any("vcc" in a.text for a in sheet.annotations)
+
+    svg = render_svg(model)
+    assert len(svg) > 0

@@ -1,0 +1,35 @@
+{
+  "artifacts": [
+    {
+      "bytes": 474,
+      "deterministic": true,
+      "path": "cutlist/board_dimensions.json",
+      "sha256": "sha256:fd8c76be465999ededc49caba579b556c3353e7df88d05cf5015b23c1a0c808f"
+    },
+    {
+      "bytes": 201,
+      "deterministic": true,
+      "path": "cutlist/cutlist.csv",
+      "sha256": "sha256:7f32c5d251a4eb5fc067831ea76eaaf7b2c443fc73775dec45b394f9229ead99"
+    },
+    {
+      "bytes": 4288,
+      "deterministic": true,
+      "path": "wiring_map/wiring_map.json",
+      "sha256": "sha256:e311d18eeb163f377beefa25044d38886eb766c33e5425004dff52ac3e381f0c"
+    },
+    {
+      "bytes": 4557,
+      "deterministic": true,
+      "path": "wiring_map/wiring_map.svg",
+      "sha256": "sha256:faea5a6f4364f0cceb4488abf675c4ed01d19d92bed35a822f2270374c70b377"
+    }
+  ],
+  "cause_row": "n/a",
+  "demo": "demo18_perfboard_wiring",
+  "domain": "perf-board LED-blink circuit -> jumper assignment -> wiring map + cut list",
+  "live": true,
+  "optimized_quantity": "n/a (perf-board wiring/cut-list, not an optimizer surface)",
+  "surface": "perf-board jumper/wire assignment -> wiring map + cut list (WO-165)",
+  "winner": "n/a"
+}

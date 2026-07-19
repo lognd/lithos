@@ -135,9 +135,12 @@ def test_elec_capability_is_honestly_populated() -> None:
     assert any("std.elec" in rec for rec in elec.process_records)
 
 
-def test_default_registry_has_exactly_mech_and_elec() -> None:
+def test_default_registry_has_exactly_mech_elec_perfboard() -> None:
+    # WO-165: perfboard joins mech/elec as the first NEW capability
+    # program registered through this registry (mech/elec were a
+    # descriptive retrofit of pre-existing code).
     registry = default_capability_registry()
-    assert set(registry.domains()) == {"mech", "elec"}
+    assert set(registry.domains()) == {"mech", "elec", "perfboard"}
 
 
 def test_capability_model_is_frozen() -> None:

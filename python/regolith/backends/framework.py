@@ -39,11 +39,17 @@ from regolith.orchestrator.lockfile import Lockfile
 if TYPE_CHECKING:
     # Annotation-only: the producers module is a CONSUMER of
     # `BackendInputs` at runtime (via backend.py); a runtime import
-    # here would be the layering inversion.
+    # here would be the layering inversion. `RealizedBoardAssignment`
+    # (WO-165) is annotation-only for a DIFFERENT reason: a runtime
+    # import cycles back through `regolith.orchestrator` (which itself
+    # imports `regolith.backends.artifacts`, i.e. this package) --
+    # `board_assignment.py` needs `PayloadStore` from the orchestrator
+    # package, so this direction must stay type-only.
     from regolith.backends.debug_taps import TapHeaderRecord, TapSet
     from regolith.backends.drawings.producers import SiSheetRow
     from regolith.backends.firmware import FirmwareArtifact
     from regolith.backends.hdl import HdlBuildProducts
+    from regolith.realizer.elec.board_assignment import RealizedBoardAssignment
     from regolith.realizer.elec.debug_placement import TapPlacementPlan
 
 
@@ -160,6 +166,7 @@ class BackendInputs:
         tap_header: TapHeaderRecord | None = None,
         tap_placements: Mapping[str, TapPlacementPlan] = {},  # noqa: B006 (frozen inputs)
         hdl_debug_pins: Mapping[str, tuple[str, ...]] = {},  # noqa: B006 (frozen inputs)
+        board_assignments: Mapping[str, RealizedBoardAssignment] = {},  # noqa: B006 (frozen inputs)
     ) -> None:
         """Bind the inputs a backend may ever read.
 
@@ -241,6 +248,11 @@ class BackendInputs:
         self.tap_header = tap_header
         self.tap_placements = tap_placements
         self.hdl_debug_pins = hdl_debug_pins
+        # WO-165 (AD-47 sec. 5): the perf-board realizer's
+        # `board_assignment.realized` payload, keyed by subject -- the
+        # wiring-map/cut-list producers' input, mirroring `layouts`'
+        # subject-keyed shape for the sibling `layout.realized` kind.
+        self.board_assignments = board_assignments
 
 
 # frob:doc docs/modules/py-backends.md#backends-framework

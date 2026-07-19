@@ -45,6 +45,12 @@ Per-demo focus (each demo names the surface it proves):
 * `demo15_calc_audit.py` -- the calc book + audit trail (D221).
 * `demo16_doctor_config.py` -- doctor/config/toolenv environment surface.
 * `demo17_physical_bringup_pack.py` -- physical bring-up pack (WO-127 D4).
+* `demo18_perfboard_wiring.py` -- perf-board netlist -> jumper assignment
+  -> wiring map + cut list (WO-165); drives the realizer + backend
+  directly from an in-memory netlist rather than through `regolith
+  build`/`ship` (a named scope cut -- see the script's module
+  docstring: a real `.cupr` substrate variant or a staged-build
+  integration point is outside this WO's declared surface).
 
 <a id="harness"></a>
 ## demos/harness.py -- shared proof-pack machinery

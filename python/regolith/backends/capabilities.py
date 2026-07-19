@@ -40,6 +40,7 @@ from typani.result import Err, Ok, Result
 from regolith._schema.models import FeatureProgram
 from regolith.logging_setup import get_logger
 from regolith.realizer.elec.kicad import LayoutRequest
+from regolith.realizer.elec.perfboard import PerfboardNetlist
 
 _log = get_logger(__name__)
 
@@ -351,16 +352,75 @@ def _elec_capability() -> RealizerCapability:
     )
 
 
+def _perfboard_capability() -> RealizerCapability:
+    """The perf-board domain (WO-165, AD-47 sec. 5, D268 item 3): the
+    FIRST NEW capability program through this registry (mech/elec were
+    a descriptive retrofit of pre-existing code; this one is new):
+
+    - ``program_kind``: `PerfboardNetlist`
+      (`regolith.realizer.elec.perfboard`), this program's own input IR
+      (a netlist already resolved to per-pin grid-hole placement -- see
+      that module's docstring for why no existing in-memory netlist IR
+      is reused).
+    - ``realized_kind``: ``"board_assignment.realized"``, the
+      `put_realized_board_assignment` payload-store kind (WO-163,
+      `regolith.realizer.elec.board_assignment`) -- the sibling
+      realized-kind to `layout.realized`, NOT a `RealizedLayout` field
+      (no copper, no `.kicad_pcb`).
+    - ``artifact_families``: ``wiring_map`` (the human-followable
+      per-net hole-coordinate diagram, rendered through the
+      `DrawingModel` -> svg path, AD-27) and ``cutlist`` (wire lengths
+      by gauge + board-dimension/trim data, `DimensionedValue`-carrying
+      per D262/INV-34) -- both registered below in
+      `default_artifact_family_registry`.
+    - ``tool_adapters``: ONE deterministic tier -- the Manhattan
+      point-to-point jumper assignment runs entirely in-process (no
+      external tool invocation at all), so unlike elec's two-tier
+      KiCad ladder there is no `real_tool` tier to claim here (the
+      WO's own framing: "no external tool -- the assignment algorithm
+      is in-process").
+    - ``process_records``: `std.process` perf-board-assembly namespace
+      (WO-165 deliverable 5: this WO lands the check-set contract + one
+      real check; WO-170 owns populating the ACTUAL sourced records --
+      named here as a pending namespace, not empty).
+    - ``dfm_checks``: `check_no_shared_holes`
+      (`regolith.realizer.elec.perfboard`) -- the one real DFM check
+      WO-165 requires land with this capability ("no two jumpers
+      occupy the same [bare] hole"); WO-170 adds the rest.
+    - ``claim_kinds``: `"perfboard.assignment_complete"` -- every net
+      covered exactly once (the completeness property the unit test in
+      `tests/realizer/elec/test_perfboard.py` asserts directly); no
+      DRC-style claim exists for a perf-board (there is no copper to
+      violate a clearance rule on).
+    """
+    return RealizerCapability(
+        domain="perfboard",
+        program_kind=PerfboardNetlist,
+        realized_kind="board_assignment.realized",
+        artifact_families=("wiring_map", "cutlist"),
+        tool_adapters=(
+            ToolAdapterDescriptor(
+                name="manhattan_jumper_assignment", tier="deterministic"
+            ),
+        ),
+        process_records=("std.process.perfboard_assembly/records/**",),
+        dfm_checks=("regolith.realizer.elec.perfboard:check_no_shared_holes",),
+        claim_kinds=("perfboard.assignment_complete",),
+    )
+
+
 # frob:doc docs/modules/py-backends.md#backends-capabilities
 def default_capability_registry() -> CapabilityRegistry:
-    """The two built-in registrations (WO-164 deliverable 3): mech and
-    elec, retrofit from their existing scattered pieces. A collision
-    here is a built-in authoring bug (both domain tags are hard-coded
-    distinct strings), so it is allowed to raise straight through
-    rather than being caught -- the same posture the other
-    `default_*_registry` factories in `registry.py` take with their own
-    `assert result.is_ok` built-in-collision guards."""
+    """The three built-in registrations: mech and elec (WO-164
+    deliverable 3, a descriptive retrofit) plus perfboard (WO-165, the
+    first NEW capability program). A collision here is a built-in
+    authoring bug (every domain tag is a hard-coded distinct string),
+    so it is allowed to raise straight through rather than being
+    caught -- the same posture the other `default_*_registry`
+    factories in `registry.py` take with their own `assert
+    result.is_ok` built-in-collision guards."""
     registry = CapabilityRegistry()
     registry.register(_mech_capability())
     registry.register(_elec_capability())
+    registry.register(_perfboard_capability())
     return registry
