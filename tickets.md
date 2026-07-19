@@ -1597,6 +1597,13 @@ acceptance:
 - see docs/workflow/work-orders/WO-171-process-population-wave3.md
 threat: null
 ```
+
+### Progress (2026-07-19)
+
+Wave 3 landed (44 records, 6 families complete). Coverage 66/100;
+remaining 34 = subtractive remainder (18), sheet remainder (8),
+surface remainder (8) -- wave 4 dispatched.
+
 See docs/workflow/work-orders/WO-171-process-population-wave3.md. D269 item 4, remainder of the 100-entry process-research denominator not owned by WO-169/WO-170.
 
 <!-- ticket:T-0052 -->
