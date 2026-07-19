@@ -308,6 +308,7 @@ def _load_roughness_file(
     return Ok(None)
 
 
+# frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
 def _point_table(raw: object) -> tuple[tuple[float, float], ...]:
     """Parse an optional `[{t_k, value, note}]` point-table field (the
     `polymer_melt.toml` rho_melt/mu convention, D182) into sorted

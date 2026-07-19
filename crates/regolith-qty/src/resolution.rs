@@ -17,6 +17,7 @@ use crate::quantity::Qty;
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(tag = "cause", content = "ref", rename_all = "snake_case")]
 // frob:doc docs/modules/regolith-qty.md#resolution
+// frob:invariant INV-021
 pub enum Cause {
     /// A DFM rule pinned it (`dfm(sheet.min_bend_radius)`).
     Dfm(String),

@@ -79,6 +79,7 @@ pub(crate) fn realization_obligation(
 /// [`ConformanceEdge`]: a `<upper> conforms <lower>` claim keyed on the
 /// enclosing subject's snapshot (empty for a file-level `import`).
 // frob:doc docs/modules/regolith-lower.md#claims
+// frob:invariant INV-013
 pub(crate) fn conformance_obligation(
     edge: &ConformanceEdge,
     snapshots: &EntitySnapshots,

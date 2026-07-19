@@ -101,6 +101,7 @@ class KeySet(BaseModel):
 
 
 # frob:doc docs/modules/py-magnetite.md#magnetite-trust
+# frob:invariant INV-014
 def verify_trust(
     content_hash: str,
     signatures: tuple[Signature, ...],

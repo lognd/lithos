@@ -206,6 +206,7 @@ def check_event_interrupt_capability(
 
 
 # frob:doc docs/modules/py-realizer.md#firmware-contract
+# frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
 def generate_contract_header(design: FirmwareDesign) -> str:
     """The hardware contract header: symbolic constants, one per realized fact.
 

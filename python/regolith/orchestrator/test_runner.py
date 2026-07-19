@@ -56,6 +56,7 @@ def _digest(data: bytes) -> str:
     return f"blake3:{digest}"
 
 
+# frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
 def discover_test_files(roots: tuple[str, ...]) -> tuple[Path, ...]:
     """Every `.test.<ext>` file under `roots` (the ONE extension
     registry decides `<ext>`, never a second hard-coded list)."""
@@ -332,6 +333,7 @@ def run_tests(
     return tuple(all_results)
 
 
+# frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
 def discover_rule_pack_files(roots: tuple[str, ...]) -> tuple[str, ...]:
     """Every source file under `roots` that declares `expect: pass`/
     `expect: fail` fixtures (WO-28's authoring convention -- rule packs

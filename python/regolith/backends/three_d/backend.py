@@ -183,6 +183,7 @@ class ThreeDBackend:
         return self._renderers.for_realized_family(THREE_D_ASSEMBLY_FAMILY)
 
     # frob:doc docs/modules/py-backends.md#three-d-backend
+    # frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
     def produce(
         self, inputs: BackendInputs
     ) -> Result[tuple[OutputFile, ...], BackendError]:

@@ -236,6 +236,8 @@ class Model(ABC):
         """
 
     # frob:doc docs/modules/py-harness.md#model
+    # frob:invariant INV-009
+    # frob:invariant INV-025
     def discharge(
         self,
         request: DischargeRequest,

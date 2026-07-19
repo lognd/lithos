@@ -16,6 +16,7 @@ but it never aborts the other packs and never raises.
 
 from __future__ import annotations
 
+from collections import Counter
 from collections.abc import Iterable
 
 from pydantic import BaseModel, ConfigDict
@@ -149,7 +150,9 @@ def _stage_pack(
     # registered.
     staged_keys = [(model.signature.claim_kind, model.model_id) for model in staged]
     if len(staged_keys) != len(set(staged_keys)):
-        dup = sorted({k for k in staged_keys if staged_keys.count(k) > 1})[0]
+        key_counts = Counter(staged_keys)
+        # frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
+        dup = sorted(k for k, n in key_counts.items() if n > 1)[0]
         return DuplicateModelId(pack=manifest.id, model_id=dup[1])
     collisions = sorted(set(staged_keys) & registry.registered_keys())
     if collisions:

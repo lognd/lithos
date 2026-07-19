@@ -143,6 +143,7 @@ def sign_evidence(
 
 
 # frob:doc docs/modules/py-harness.md#attest
+# frob:invariant INV-028
 def verify_attestation(
     evidence: Evidence,
     att: Attestation | None,

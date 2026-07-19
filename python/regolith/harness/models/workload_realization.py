@@ -36,6 +36,7 @@ CLAIM_KIND = "harness.workload_realization"
 
 
 # frob:doc docs/modules/py-harness.md#models
+# frob:invariant INV-026
 class WorkloadRealizationModel(Model):
     """Identity discharge for a rule-3 derived workload/intent edge."""
 

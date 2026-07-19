@@ -228,6 +228,7 @@ def si_rows_from_report(report: StagedBuildReport) -> dict[str, tuple[SiSheetRow
 
 
 # frob:doc docs/modules/py-backends.md#backends-ship
+# frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
 def resolve_cost_estimates(
     report: StagedBuildReport, project_root: str
 ) -> dict[str, ItemizedEstimate]:
@@ -783,6 +784,7 @@ def _tap_map_bytes(debug: _DebugEmission) -> bytes:
 
 
 # frob:doc docs/modules/py-backends.md#backends-ship
+# frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
 def ship(
     paths: tuple[str, ...],
     backends: Mapping[str, Backend],

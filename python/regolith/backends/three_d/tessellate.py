@@ -45,6 +45,7 @@ def _q(value: float) -> float:
 
 
 # frob:doc docs/modules/py-backends.md#three-d-tessellate
+# frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
 def tessellate_step(step_bytes: bytes) -> TriMesh | None:
     """Mesh ``step_bytes`` into a canonical :class:`TriMesh`.
 

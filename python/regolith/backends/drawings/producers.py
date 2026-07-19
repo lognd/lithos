@@ -206,6 +206,7 @@ def mech_part_drawing(subject: str, geometry: RealizedGeometry) -> DrawingModel:
 
 
 # frob:doc docs/modules/py-backends.md#drawings-producers
+# frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
 def fluid_pid(subject: str, flownet: FlownetPayload) -> DrawingModel:
     """Project a `FlownetPayload` into a schematic P&ID sheet.
 
@@ -309,6 +310,7 @@ def _endpoint(text: str) -> tuple[str, str]:
 
 
 # frob:doc docs/modules/py-backends.md#drawings-producers
+# frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
 def elec_blocks(subject: str, harness: HarnessPayload) -> DrawingModel:
     """Project a `HarnessPayload` into a bdf-shaped structural block
     diagram (interaction-surface/29 sec. 1.6, D165): one rectangle per
@@ -495,6 +497,7 @@ def _role_str(
 
 
 # frob:doc docs/modules/py-backends.md#drawings-producers
+# frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
 def civil_plan_section(subject: str, frame: FramePayload) -> DrawingModel:
     """Project a `FramePayload` into a one-sheet civil plan + member
     schedule (calcite/03 sec. 6, WO-50 final slice).

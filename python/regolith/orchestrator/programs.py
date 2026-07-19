@@ -267,6 +267,7 @@ def _stock_blank_ops_from_source(text: str) -> dict[str, tuple[str, str, BlankOp
     return out
 
 
+# frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
 def _mech_source_files(source_paths: tuple[str, ...]) -> list[Path]:
     """Every hematite (mech-track) source file reachable from
     ``source_paths`` (files or directories), sorted and deduplicated.

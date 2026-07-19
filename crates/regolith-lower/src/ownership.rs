@@ -91,6 +91,7 @@ impl Scope {
 }
 
 /// Check one declaration's ownership/region/symmetry statements.
+// frob:invariant INV-005
 fn check_decl(decl: &Decl, scope_name: &str, file: &camino::Utf8PathBuf) -> Vec<Diagnostic> {
     let mut scope = Scope::new();
     let mut borrows = regolith_sem::BorrowTable::new();
@@ -240,6 +241,7 @@ fn record_region(
 /// Check a `route <name> (into|join) <region>` statement: an `into` an
 /// exclusion region without a declared join is a borrow conflict
 /// (`E0302`, INV-23); a `join` is the declared overlap that exempts it.
+// frob:invariant INV-023
 fn check_route(
     stmt: &RegionStmt,
     scope: &mut Scope,

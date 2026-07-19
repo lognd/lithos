@@ -351,6 +351,7 @@ fn is_realized_tier_domain(kind: &EntityKind) -> bool {
 ///   violation); any OTHER tail shape keeps the pre-existing honest
 ///   whole-rule deferral, but only where the base domain has entities
 ///   at all.
+// frob:invariant INV-029
 fn select_domain_entities<'a>(
     rule: &RuleDef,
     kind: &EntityKind,

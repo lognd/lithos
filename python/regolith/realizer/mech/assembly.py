@@ -213,6 +213,7 @@ def _identity() -> WireTransform:
 
 
 # frob:doc docs/modules/py-realizer.md#mech-assembly
+# frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
 def solve_assembly(
     assembly: AssemblyDef,
     *,
@@ -378,6 +379,7 @@ def _invert(t: MateTransform) -> MateTransform:
     )
 
 
+# frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
 def _loop_mate_ids(
     closing_mate: MateDef, parent_edge: dict[str, tuple[str, MateDef, bool]]
 ) -> tuple[str, ...]:
@@ -469,6 +471,7 @@ def _world_bbox_mm(
     return mins, maxs
 
 
+# frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
 def _find_interferences(
     assembly: AssemblyDef,
     world: dict[str, WireTransform],

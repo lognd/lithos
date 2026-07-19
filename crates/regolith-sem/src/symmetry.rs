@@ -50,6 +50,7 @@ impl SymmetryGroup {
     /// soundly representable in this enum collapses to `Trivial`.
     #[must_use]
     // frob:doc docs/modules/regolith-sem.md#symmetry
+    // frob:invariant INV-004
     pub fn intersect(&self, other: &SymmetryGroup) -> SymmetryGroup {
         use SymmetryGroup::{Continuous, Cyclic, Permutation, Trivial};
 

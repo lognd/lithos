@@ -308,6 +308,7 @@ def _section_props(key: str, row: dict[str, Any], digest: str) -> SectionProps:
     )
 
 
+# frob:waive PERF003 reason="O(1) check against a fixed small set, not nested"
 def _load_record_file(
     path: Path,
     out_sections: dict[str, SectionProps],

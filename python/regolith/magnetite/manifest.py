@@ -150,6 +150,7 @@ def _parse_style_pack(
     return Ok(pack)
 
 
+# frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
 def _flatten_provides(table: dict[str, object]) -> tuple[str, ...]:
     """Flatten ``[provides]`` (category -> names) into ``category:name`` rows."""
     rows: list[str] = []
@@ -171,6 +172,7 @@ def _flatten_evidence(table: dict[str, object]) -> tuple[str, ...]:
     return tuple(sorted(f"{ref}={digest}" for ref, digest in table.items()))
 
 
+# frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
 def _flatten_lints(table: dict[str, object]) -> tuple[tuple[str, str], ...]:
     """Flatten ``[lints]`` (code -> action) into ``(code, action)`` rows
     (WO-40 deliverable 4). A non-string action is dropped here; an
@@ -202,6 +204,7 @@ def _ref_list(value: object) -> tuple[str, ...]:
     return ()
 
 
+# frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
 def _parse_cost_profiles(
     data: dict[str, object], manifest_path: Path
 ) -> Result[tuple[tuple[CostProfile, ...], str | None], MagnetiteError]:
@@ -319,6 +322,7 @@ def _parse_cost_profiles(
     return Ok((tuple(sorted(profiles, key=lambda p: p.name)), default))
 
 
+# frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
 def _parse_sources(
     data: dict[str, object], manifest_path: Path
 ) -> Result[Sources, MagnetiteError]:

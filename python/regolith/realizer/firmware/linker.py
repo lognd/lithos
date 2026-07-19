@@ -28,6 +28,7 @@ _BANNER = (
 
 
 # frob:doc docs/modules/py-realizer.md#firmware-linker
+# frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
 def check_partition_overlap(
     design: FirmwareDesign,
 ) -> Result[None, PartitionOverlap]:

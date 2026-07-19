@@ -407,6 +407,7 @@ def gate_counts(
 
 
 # frob:doc docs/modules/py-orchestrator.md#orchestrate
+# frob:invariant INV-024
 def release_gate(
     results: tuple[ObligationResult, ...],
     acceptance: AcceptanceOutcome | None = None,
@@ -1190,6 +1191,7 @@ class StagedBuildReport(BaseModel):
 
 
 # frob:doc docs/modules/py-orchestrator.md#orchestrate
+# frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
 def staged_build(
     paths: tuple[str, ...],
     tier: BuildTier,

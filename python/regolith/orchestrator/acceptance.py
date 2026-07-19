@@ -203,6 +203,7 @@ def _tier_meets_floor(tier: TrustTier, floor: str | None) -> bool:
 
 
 # frob:doc docs/modules/py-orchestrator.md#acceptance
+# frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
 def compute_acceptance(
     ledger_raw: object,
     results: tuple[ObligationResult, ...],
@@ -418,6 +419,7 @@ def accepted_match_sets_by_target(
 
 
 # frob:doc docs/modules/py-orchestrator.md#acceptance
+# frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
 def match_set_growth_warnings(
     outcome: AcceptanceOutcome,
     prior_match_sets: Mapping[str, frozenset[str]],

@@ -644,6 +644,7 @@ def _deviation_for_hash(
 
 
 # frob:doc docs/modules/py-backends.md#backends-calc
+# frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
 def build_calc_book(
     project: str,
     obligations: tuple[Obligation, ...],

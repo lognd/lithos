@@ -53,6 +53,7 @@ const L2_STIFFNESS_REL_EPS: f64 = 0.05;
 /// keys and forces re-verification rather than reusing stale evidence.
 // frob:doc docs/modules/regolith-lower.md#discharge
 #[must_use]
+// frob:invariant INV-010
 pub fn discharge_static(
     obligations: &[Obligation],
     _graph: &crate::contracts::ContractGraph,

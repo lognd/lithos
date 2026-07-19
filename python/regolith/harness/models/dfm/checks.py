@@ -85,6 +85,7 @@ def check_stock_fit(part_bbox: Aabb, travel: Aabb) -> CamOutcome:
 
 
 # frob:doc docs/modules/py-harness.md#models-dfm
+# frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
 def check_tool_fit(
     features: tuple[DfmFeature, ...], tools: tuple[ToolRecord, ...]
 ) -> CamOutcome:

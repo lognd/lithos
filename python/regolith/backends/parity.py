@@ -211,6 +211,7 @@ def _deviation_bases(ledger: WaiveLedger) -> dict[str, str]:
 
 
 # frob:doc docs/modules/py-backends.md#backends-parity
+# frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
 def demand_table(
     results: Sequence[ObligationResult], ledger: WaiveLedger
 ) -> tuple[DemandRow, ...]:
@@ -261,6 +262,7 @@ class AssumedWaivedRow(BaseModel):
 
 
 # frob:doc docs/modules/py-backends.md#backends-parity
+# frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
 def assumed_waived_rows(ledger: WaiveLedger) -> tuple[AssumedWaivedRow, ...]:
     """Every ``assume!``/``waived`` ledger entry (regolith/12 rungs 6-7),
     sorted by ``(kind, target)``. Evidence-carrying waivers (deviations)

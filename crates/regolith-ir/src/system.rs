@@ -23,6 +23,7 @@ use crate::nodes::{BoundaryEntry, SystemNode};
 /// would be used outside what it was proven under: `E0407`.
 #[must_use]
 // frob:doc docs/modules/regolith-ir.md#system
+// frob:invariant INV-007
 pub fn check_boundary_subsumption(node: &SystemNode) -> Vec<Diagnostic> {
     let mut diags = Vec::new();
     for (child_name, child_entries) in &node.child_boundaries {
@@ -81,6 +82,7 @@ fn envelope_escapes(parent: &BoundaryEntry, child: &BoundaryEntry) -> Option<&'s
 /// check bites only on quantified over-allocation it can prove.
 #[must_use]
 // frob:doc docs/modules/regolith-ir.md#system
+// frob:invariant INV-008
 pub fn check_target_reserves(node: &SystemNode) -> Vec<Diagnostic> {
     let mut diags = Vec::new();
     for reserve in &node.reserves {
@@ -129,6 +131,7 @@ pub fn check_target_reserves(node: &SystemNode) -> Vec<Diagnostic> {
 /// (regolith/13 INV-15: nothing participates outside the ledger).
 #[must_use]
 // frob:doc docs/modules/regolith-ir.md#system
+// frob:invariant INV-015
 pub fn check_flow_ledger(node: &SystemNode) -> Vec<Diagnostic> {
     let declared: IndexSet<&str> = node.flow_endpoints.iter().map(String::as_str).collect();
     let mut diags = Vec::new();

@@ -68,6 +68,7 @@ class PlanRecordSet(BaseModel):
     stock_targets: dict[str, StockTarget] = {}
 
 
+# frob:waive PERF003 reason="O(1) check against a fixed small set, not nested"
 def _load_record_file(
     path: Path,
     out_machines: dict[str, tuple[str, MachineRecord]],

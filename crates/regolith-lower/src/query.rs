@@ -49,6 +49,7 @@ use crate::output::ParsedFile;
 /// source order (AD-6). Poisoned subjects are skipped (INV-20 gating).
 // frob:doc docs/modules/regolith-lower.md#query
 #[must_use]
+// frob:invariant INV-006
 pub fn run_query_resolution(files: &[ParsedFile]) -> Vec<Diagnostic> {
     let span = tracing::info_span!("lower.query");
     let _enter = span.enter();
@@ -75,6 +76,7 @@ pub fn run_query_resolution(files: &[ParsedFile]) -> Vec<Diagnostic> {
 /// state (INV-6): it is committed once, up front, from every feature in
 /// the scope, and every reference resolves against THAT immutable
 /// snapshot.
+// frob:invariant INV-018
 fn resolve_decl(decl: &Decl, scope_name: &str, file: &camino::Utf8PathBuf) -> Vec<Diagnostic> {
     // Phase 1: commit the scope-entry snapshot from `feature` statements.
     let mut features: Vec<Entity> = Vec::new();

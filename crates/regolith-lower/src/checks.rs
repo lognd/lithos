@@ -49,6 +49,7 @@ pub struct CheckReport {
 /// The no-registry convenience over [`run_checks_with_registry`].
 #[must_use]
 // frob:doc docs/modules/regolith-lower.md#checks
+// frob:invariant INV-020
 pub fn run_checks(files: &[ParsedFile], snapshots: &EntitySnapshots) -> CheckReport {
     run_checks_with_registry(files, snapshots, &crate::registry::RegistryRecords::empty())
 }
@@ -239,6 +240,7 @@ struct Instantiation {
 /// diagnostics: a use site whose arity mismatches its declaration
 /// (E0504, an un-expandable point) and a generic declaration referenced
 /// nowhere (E0503, a dead generic).
+// frob:invariant INV-011
 fn monomorphize(files: &[ParsedFile]) -> (Vec<String>, Vec<Diagnostic>) {
     let ident_counts = census_idents(files);
     let insts = collect_instantiations(files);

@@ -41,6 +41,7 @@ def _discover_one(root: Path, exts: frozenset[str], out: list[Path]) -> None:
 
 # frob:doc docs/modules/py-docgen.md#extract
 # frob:waive TEST001 reason="docgen helper, tested transitively via render tests"
+# frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
 def discover_sources(paths: tuple[str, ...]) -> Result[tuple[Path, ...], DocError]:
     """Every recognized source file under ``paths`` (files or roots),
     sorted for deterministic output (AD-6). ``Err`` when a root does not

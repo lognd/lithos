@@ -206,6 +206,7 @@ class PinmuxResult(BaseModel, PlannerAdapter):
         return {a.instance: a.pin for a in self.assignments}
 
 
+# frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
 def _candidates(
     demand: FlowDemand, table: AlternateFunctionTable
 ) -> list[tuple[str, str]]:

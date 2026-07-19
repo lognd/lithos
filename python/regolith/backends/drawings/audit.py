@@ -464,6 +464,7 @@ def _rule_no_bare_unit_numbers(sheet: Sheet) -> RuleResult:
     """
     offenders: list[str] = []
     for table in sheet.tables:
+        # frob:waive PERF002 reason="one-shot index/count over a small per-call set"
         try:
             value_idx = table.columns.index("value")
             provenance_idx = table.columns.index("provenance")
@@ -582,6 +583,7 @@ def _sheet_is_non_gating(sheet: Sheet) -> bool:
 
 
 # frob:doc docs/modules/py-backends.md#drawings-audit
+# frob:invariant INV-031
 def assert_ship_ready(
     model: DrawingModel, subject: str, style: StyleRecord | None = None
 ) -> BackendError | None:

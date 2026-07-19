@@ -462,6 +462,7 @@ class TableLayout:
         "total_w",
     )
 
+    # frob:waive PERF003 reason="O(1) check against a fixed small set, not nested"
     def __init__(
         self,
         table: Table,

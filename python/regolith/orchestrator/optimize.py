@@ -253,6 +253,7 @@ def _candidate_entry(assignment: Assignment, outcome: EvalOutcome) -> CandidateE
 
 
 # frob:doc docs/modules/py-orchestrator.md#optimize
+# frob:invariant INV-030
 def optimize_discrete(
     domains: Sequence[ChoicePointDomain],
     evaluator: DiscreteEvaluator,
@@ -473,6 +474,8 @@ def optimize_continuous_golden_section(
 
 
 # frob:doc docs/modules/py-orchestrator.md#optimize
+# frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
+# frob:waive PERF002 reason="one-shot index/count over a small per-call set"
 def optimize_continuous_nelder_mead(
     bounds: Sequence[tuple[float, float]],
     evaluator: ContinuousEvaluator,

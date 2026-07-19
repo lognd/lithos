@@ -305,6 +305,7 @@ def run_real_layout(
 
 
 # frob:doc docs/modules/py-realizer.md#elec-kicad
+# frob:invariant INV-022
 def hash_pcb_file(path: Path) -> str:
     """Content-address a `.kicad_pcb` file (INV-22 hash pin)."""
     digest = hashlib.sha256(path.read_bytes()).hexdigest()

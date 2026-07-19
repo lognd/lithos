@@ -296,6 +296,7 @@ def _placed_shape(
 
 
 # frob:doc docs/modules/py-backends.md#drawings-project
+# frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
 def project_assembly_front(
     placed: list[tuple[bytes, tuple[float, float, float], tuple[float, float, float]]],
 ) -> list[tuple[tuple[float, float], ...]] | None:
@@ -379,6 +380,7 @@ def _fallback(subject: str, geometry: RealizedGeometry, reason: str) -> DrawingM
 
 
 # frob:doc docs/modules/py-backends.md#drawings-project
+# frob:waive PERF003 reason="O(1) check against a fixed small set, not nested"
 def mech_part_projected_drawing(
     subject: str, geometry: RealizedGeometry, native: NativeArtifactStore
 ) -> DrawingModel:

@@ -158,6 +158,7 @@ pub fn build_ledger(
 /// Lower a single `waive` block: validate its mandatory basis (INV-2
 /// overreach guard), classify it against the obligation set (INV-12),
 /// and record it. Never mutates `obligations` (INV-2 ladder safety).
+// frob:invariant INV-002
 fn lower_one_waiver(
     path: &camino::Utf8Path,
     decl_name: Option<&str>,
@@ -330,6 +331,7 @@ impl MatchScope {
 /// obligation whose claim name is the trailing `<claim>.<half>` pair
 /// (`push_within_window_obligations` names each half `<subject>.<half>`).
 /// A claim target that matches nothing is `Stale` (INV-12).
+// frob:invariant INV-012
 fn classify(
     target: &str,
     on_scope: Option<&str>,

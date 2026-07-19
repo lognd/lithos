@@ -104,6 +104,7 @@ def _interval_from(value: object) -> ScalarInterval | None:
         return None
 
 
+# frob:waive PERF003 reason="O(1) check against a fixed small set, not nested"
 def _load_record_file(
     path: Path, out_rates: dict, out_pricing: dict, out_unit_costs: dict
 ) -> Result[None, OrchestratorError]:
@@ -548,6 +549,7 @@ def assemble_inputs_doc(
 
 # frob:doc docs/modules/py-orchestrator.md#costing
 # frob:waive TEST001 reason="costing helper, tested transitively via costing tests"
+# frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
 def stage_inputs_doc(
     context: CostContext, doc: CostInputsDoc
 ) -> Result[tuple[dict[str, PayloadRef], str], CostResolutionError]:

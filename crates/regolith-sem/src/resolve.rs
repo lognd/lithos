@@ -140,6 +140,7 @@ fn bin_operator(node: &SyntaxNode) -> Option<SyntaxKind> {
 /// alone (no false positive on legal `Count` equality).
 #[must_use]
 // frob:doc docs/modules/regolith-sem.md#resolve
+// frob:invariant INV-017
 pub fn check_equality_ban(decl: &Decl, file: &Utf8PathBuf) -> Vec<Diagnostic> {
     let span = tracing::debug_span!("sem.equality_ban", subject = decl.name());
     let _enter = span.enter();

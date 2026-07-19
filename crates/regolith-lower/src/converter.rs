@@ -61,6 +61,7 @@ const CONTINUOUS_OUTPUT_WORDS: [&str; 2] = ["dac", "pwm"];
 /// (INV-20 gating).
 #[must_use]
 // frob:doc docs/modules/regolith-lower.md#converter
+// frob:invariant INV-016
 pub fn run_converter_check(files: &[ParsedFile]) -> Vec<Diagnostic> {
     let span = tracing::info_span!("lower.converter");
     let _enter = span.enter();

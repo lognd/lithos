@@ -53,6 +53,7 @@ pub struct Obligation {
     /// The pinned evaluation context.
     pub given: Given,
     /// Discharge hints carried from the claim/symmetry.
+    // frob:invariant INV-003
     pub hints: Vec<String>,
     /// The sweep domain this obligation instance carries, if any.
     pub sweep: Option<SweepDomain>,
@@ -95,6 +96,7 @@ impl Obligation {
     /// bug), for the same reason as [`Obligation::content_hash`].
     #[must_use]
     // frob:doc docs/modules/regolith-oblig.md#obligation
+    // frob:invariant INV-001
     pub fn evidence_cache_key(&self, registry_version: &str) -> String {
         // Built-in models carry the pack identity
         // `("regolith", registry_version)` (AD-19), so the un-packed

@@ -266,6 +266,7 @@ def _lines_by_subject(lines: Iterable[AssemblyLine]) -> dict[str, AssemblyLine]:
 
 
 # frob:doc docs/modules/py-backends.md#backends-bom
+# frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
 def derive_bom_rows(
     inputs: BackendInputs,
     *,

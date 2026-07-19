@@ -233,6 +233,7 @@ def _markup_line(
     )
 
 
+# frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
 def _finish(
     profile: CostProfileInputs,
     lines: list[EstimateLineItem],

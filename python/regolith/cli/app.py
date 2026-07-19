@@ -432,6 +432,7 @@ def doctor(
     raise typer.Exit(EXIT_CLEAN)
 
 
+# frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
 def _near_code_matches(code: str, limit: int = 3) -> list[str]:
     """Constructive near-matches for an unknown code (D247 deliverable 5):
     same-family prefix first, falling back to a small edit distance."""
@@ -721,6 +722,7 @@ def _render_build_report(report: StagedBuildReport) -> str:
     return "\n".join(lines)
 
 
+# frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
 @app.command()
 # frob:doc docs/modules/py-cli.md#app
 def build(

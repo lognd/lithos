@@ -1081,6 +1081,7 @@ def _translate_cg_moment(
     )
 
 
+# frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
 def _translate_cost(
     obligation: Obligation,
     fields: dict[str, str],
@@ -2268,6 +2269,7 @@ def _resolve_bound(
     return si_value, None
 
 
+# frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
 def _translate_critical_speed(
     obligation: Obligation, split: tuple[str, str, str]
 ) -> Result[DischargeRequest, Deferral]:
@@ -2467,6 +2469,7 @@ def _si_half_of(obligation: Obligation, comparator: str) -> str:
     return "lo" if comparator in _LOWER_OPS else "hi"
 
 
+# frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
 def _translate_si_impedance(
     obligation: Obligation,
     args_text: str,
@@ -3270,6 +3273,7 @@ def _find_top_level(text: str, needle: str) -> int | None:
     return None
 
 
+# frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
 def _try_link_budget(
     obligation: Obligation,
     form: ClaimForm1,
@@ -3953,6 +3957,7 @@ def _translate_manufacturable(
 
 
 # frob:doc docs/modules/py-orchestrator.md#translate
+# frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
 def translate(
     obligation: Obligation,
     *,

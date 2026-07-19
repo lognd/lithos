@@ -142,6 +142,7 @@ def _footprint_ref(component: Component) -> str:
 
 
 # frob:doc docs/modules/py-realizer.md#elec-netlist
+# frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
 def to_kicad_netlist(model: NetlistModel) -> str:
     """Render ``model`` to a KiCad-legacy s-expression netlist (v1 writer).
 

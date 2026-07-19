@@ -97,6 +97,7 @@ def auto_specs(
 
 
 # frob:doc docs/modules/py-backends.md#backends-preview
+# frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
 def run_preview(
     report: StagedBuildReport,
     specs: tuple[DrawingSpec, ...] | None,

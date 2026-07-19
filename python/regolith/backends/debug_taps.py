@@ -144,6 +144,7 @@ class TapSet(BaseModel):
 
 
 # frob:doc docs/modules/py-backends.md#backends-debug-taps
+# frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
 def derive_taps(
     candidates: tuple[TapCandidate, ...],
     explicit: tuple[ExplicitTap, ...],
@@ -427,6 +428,7 @@ def _kind_for_signal(quantity: str, inner: str) -> TapKind:
 
 
 # frob:doc docs/modules/py-backends.md#backends-debug-taps
+# frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
 def tap_candidates_from_payload(payload: dict) -> tuple[TapCandidate, ...]:
     """Derive tap candidates from a build payload's own obligations --
     the SAME claim surface the census reads (D237.2).
@@ -559,6 +561,7 @@ def hdl_debug_pins_from_debug_spec(block: dict) -> dict[str, tuple[str, ...]]:
 
 
 # frob:doc docs/modules/py-backends.md#backends-debug-taps
+# frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
 def resolve_explicit_taps(
     explicit: tuple[ExplicitTap, ...],
     candidates: tuple[TapCandidate, ...],
@@ -610,6 +613,8 @@ def tap_marker(channel: int, target_path: str) -> str:
 
 
 # frob:doc docs/modules/py-backends.md#backends-debug-taps
+# frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
+# frob:invariant INV-032
 def check_tap_agreement(
     tap_map_bytes: bytes,
     files: tuple[OutputFile, ...],
