@@ -393,6 +393,13 @@ acceptance:
 - see docs/workflow/work-orders/WO-140-minor-losses.md
 threat: null
 ```
+## Done report
+
+WO-140 chain landed (fittings records w/ textbook-law citations +
+K-sum/crack-dp widening, feldspar-byte-checked). Hooper/Darby
+coefficient tables = NAMED REFUSAL under the D266 class, escalated
+to owner/counsel (fittings.toml header records it). brew_water
+F132.3 refusal stays for WO-144.
 
 <!-- ticket:T-0013 -->
 ```yaml
@@ -1620,3 +1627,21 @@ threat: null
 10 inert TEST005 test-file waivers retired with per-site grep proof
 after frob v0.9.0+ began skipping test files; crates TEST002 and
 vscode TEST001 waivers verified still matching and kept.
+
+<!-- ticket:T-0056 -->
+```yaml
+id: T-0056
+title: generalize ChartGeometry drafting-audit mapping beyond optimize.trace (WO-143
+  residual)
+state: queued
+kind: feature
+origin: agent
+created: '2026-07-19'
+blocked_by: []
+parent: null
+scope: []
+evidence: []
+attachments: []
+acceptance: []
+threat: null
+```
