@@ -1510,7 +1510,7 @@ See docs/workflow/work-orders/WO-166-wire-edm-die-set-program.md. D268 item 1 + 
 ```yaml
 id: T-0047
 title: 'WO-167: dwelling/house wiring program'
-state: queued
+state: planned
 kind: feature
 origin: human
 created: '2026-07-19'
