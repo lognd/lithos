@@ -1,0 +1,18 @@
+# BREAKS: an ampacity transition with no declared protective device
+#   (charter toolchain/43-power-distribution.md sec. 1 rule 3: "every
+#   ampacity transition (a feeder narrowing, a bus stepping down) has
+#   a declared protective device. An unprotected transition is a
+#   diagnostic.").
+# EXPECT: E0214
+# Self-calibration (WO-132): the `transformer` edge from `Svc1` to
+# `MainBus` narrows ampacity (primary to secondary) but no
+# `breaker`/`fuse`/`relay` edge touches either endpoint;
+# `regolith_lower::power` flags the unprotected transition. Verified
+# against live output.
+power PlantMain:
+    sources: Svc1
+    buses: Svc1, MainBus
+    loads: Motor1
+    feeders:
+        f1: transformer(kva=500kVA, primary=13.2kV, secondary=480V) (Svc1 -> MainBus)
+        f2: feeder(size=cu_4_0awg)                                  (MainBus -> Motor1)

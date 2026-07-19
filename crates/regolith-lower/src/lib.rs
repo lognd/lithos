@@ -30,6 +30,7 @@ pub mod harness_lower;
 pub mod lints;
 pub mod output;
 pub mod ownership;
+pub mod power;
 pub mod query;
 pub mod realized_input;
 pub mod registry;
@@ -137,12 +138,11 @@ pub fn lower_with_lint_config(
         .flat_map(|p| p.parse.diagnostics().iter().cloned())
         .collect();
 
-    let lints_span = tracing::info_span!("lower.lints");
-    let lint_report = {
-        let _enter = lints_span.enter();
-        lints::run_lints(&parsed)
-    };
-    diagnostics.extend(lint_report.diagnostics);
+    diagnostics.extend(
+        tracing::info_span!("lower.lints")
+            .in_scope(|| lints::run_lints(&parsed))
+            .diagnostics,
+    );
 
     // WO-87 (D198): the registry-records payload rides the realized-
     // input channel; parsed ONCE here and threaded to the entity pass
@@ -150,33 +150,31 @@ pub fn lower_with_lint_config(
     // dereference seam).
     let records = registry::RegistryRecords::from_realized_inputs(realized_inputs);
 
-    let entity_span = tracing::info_span!("lower.entities");
-    let snapshots = {
-        let _enter = entity_span.enter();
-        entities::build_entities_with_realized(&parsed, &records, realized_inputs)
-    };
+    let snapshots = tracing::info_span!("lower.entities")
+        .in_scope(|| entities::build_entities_with_realized(&parsed, &records, realized_inputs));
     diagnostics.extend(snapshots.diagnostics.iter().cloned());
 
-    let checks_span = tracing::info_span!("lower.checks");
-    let check_report = {
-        let _enter = checks_span.enter();
-        checks::run_checks_with_registry(&parsed, &snapshots, &records)
-    };
+    let check_report = tracing::info_span!("lower.checks")
+        .in_scope(|| checks::run_checks_with_registry(&parsed, &snapshots, &records));
     diagnostics.extend(check_report.diagnostics.iter().cloned());
 
-    let fluid_span = tracing::info_span!("lower.fluid");
-    let fluid_report = {
-        let _enter = fluid_span.enter();
-        fluid::run_fluid_checks(&parsed)
-    };
-    diagnostics.extend(fluid_report.diagnostics.iter().cloned());
+    diagnostics.extend(
+        tracing::info_span!("lower.fluid")
+            .in_scope(|| fluid::run_fluid_checks(&parsed))
+            .diagnostics,
+    );
 
-    let calcite_span = tracing::info_span!("lower.calcite");
-    let calcite_report = {
-        let _enter = calcite_span.enter();
-        calcite::run_calcite_checks(&parsed)
-    };
-    diagnostics.extend(calcite_report.diagnostics.iter().cloned());
+    diagnostics.extend(
+        tracing::info_span!("lower.calcite")
+            .in_scope(|| calcite::run_calcite_checks(&parsed))
+            .diagnostics,
+    );
+
+    diagnostics.extend(
+        tracing::info_span!("lower.power")
+            .in_scope(|| power::run_power_checks(&parsed))
+            .diagnostics,
+    );
 
     let (graph, contract_graph, choice_points) = run_contracts_pass(&parsed, &snapshots);
     diagnostics.extend(graph.diagnostics.iter().cloned());
@@ -340,6 +338,10 @@ pub fn lower_and_discharge_with_lint_config(
     let calcite_report =
         tracing::info_span!("lower.calcite").in_scope(|| calcite::run_calcite_checks(&parsed));
     diagnostics.extend(calcite_report.diagnostics.iter().cloned());
+
+    let power_report =
+        tracing::info_span!("lower.power").in_scope(|| power::run_power_checks(&parsed));
+    diagnostics.extend(power_report.diagnostics.iter().cloned());
 
     let (graph, contract_graph, choice_points) = run_contracts_pass(&parsed, &snapshots);
     diagnostics.extend(graph.diagnostics.iter().cloned());

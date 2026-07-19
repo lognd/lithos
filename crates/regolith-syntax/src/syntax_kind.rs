@@ -547,6 +547,33 @@ pub enum SyntaxKind {
     // [`SyntaxKind::Decl`] to keep hematite's goldens byte-identical
     // (see the parser dispatch's own comment for the full argument).
 
+    // -- typed cuprite power-distribution construct (WO-132; charter
+    //    toolchain/43-power-distribution.md secs. 1-2, D248/AD-42). The
+    //    fourth `NetDiscipline` over the AD-23 core: `power` is a
+    //    CONTEXTUAL ident (same D85 idiom as `flownet`/`structure`
+    //    above), never a lexer keyword. Its body types `feeders:` as an
+    //    [`SyntaxKind::EdgesBlock`] exactly like `structure`'s
+    //    `transfers:` -- the apparatus vocabulary (`service`,
+    //    `generator`, `transformer`, `switchgear`, `panelboard`, `mcc`,
+    //    `feeder`, `busway`, `breaker`, `fuse`, `relay`, `motor`,
+    //    `load`) is NOT new SyntaxKind at all: exactly like fluorite's
+    //    `Pipe`/`Valve`/`Pump`, these are ordinary constructor names
+    //    used as an edge's value (`f1: transformer(kva=500kVA) (svc ->
+    //    bus1)`), already generic under the shared Ctor-call grammar --
+    //    "ordinary cuprite artifacts with power roles" (charter 43
+    //    sec. 2) is the point: no new grammar per apparatus word, only
+    //    per net-decl shape (one, `power`, the same ONE-new-decl budget
+    //    `structure`/`circulation` each spent for their own track).
+    /// A top-level `power <name>:` declaration (charter 43 sec. 1): the
+    /// facility power net (AD-23 discipline #5 in the NetDiscipline
+    /// count, but the fourth ELEC/CIVIL rule family after elec/fluid/
+    /// calcite-load-path -- see net_core module docs). Body holds
+    /// `sources:`/`buses:`/`ties:`/`loads:` fields plus the typed
+    /// [`SyntaxKind::EdgesBlock`] under `feeders:` (bus-to-bus apparatus
+    /// edges: services, generators, transformers, feeders, protective
+    /// devices).
+    PowerDecl,
+
     // -- typed design-test constructs (WO-83 deliverable 1; charter
     //    toolchain/37-design-testing.md, D190) --
     /// A top-level `test <name>:` declaration: a cross-track,
@@ -774,6 +801,7 @@ const ALL_KINDS: &[SyntaxKind] = &[
     SyntaxKind::MemberDecl,
     SyntaxKind::StructureDecl,
     SyntaxKind::LoadsDecl,
+    SyntaxKind::PowerDecl,
     SyntaxKind::TestDecl,
     SyntaxKind::ScenarioBlock,
     SyntaxKind::TestExpectBlock,

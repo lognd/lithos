@@ -173,6 +173,37 @@ impl NetDiscipline for CirculationDiscipline {
     }
 }
 
+/// The power discipline (charter toolchain/43-power-distribution.md
+/// sec. 1 rule 1, WO-132, D248/AD-42): at least one source imposer
+/// (utility `service` or generator) per energized subnet -- an
+/// unsourced load is a diagnostic, never an assumption. The direct
+/// imposer-count analog of [`FluidDiscipline`] (fluid: at least one
+/// pressure imposer; power: at least one source imposer). Rules 2-4 of
+/// charter 43 sec. 1 (undeclared parallel source paths, unprotected
+/// ampacity transitions, load reachability) need edge-walk machinery
+/// this trait does not provide (only imposer terminals per net, no
+/// edge traversal) -- same scope split [`LoadPathDiscipline`]'s doc
+/// comment names for calcite; wired as hand-written graph walks in
+/// `regolith_lower::power`, not `NetDiscipline` plugins.
+#[derive(Debug, Clone, Copy, Default)]
+// frob:doc docs/modules/regolith-sem.md#net-core
+// frob:ticket T-0007
+pub struct PowerDiscipline;
+
+impl NetDiscipline for PowerDiscipline {
+    // frob:ticket T-0007
+    fn check_imposers(&self, net_name: &str, imposers: &[String]) -> Option<String> {
+        if imposers.is_empty() {
+            Some(format!(
+                "power subnet '{net_name}' has no source imposer (service/generator) \
+                 (charter toolchain/43 sec. 1 rule 1, the power discipline)"
+            ))
+        } else {
+            None
+        }
+    }
+}
+
 /// Walk `nets` in the given order and return the FIRST discipline
 /// violation (fail-fast). This matches the historical elec behavior
 /// exactly: the first offending net short-circuits the whole check, it
@@ -203,7 +234,7 @@ pub fn first_violation<D: NetDiscipline>(discipline: &D, nets: &[NetEntry]) -> O
 mod tests {
     use super::{
         first_violation, CirculationDiscipline, ElecDiscipline, FluidDiscipline,
-        LoadPathDiscipline, NetEntry, Terminal,
+        LoadPathDiscipline, NetEntry, PowerDiscipline, Terminal,
     };
 
     fn terminal(component: &str, terminal: &str, imposes: bool) -> Terminal {
@@ -311,6 +342,35 @@ mod tests {
         let violation = first_violation(&CirculationDiscipline, &nets).expect("violation");
         assert_eq!(violation.net, "Suite103");
         assert!(violation.message.contains("circulation"));
+    }
+
+    // frob:tests crates/regolith-sem/src/net_core.rs::first_violation kind="unit"
+    // frob:ticket T-0007
+    #[test]
+    fn power_discipline_flags_unsourced_subnet() {
+        let nets = vec![NetEntry {
+            name: "Bus1".to_string(),
+            terminals: vec![
+                terminal("mcc1", "in", false),
+                terminal("load1", "in", false),
+            ],
+        }];
+        let violation = first_violation(&PowerDiscipline, &nets).expect("violation");
+        assert_eq!(violation.net, "Bus1");
+        assert!(violation.message.contains("no source imposer"));
+    }
+
+    #[test]
+    // frob:ticket T-0007
+    fn power_discipline_passes_with_one_source() {
+        let nets = vec![NetEntry {
+            name: "Bus1".to_string(),
+            terminals: vec![
+                terminal("svc1", "out", true),
+                terminal("load1", "in", false),
+            ],
+        }];
+        assert_eq!(first_violation(&PowerDiscipline, &nets), None);
     }
 
     #[test]

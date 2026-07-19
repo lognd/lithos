@@ -7,6 +7,12 @@
 > regolith vocabulary shared verbatim with hematite -- by design, most of
 > the load-bearing words. Everything unmarked is a sketch, not settled.
 
+See [10-power-layer.md](10-power-layer.md) for the power-distribution
+vocabulary (`service`, `generator`, `transformer`, `switchgear`,
+`panelboard`, `mcc`, `feeder`, `busway`, `breaker`, `fuse`, `relay`,
+`motor`, `load`, WO-132): ordinary constructor names, not new keyword
+rows here, the same shape as fluorite's `Pipe`/`Valve`/`Pump`.
+
 ## A. Shared registries
 
 All of section A in the mech vocabulary applies (`namespace`, `quantity`,

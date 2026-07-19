@@ -1,0 +1,16 @@
+# BREAKS: an energized power subnet declaring no source (charter
+#   toolchain/43-power-distribution.md sec. 1 rule 1: "every energized
+#   subnet has AT LEAST ONE source imposer (utility service or
+#   generator). An unsourced load is a diagnostic, never an
+#   assumption.").
+# EXPECT: E0212
+# Self-calibration (WO-132): the power net declares `buses:`/`loads:`
+# and a `feeders:` edge but no `sources:` field at all;
+# `net_core::PowerDiscipline` (the AD-23 core) flags the whole-net
+# imposer-free subnet at compile time via `regolith_lower::power`.
+# Verified against live output.
+power PlantMain:
+    buses: MainBus
+    loads: Motor1
+    feeders:
+        f1: feeder(size=cu_4_0awg) (MainBus -> Motor1)

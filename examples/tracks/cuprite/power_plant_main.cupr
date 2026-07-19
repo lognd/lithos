@@ -1,0 +1,30 @@
+# WO-132 positive corpus member (charter toolchain/43-power-distribution.md
+# secs. 1-2, D248/AD-42): a clean, zero-diagnostic facility power design
+# exercising every apparatus word the charter names (service, generator,
+# transformer, switchgear, panelboard, mcc, feeder, busway, breaker,
+# fuse, relay, motor, load) and every discipline rule in its passing
+# form: a declared source per subnet (rule 1), a declared `ties:` bus
+# for the utility/generator tie (rule 2), a protective device at every
+# ampacity transition (rule 3), and every load reachable from a source
+# (rule 4).
+
+power PlantMain:
+    sources: Utility, Genset
+    buses: Utility, Genset, Tie, MainSwgr, PanelA, MccA
+    ties: Tie
+    loads: PressMotor, ConveyorMotor, LightingLoad
+    feeders:
+        svc:        service(voltage=13.2kV, available_fault=25kA, x_r=6.6) (Utility -> Tie)
+        gen:        generator(kva=750kVA, voltage=480V)                   (Genset -> Tie)
+        main_bkr:   breaker(frame=2000A, aic=65kA)                        (Tie -> MainSwgr)
+        xfmr:       transformer(kva=1000kVA, primary=13.2kV, secondary=480V) (MainSwgr -> MainSwgr)
+        swgr_bkr:   breaker(frame=1200A, aic=65kA)                        (MainSwgr -> MainSwgr)
+        panel_feed: feeder(size=cu_4_0awg, length=45m)                    (MainSwgr -> PanelA)
+        panel_bkr:  breaker(frame=225A, aic=25kA)                         (PanelA -> PanelA)
+        light_feed: feeder(size=cu_10awg, length=20m)                     (PanelA -> LightingLoad)
+        mcc_bus:    busway(rating=800A)                                   (MainSwgr -> MccA)
+        mcc_fuse:   fuse(frame=800A, aic=100kA)                           (MccA -> MccA)
+        press_feed: feeder(size=cu_2_0awg, length=30m)                    (MccA -> PressMotor)
+        press_relay: relay(curve=motor_thermal)                          (PressMotor -> PressMotor)
+        conv_feed:  feeder(size=cu_6awg, length=25m)                      (MccA -> ConveyorMotor)
+        conv_fuse:  fuse(frame=60A, aic=25kA)                             (ConveyorMotor -> ConveyorMotor)

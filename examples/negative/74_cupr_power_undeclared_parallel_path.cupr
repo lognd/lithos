@@ -1,0 +1,19 @@
+# BREAKS: a bus fed from more than one source with no `ties:`
+#   declaration (charter toolchain/43-power-distribution.md sec. 1
+#   rule 2: "a radial system has EXACTLY ONE source path per bus
+#   unless a TIE is explicitly declared ... an undeclared parallel
+#   path is a diagnostic -- accidental parallelism destroys
+#   equipment.").
+# EXPECT: E0213
+# Self-calibration (WO-132): `MainBus` is fed by both `Svc1` and
+# `Svc2` through the declared `feeders:` edges and is not named in
+# `ties:`; `regolith_lower::power`'s directed reachability walk flags
+# the undeclared parallel source path. Verified against live output.
+power PlantMain:
+    sources: Svc1, Svc2
+    buses: Svc1, Svc2, MainBus
+    loads: Motor1
+    feeders:
+        f1: service(voltage=480V)     (Svc1 -> MainBus)
+        f2: generator(kva=750kVA)     (Svc2 -> MainBus)
+        f3: feeder(size=cu_4_0awg)    (MainBus -> Motor1)

@@ -112,10 +112,16 @@ AD-23: one net core, per-discipline plugins. The net ledger machinery
 (terminal collection, per-net imposer counting, deterministic
 traversal) lives once here, parameterized by a discipline that
 contributes only a check predicate and diagnostic message. `elec`
-(cuprite/03 sec. 2, at most one voltage-imposing terminal) and `fluid`
-(fluorite/02 sec. 4, at least one pressure imposer per subnet) are the
-two instances riding the same traversal; before this module the elec
-check duplicated the same logic in Python (AD-23, D100).
+(cuprite/03 sec. 2, at most one voltage-imposing terminal), `fluid`
+(fluorite/02 sec. 4, at least one pressure imposer per subnet),
+`load_path`/`circulation` (calcite/03 sec. 3), and `power` (charter
+toolchain/43-power-distribution.md sec. 1 rule 1, WO-132: at least one
+source imposer per energized subnet) all ride the same traversal;
+before this module the elec check duplicated the same logic in Python
+(AD-23, D100). The power discipline's remaining rules (undeclared
+parallel source paths, unprotected ampacity transitions, load
+reachability) need an edge walk this trait does not provide -- see
+`regolith_lower::power`'s module doc comment.
 
 <a id="converter"></a>
 ### `converter`

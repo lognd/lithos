@@ -404,6 +404,15 @@ ast_node!(
 // generic `Decl` for both tracks (see the parser dispatch's comment).
 
 ast_node!(
+    /// A top-level `power <name>:` declaration (charter
+    /// toolchain/43-power-distribution.md sec. 1, WO-132, D248/AD-42):
+    /// the facility power net over the AD-23 net core. Body holds
+    /// `sources:`/`buses:`/`ties:`/`loads:` fields plus the typed
+    /// [`EdgesBlock`] under `feeders:`.
+    PowerDecl => PowerDecl
+);
+
+ast_node!(
     /// A top-level `test <name>:` declaration (WO-83; charter
     /// toolchain/37-design-testing.md, D190): an author-written design
     /// test. Body holds a [`ScenarioBlock`] and a [`TestExpectBlock`].
@@ -2161,6 +2170,14 @@ impl File {
         self.syntax.children().filter_map(LoadsDecl::cast).collect()
     }
 
+    /// The top-level `power` declarations (charter 43 sec. 1, WO-132).
+    #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST001 reason="thin CST accessor exercised transitively by every parser/lowering test that walks this node kind; no dedicated unit test isolates the accessor itself"
+    pub fn power_nets(&self) -> Vec<PowerDecl> {
+        self.syntax.children().filter_map(PowerDecl::cast).collect()
+    }
+
     /// The top-level `test` declarations (WO-83; charter 37): every
     /// cross-track design test in this file.
     #[must_use]
@@ -2286,6 +2303,33 @@ impl StructureDecl {
     #[must_use]
     // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn transfers(&self) -> Option<EdgesBlock> {
+        self.syntax.children().find_map(EdgesBlock::cast)
+    }
+}
+
+impl PowerDecl {
+    /// The power net's name (`power PlantMain:` -> `PlantMain`).
+    #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
+    pub fn name(&self) -> Option<String> {
+        header_ident_after_keyword(&self.syntax)
+    }
+
+    /// The `sources:`/`buses:`/`ties:`/`loads:` header fields.
+    #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
+    pub fn fields(&self) -> Vec<Field> {
+        self.syntax.children().filter_map(Field::cast).collect()
+    }
+
+    /// The `feeders:` block, if declared (charter 43 sec. 1): the
+    /// bus-to-bus apparatus edges (services, generators, transformers,
+    /// feeders, protective devices), typed identically to a flownet
+    /// `edges:` block / a structure's `transfers:` block.
+    #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
+    pub fn feeders(&self) -> Option<EdgesBlock> {
         self.syntax.children().find_map(EdgesBlock::cast)
     }
 }

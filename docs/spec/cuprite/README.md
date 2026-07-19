@@ -1,12 +1,14 @@
 # cuprite -- Declarative Electrical and Computer Design
 
-> Spec 0.12 (design sketch). NAMED **cuprite** (`.cupr`) in cycle 9
+> Spec 0.13 (design sketch). NAMED **cuprite** (`.cupr`) in cycle 9
 > (D78). 0.10 -> 0.11 (cycle 18, WO-28 spec cycle): the `drc:`/`erc:`
 > rule grammar and the discipline boundary landed
 > ([04-structural-layer.md](04-structural-layer.md) sec. 4, [07-vocabulary-sketch.md](07-vocabulary-sketch.md)
 > sec. A2). 0.11 -> 0.12 (cycle 23, D120): the HDL coverage matrix
 > ([09-hdl-coverage.md](09-hdl-coverage.md)) makes the "HDL superset" banner precise and
-> testable. This track is
+> testable. 0.12 -> 0.13 (cycle 36, D248/AD-42, WO-132): the power
+> layer ([10-power-layer.md](10-power-layer.md)) adds facility power
+> distribution as a fourth `NetDiscipline`. This track is
 > deliberately younger than the mechanical one: the regolith is
 > proven against mech first, and this directory's job is to
 > demonstrate that the same machinery carries electrical and computer
@@ -34,6 +36,8 @@ derived, the same way hematite derives geometry from claims.
 | [06-lowering.md](06-lowering.md) | the elec L0-L6 stack and checks per level |
 | [07-vocabulary-sketch.md](07-vocabulary-sketch.md) | draft keyword tables mapped to the regolith |
 | [08-open-questions.md](08-open-questions.md) | the EOPEN list |
+| [09-hdl-coverage.md](09-hdl-coverage.md) | the HDL coverage matrix |
+| [10-power-layer.md](10-power-layer.md) | facility power distribution: the fourth `NetDiscipline`, its vocabulary, discipline rules, claim forms (WO-132) |
 
 Status: the core is [SETTLED] as of 0.10 -- the boundary/interior
 intent rule, the event-bounded hybrid semantics (03 sec. 1a), the

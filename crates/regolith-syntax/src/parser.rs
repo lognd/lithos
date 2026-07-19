@@ -521,6 +521,16 @@ impl Parser<'_> {
                 Some(SyntaxKind::Ident) if self.leading_ident_text() == Some("loads") => {
                     self.parse_simple_fluid_decl(SyntaxKind::LoadsDecl);
                 }
+                // The cuprite power-distribution top-level declarator
+                // (WO-132; charter toolchain/43 sec. 1, D248/AD-42):
+                // CONTEXTUAL, same idiom as `structure`/`circulation`
+                // above. `feeders:` types a nested `EdgesBlock` exactly
+                // like `structure`'s `transfers:`, so it gets its own
+                // parse fn; everything else (`sources:`, `buses:`,
+                // `ties:`, `loads:`) is the shared generic field grammar.
+                Some(SyntaxKind::Ident) if self.leading_ident_text() == Some("power") => {
+                    self.parse_power_decl();
+                }
                 // The cross-track design-test top-level declarator
                 // (WO-83 deliverable 1; charter toolchain/37, D190):
                 // CONTEXTUAL, like `process`/`medium`/`flownet` above --
@@ -849,6 +859,69 @@ impl Parser<'_> {
                 Some("transfers") => self.parse_fluid_line_block(SyntaxKind::EdgesBlock),
                 // `support:` / `members:` and any other line: the
                 // shared statement grammar.
+                _ => self.parse_generic_stmt(),
+            }
+        }
+        if self.current() == Some(SyntaxKind::Dedent) {
+            self.bump();
+        }
+    }
+
+    /// A top-level `power <name>:` declaration (charter 43 sec. 1, WO-132):
+    /// the facility power net. Header + `sources:`/`buses:`/`ties:`/
+    /// `loads:` fields parse like [`Parser::parse_structure_decl`]'s
+    /// header; the `feeders:` line types a nested [`SyntaxKind::EdgesBlock`]
+    /// exactly like a structure's `transfers:` (mirrors
+    /// [`Parser::parse_structure_body`] verbatim, one different field
+    /// name -- NO DUPLICATION beyond the unavoidable dispatch string).
+    fn parse_power_decl(&mut self) {
+        self.start(SyntaxKind::PowerDecl);
+        let subject = self.consume_decl_header();
+        if let Some(s) = subject.clone() {
+            self.subjects.push(s);
+        }
+        self.parse_power_body();
+        if subject.is_some() {
+            self.subjects.pop();
+        }
+        self.finish();
+    }
+
+    /// The indented body of a [`SyntaxKind::PowerDecl`]: `sources:`/
+    /// `buses:`/`ties:`/`loads:` fields plus the typed `feeders:` ->
+    /// [`SyntaxKind::EdgesBlock`]. Mirrors
+    /// [`Parser::parse_structure_body`]'s look-past-trivia-to-Indent
+    /// idiom and dispatch shape.
+    fn parse_power_body(&mut self) {
+        let mut idx = self.pos;
+        while matches!(
+            self.toks.get(idx).map(|t| t.kind),
+            Some(SyntaxKind::Whitespace | SyntaxKind::Comment | SyntaxKind::Newline)
+        ) {
+            idx += 1;
+        }
+        if self.toks.get(idx).map(|t| t.kind) != Some(SyntaxKind::Indent) {
+            return;
+        }
+        while self.pos < idx {
+            self.bump();
+        }
+        self.bump(); // Indent
+        loop {
+            while matches!(
+                self.current(),
+                Some(SyntaxKind::Whitespace | SyntaxKind::Comment | SyntaxKind::Newline)
+            ) {
+                self.bump();
+            }
+            if matches!(self.current(), None | Some(SyntaxKind::Dedent)) {
+                break;
+            }
+            let lead = self.leading_ident_text().map(str::to_string);
+            match lead.as_deref() {
+                Some("feeders") => self.parse_fluid_line_block(SyntaxKind::EdgesBlock),
+                // `sources:` / `buses:` / `ties:` / `loads:` and any
+                // other line: the shared statement grammar.
                 _ => self.parse_generic_stmt(),
             }
         }

@@ -1,0 +1,16 @@
+# BREAKS: a declared load that cannot trace to any source (charter
+#   toolchain/43-power-distribution.md sec. 1 rule 4: "every load
+#   traces to a source (reachability -- the net core's existing
+#   reference-reachability check, reused).").
+# EXPECT: E0215
+# Self-calibration (WO-132): `StrandedMotor` is declared in `loads:`
+# but no `feeders:` edge chain reaches it from `Svc1`;
+# `regolith_lower::power`'s directed reachability walk flags the
+# unreachable load. Verified against live output.
+power PlantMain:
+    sources: Svc1
+    buses: Svc1, MainBus
+    loads: Motor1, StrandedMotor
+    feeders:
+        f1: feeder(size=cu_4_0awg) (Svc1 -> MainBus)
+        f2: feeder(size=cu_10awg)  (MainBus -> Motor1)

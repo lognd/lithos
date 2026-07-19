@@ -69,6 +69,7 @@ macro_rules! authored {
 /// The ONE explain registry: every code in `codes::ALL`, no more, no
 /// fewer (`completeness_is_total` enforces both directions).
 // frob:doc docs/modules/regolith-diag.md#explain
+// frob:ticket T-0007
 pub const ALL: &[ExplainEntry] = &[
 
     authored!(
@@ -261,6 +262,10 @@ pub const ALL: &[ExplainEntry] = &[
     stub!(MEMBER_UNJOINED_OR_TRIBUTARY_MISMATCH, "a member end/bearing terminal is unjoined and not `unloaded`, or declared tributary shares fail to partition their loaded surface (calcite/03 sec. 3; two conditions share one code per the spec's own allocation)."),
     stub!(MEDIUM_MISMATCH, "FOPEN-1 (fluorite/04, WO-49): a flownet edge resolves, through its `from=<part>.<role>` ref, to a component with a declared `impl FluidPort<medium=...>` binding whose medium disagrees with the flownet's own `medium=` header -- a mixed- medium subnet, rejected at compile time before payload construction (fluorite/02 sec. 1, the one-medium-per-subnet rule). Names both media and both declaration sites. (Landed as E0204 on the WO-49 branch; renumbered at integration -- the ratified calcite spec owns E0204-E0209.)."),
     stub!(POINT_LOAD_NEEDS_STATION, "WO-85/D194: a concentrated (force/moment-unit) load row targets a bare MEMBER with no `@<station>` refinement (the location is ambiguous: name a station, `G1@0.5`, or target a joint/support instead -- never inferred), or its declared station is malformed / outside the normalized `[0, 1]` range. Constructive: the message names both valid spellings."),
+    stub!(POWER_SUBNET_UNSOURCED, "WO-132 (charter 43 sec. 1 rule 1, D248/AD-42): an energized power subnet has no source imposer (utility `service` or `generator`) -- an unsourced load is a diagnostic, never an assumption."),
+    stub!(POWER_UNDECLARED_PARALLEL_PATH, "WO-132 (charter 43 sec. 1 rule 2): a bus is reachable from more than one source through the declared `feeders:` edges and is not named in the net's `ties:` field -- an undeclared parallel source path (accidental parallelism destroys equipment)."),
+    stub!(POWER_UNPROTECTED_TRANSITION, "WO-132 (charter 43 sec. 1 rule 3): a `feeders:` edge whose apparatus constructor narrows ampacity (`transformer`, `feeder`, `busway`) declares no adjoining protective device (`breaker`/`fuse`/`relay`) -- an unprotected ampacity transition."),
+    stub!(POWER_LOAD_UNREACHABLE, "WO-132 (charter 43 sec. 1 rule 4): a declared `loads:` entry cannot reach any source bus by walking the net's declared `feeders:` edges."),
     stub!(AMBIGUOUS_SELECTION, "an entity query matched more than one entity."),
     stub!(BORROW_CONFLICT, "conflicting borrow of an owned region."),
     stub!(UNRESOLVED_FIELD_REFERENCE, "WO-33 D98: a claim projection (`max`/`min`/`at`/ `slope`) names a field no `compute` claim in scope declares (the unresolved-reference family, mirroring `E0301`)."),

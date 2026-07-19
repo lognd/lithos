@@ -281,6 +281,26 @@ finality), INV-23 (region exclusivity). Per declaration scope it builds
 a `BorrowTable` + `EntityKind::Region` entities + an `OrbitTable` and
 runs the sem checks.
 
+<a id="power"></a>
+### `power`
+
+Pass 3e (WO-132): the cuprite power-distribution net discipline
+(charter toolchain/43-power-distribution.md secs. 1-2, D248/AD-42).
+Runs the front-end-decidable power discipline checks over every
+parsed `.cupr` file's typed `PowerDecl` AST, riding the same AD-23 net
+core (`regolith_sem::net_core`) the elec/fluid/calcite disciplines use
+-- `net_core::PowerDiscipline` wired to E0212 (at least one source
+imposer per subnet). Rules 2-4 (undeclared parallel source paths,
+unprotected ampacity transitions, load reachability -- E0213/E0214/
+E0215) are hand-written directed graph walks over the `feeders:` edge
+list, the same scope split `calcite.rs` uses for its own reachability
+checks (imposer-counting stays a `NetDiscipline` plugin; edge walks
+live here). The apparatus vocabulary (`service`, `generator`,
+`transformer`, `switchgear`, `panelboard`, `mcc`, `feeder`, `busway`,
+`breaker`, `fuse`, `relay`, `motor`, `load`) needed no new grammar:
+each is an ordinary constructor name used as a `feeders:` edge's
+value, exactly like fluorite's `Pipe`/`Valve`/`Pump`.
+
 <a id="query"></a>
 ### `query`
 

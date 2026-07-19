@@ -250,6 +250,35 @@ pub mod codes {
     /// Constructive: the message names both valid spellings.
     // frob:doc docs/modules/regolith-diag.md#code
     pub const POINT_LOAD_NEEDS_STATION: DiagCode = DiagCode::new(Family::FluidNet, 11);
+    /// `E0212` -- WO-132 (charter 43 sec. 1 rule 1, D248/AD-42): an
+    /// energized power subnet has no source imposer (utility `service`
+    /// or `generator`) -- an unsourced load is a diagnostic, never an
+    /// assumption. The power discipline's imposer-free-subnet analog of
+    /// `E0201`/`E0204`/`E0208`.
+    // frob:doc docs/modules/regolith-diag.md#code
+    // frob:ticket T-0007
+    pub const POWER_SUBNET_UNSOURCED: DiagCode = DiagCode::new(Family::FluidNet, 12);
+    /// `E0213` -- WO-132 (charter 43 sec. 1 rule 2): a bus is reachable
+    /// from more than one source through the declared `feeders:` edges
+    /// and is not named in the net's `ties:` field -- an undeclared
+    /// parallel source path (accidental parallelism destroys equipment).
+    // frob:doc docs/modules/regolith-diag.md#code
+    // frob:ticket T-0007
+    pub const POWER_UNDECLARED_PARALLEL_PATH: DiagCode = DiagCode::new(Family::FluidNet, 13);
+    /// `E0214` -- WO-132 (charter 43 sec. 1 rule 3): a `feeders:` edge
+    /// whose apparatus constructor narrows ampacity (`transformer`,
+    /// `feeder`, `busway`) declares no adjoining protective device
+    /// (`breaker`/`fuse`/`relay`) -- an unprotected ampacity transition.
+    // frob:doc docs/modules/regolith-diag.md#code
+    // frob:ticket T-0007
+    pub const POWER_UNPROTECTED_TRANSITION: DiagCode = DiagCode::new(Family::FluidNet, 14);
+    /// `E0215` -- WO-132 (charter 43 sec. 1 rule 4): a declared `loads:`
+    /// entry cannot reach any source bus by walking the net's declared
+    /// `feeders:` edges -- the power discipline's reachability check,
+    /// the same shape as calcite's `E0207`/`E0205`.
+    // frob:doc docs/modules/regolith-diag.md#code
+    // frob:ticket T-0007
+    pub const POWER_LOAD_UNREACHABLE: DiagCode = DiagCode::new(Family::FluidNet, 15);
     /// `E0301` -- an entity query matched more than one entity.
     // frob:doc docs/modules/regolith-diag.md#code
     pub const AMBIGUOUS_SELECTION: DiagCode = DiagCode::new(Family::References, 1);
@@ -593,6 +622,7 @@ pub mod codes {
     /// is a build error (see `regolith_diag::explain`'s completeness
     /// test) -- this is what makes D247.4's rule able to FAIL.
     // frob:doc docs/modules/regolith-diag.md#code
+    // frob:ticket T-0007
     pub const ALL: &[(&str, DiagCode)] = &[
         ("INCOMPATIBLE_QUANTITIES", INCOMPATIBLE_QUANTITIES),
         ("EQUALITY_ON_CONTINUOUS", EQUALITY_ON_CONTINUOUS),
@@ -615,6 +645,13 @@ pub mod codes {
         ),
         ("MEDIUM_MISMATCH", MEDIUM_MISMATCH),
         ("POINT_LOAD_NEEDS_STATION", POINT_LOAD_NEEDS_STATION),
+        ("POWER_SUBNET_UNSOURCED", POWER_SUBNET_UNSOURCED),
+        (
+            "POWER_UNDECLARED_PARALLEL_PATH",
+            POWER_UNDECLARED_PARALLEL_PATH,
+        ),
+        ("POWER_UNPROTECTED_TRANSITION", POWER_UNPROTECTED_TRANSITION),
+        ("POWER_LOAD_UNREACHABLE", POWER_LOAD_UNREACHABLE),
         ("AMBIGUOUS_SELECTION", AMBIGUOUS_SELECTION),
         ("BORROW_CONFLICT", BORROW_CONFLICT),
         ("UNRESOLVED_FIELD_REFERENCE", UNRESOLVED_FIELD_REFERENCE),
@@ -697,6 +734,7 @@ mod tests {
     use super::{DiagCode, Family};
 
     #[test]
+    // frob:ticket T-0007
     fn code_renders_zero_padded() {
         assert_eq!(codes::AMBIGUOUS_SELECTION.to_string(), "E0301");
         assert_eq!(codes::BUDGET_CANNOT_CLOSE.to_string(), "E0432");
@@ -726,6 +764,10 @@ mod tests {
             "E0209"
         );
         assert_eq!(codes::POINT_LOAD_NEEDS_STATION.to_string(), "E0211");
+        assert_eq!(codes::POWER_SUBNET_UNSOURCED.to_string(), "E0212");
+        assert_eq!(codes::POWER_UNDECLARED_PARALLEL_PATH.to_string(), "E0213");
+        assert_eq!(codes::POWER_UNPROTECTED_TRANSITION.to_string(), "E0214");
+        assert_eq!(codes::POWER_LOAD_UNREACHABLE.to_string(), "E0215");
     }
 
     #[test]
@@ -772,6 +814,7 @@ mod tests {
     /// crude but effective count check: bump this alongside any new
     /// `pub const`).
     #[test]
+    // frob:ticket T-0007
     fn all_registry_has_no_duplicates() {
         let mut names = std::collections::HashSet::new();
         let mut numbers = std::collections::HashSet::new();
@@ -784,7 +827,7 @@ mod tests {
         }
         assert_eq!(
             codes::ALL.len(),
-            73,
+            77,
             "codes::ALL count drifted; if you added a code, bump this and \
              the completeness registry in explain.rs"
         );
