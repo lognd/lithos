@@ -1081,7 +1081,7 @@ threat: null
 ```yaml
 id: T-0039
 title: 'WO-159: regolith.surface UI read facade (AD-44)'
-state: queued
+state: in-progress
 kind: feature
 origin: human
 created: '2026-07-19'
@@ -1102,7 +1102,7 @@ See docs/workflow/work-orders/WO-159-surface-facade.md. Charter AD-44. Graphite-
 ```yaml
 id: T-0040
 title: 'WO-160: artifact provenance tier (AD-45)'
-state: queued
+state: in-progress
 kind: feature
 origin: human
 created: '2026-07-19'
@@ -1124,7 +1124,7 @@ See docs/workflow/work-orders/WO-160-artifact-provenance-tier.md. Charter AD-45.
 ```yaml
 id: T-0041
 title: 'WO-161: registration-derived artifact classification (AD-46)'
-state: queued
+state: in-progress
 kind: feature
 origin: human
 created: '2026-07-19'
@@ -1145,7 +1145,7 @@ See docs/workflow/work-orders/WO-161-registration-derived-classification.md. Cha
 ```yaml
 id: T-0042
 title: 'WO-162: promotion-ticket rule gains teeth (AD-22 teeth)'
-state: queued
+state: in-progress
 kind: feature
 origin: human
 created: '2026-07-19'
@@ -1168,7 +1168,7 @@ See docs/workflow/work-orders/WO-162-promotion-ticket-rule.md. Charter AD-22 har
 id: T-0043
 title: 'WO-163: RealizedLayout put seam, generalized for board-shaped capabilities
   (A7)'
-state: queued
+state: in-progress
 kind: feature
 origin: human
 created: '2026-07-19'
