@@ -1,3 +1,4 @@
+// frob:waive TEST003 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 //! Front-end: lexer, layout pass, rowan CST, parser, AST views,
 //! formatter, and the language extension registry.
 //!

@@ -1,3 +1,4 @@
+// frob:waive TEST003 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 //! Semantic layer: entity database, queries, ownership/borrows,
 //! stages/scopes, monomorphization, symmetry, sketch ledger, and the
 //! continuous/discrete converter graph (INV-16 acyclicity).

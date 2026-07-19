@@ -1,3 +1,4 @@
+// frob:waive TEST003 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 //! Shared low-level primitives for the regolith compiler core.
 //!
 //! Regolith reference: `docs/spec/regolith/09-build-and-lockfile.md`

@@ -22,6 +22,7 @@ class _EchoModel(BaseModel):
     value: int
 
 
+# frob:tests python/regolith/procio.py kind="integration"
 def test_run_argv_missing_binary_is_not_found_no_auto_install(tmp_path: Path) -> None:
     """A nonexistent binary is `Err(ToolFailure(kind="not_found"))`, never
     an exception, and never an install attempt (there is nothing to

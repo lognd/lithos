@@ -1,3 +1,4 @@
+// frob:waive TEST003 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 //! Quantity core: dimensions, units, intervals, log views, value
 //! sources.
 //!

@@ -22,6 +22,7 @@ def _isolated_global_config(tmp_path, monkeypatch):
 
 
 # frob:tests python/regolith/config.py::get_effective
+# frob:tests python/regolith/config.py kind="integration"
 def test_unknown_key_is_constructive_error(tmp_path):
     result = config.get_effective("nope.nope", tmp_path)
     assert result.is_err

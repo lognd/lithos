@@ -1,3 +1,4 @@
+// frob:waive TEST003 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 //! Contract IR: interfaces, matings, ledgers, budgets, L2 arithmetic.
 //!
 //! Regolith reference: `docs/spec/regolith/04-contracts.md`, `docs/spec/hematite/03`,

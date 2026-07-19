@@ -72,6 +72,7 @@ def _register_fixture_family(packs: dict[str, FamilyPack]) -> None:
 
 
 # frob:tests python/regolith/realizer/firmware/packs.py::get_pack
+# frob:tests python/regolith/plugins.py kind="integration"
 def test_mcu_pack_plugin_is_discovered_and_composed_after_builtins() -> None:
     """Acceptance: a `kind=mcu_pack` plugin's family resolves via `get_pack`."""
     manifest = PluginManifest(

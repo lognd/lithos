@@ -1,3 +1,4 @@
+// frob:waive TEST003 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 //! Diagnostic model and the single diagnostic renderer (AD-7).
 //!
 //! Regolith reference: `docs/spec/regolith/09-build-and-lockfile.md`

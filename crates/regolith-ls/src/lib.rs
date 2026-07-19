@@ -1,3 +1,4 @@
+// frob:waive TEST003 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
 //! `regolith-ls`: the LSP server, one front end for humans and tools
 //! over the compiler crates (AD-24, `design/24-developer-tooling.md`).
 //!

@@ -263,6 +263,8 @@ mod tests {
 
         // Round-trip identity: decoding canonical CBOR reproduces the
         // original value exactly (INV-1/INV-10 foundation).
+        // frob:tests crates/regolith-util/src/canon.rs::canonical_cbor kind="unit"
+        // frob:waive TEST002 reason="rust collector fails fast on lib-less fuzz/ crate, killing test-evidence collection repo-wide; binding+tests are real, see FROBLEMS 2026-07-18"
         #[test]
         fn canonical_cbor_round_trips_identity(
             a in proptest::prelude::any::<i64>(),

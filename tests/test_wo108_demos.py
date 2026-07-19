@@ -37,6 +37,7 @@ def _run(name: str) -> Manifest:
 
 
 @pytest.mark.parametrize("name", DEMOS)
+# frob:tests demos kind="integration"
 def test_demo_manifest_is_complete_and_deterministic(name: str) -> None:
     first = _run(name)
     second = _run(name)

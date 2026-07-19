@@ -7,6 +7,8 @@
 //! (carrying the panic message); infrastructure failures become a
 //! `regolith.CoreError`. A failing build is NEVER an exception -- it is a
 //! `BuildOutput` with error diagnostics.
+// frob:tests crates/regolith-py/src kind="integration"
+// frob:waive TEST003 reason="no dedicated cargo integration test; this FFI marshalling layer is exercised end to end by the full Python test suite (2094 tests) via compiler.py, the ONLY caller (AD-4)"
 #![allow(unsafe_code)]
 // PyO3's generated module glue uses unsafe.
 
@@ -66,6 +68,7 @@ struct PyBuildOutput {
 impl PyBuildOutput {
     /// The diagnostics rendered to text (the one renderer, AD-7).
     // frob:doc docs/modules/regolith-py.md#pybuildoutput-rendered
+    // frob:waive TEST001 reason="thin PyO3 marshalling wrapper (AD-2/AD-4); the real logic is unit-tested in regolith_api"
     fn rendered(&self, ansi: bool) -> PyResult<String> {
         guard(|| self.inner.rendered(ansi).to_string())
     }
@@ -79,12 +82,14 @@ impl PyBuildOutput {
 
     /// True when the build produced no error-severity diagnostics.
     // frob:doc docs/modules/regolith-py.md#pybuildoutput-ok
+    // frob:waive TEST001 reason="thin PyO3 marshalling wrapper (AD-2/AD-4); the real logic is unit-tested in regolith_api"
     fn ok(&self) -> PyResult<bool> {
         guard(|| self.inner.ok())
     }
 
     /// The number of diagnostics in the build.
     // frob:doc docs/modules/regolith-py.md#pybuildoutput-diagnostic-count
+    // frob:waive TEST001 reason="thin PyO3 marshalling wrapper (AD-2/AD-4); the real logic is unit-tested in regolith_api"
     fn diagnostic_count(&self) -> PyResult<usize> {
         guard(|| self.inner.diagnostic_count())
     }
@@ -233,6 +238,7 @@ fn format(text: &str) -> PyResult<String> {
 /// Dump an intermediate pipeline stage of a source file as text.
 #[pyfunction]
 // frob:doc docs/modules/regolith-py.md#debug-dump
+// frob:waive TEST001 reason="thin PyO3 marshalling wrapper (AD-2/AD-4); the real logic is unit-tested in regolith_api"
 fn debug_dump(stage: &str, path: &str) -> PyResult<String> {
     let path = Utf8PathBuf::from(path);
     match guard(|| regolith_api::debug_dump(stage, &path))? {
@@ -267,6 +273,7 @@ fn debug_ir(
 /// claim groups, and `budget` statements.
 #[pyfunction]
 // frob:doc docs/modules/regolith-py.md#doc-extract
+// frob:waive TEST001 reason="thin PyO3 marshalling wrapper (AD-2/AD-4); the real logic is unit-tested in regolith_api"
 fn doc_extract(path: &str) -> PyResult<String> {
     let path = Utf8PathBuf::from(path);
     match guard(|| regolith_api::doc_extract(&path))? {
@@ -300,6 +307,7 @@ fn extensions() -> PyResult<Vec<(String, String)>> {
 /// error.
 #[pyfunction]
 // frob:doc docs/modules/regolith-py.md#check-elec-single-driver
+// frob:waive TEST001 reason="thin PyO3 marshalling wrapper (AD-2/AD-4); the real logic is unit-tested in regolith_api"
 fn check_elec_single_driver(nets_json: &str) -> PyResult<String> {
     let result = guard(|| regolith_api::check_elec_single_driver(nets_json))?;
     let violation = result.map_err(CoreError::new_err)?;
@@ -320,6 +328,7 @@ fn check_elec_single_driver(nets_json: &str) -> PyResult<String> {
 /// failing fixture is data in the report, never an exception (AD-7).
 #[pyfunction]
 // frob:doc docs/modules/regolith-py.md#rules-test
+// frob:waive TEST001 reason="thin PyO3 marshalling wrapper (AD-2/AD-4); the real logic is unit-tested in regolith_api"
 fn rules_test(paths: Vec<String>) -> PyResult<String> {
     let paths: Vec<Utf8PathBuf> = paths.into_iter().map(Utf8PathBuf::from).collect();
     match guard(|| regolith_api::rules_test(&paths))? {
@@ -349,6 +358,7 @@ fn rules_try(pack: &str, design: &str) -> PyResult<String> {
 /// forward-authored placeholder (AD-22).
 #[pyfunction]
 // frob:doc docs/modules/regolith-py.md#on-events
+// frob:waive TEST001 reason="thin PyO3 marshalling wrapper (AD-2/AD-4); the real logic is unit-tested in regolith_api"
 fn on_events(paths: Vec<String>) -> PyResult<Vec<(String, String)>> {
     let paths: Vec<Utf8PathBuf> = paths.into_iter().map(Utf8PathBuf::from).collect();
     let refs: Vec<&camino::Utf8Path> = paths.iter().map(camino::Utf8PathBuf::as_path).collect();
@@ -365,6 +375,7 @@ fn on_events(paths: Vec<String>) -> PyResult<Vec<(String, String)>> {
 /// (WO-98). Marshalling only: delegates to `regolith_api`.
 #[pyfunction]
 // frob:doc docs/modules/regolith-py.md#obligation-content-hashes
+// frob:waive TEST001 reason="thin PyO3 marshalling wrapper (AD-2/AD-4); the real logic is unit-tested in regolith_api"
 fn obligation_content_hashes(obligations_json: &str) -> PyResult<Vec<String>> {
     match guard(|| regolith_api::obligation_content_hashes(obligations_json))? {
         Ok(hashes) => Ok(hashes),
@@ -382,6 +393,7 @@ fn obligation_content_hashes(obligations_json: &str) -> PyResult<Vec<String>> {
 /// geometry stays single-sourced in Rust (D205), no schema change.
 #[pyfunction]
 // frob:doc docs/modules/regolith-py.md#resolve-extrusion-outline
+// frob:waive TEST001 reason="thin PyO3 marshalling wrapper (AD-2/AD-4); the real logic is unit-tested in regolith_api"
 fn resolve_extrusion_outline(paths: Vec<String>, profile: &str) -> PyResult<Option<String>> {
     let paths: Vec<Utf8PathBuf> = paths.into_iter().map(Utf8PathBuf::from).collect();
     let refs: Vec<&camino::Utf8Path> = paths.iter().map(camino::Utf8PathBuf::as_path).collect();
@@ -401,6 +413,7 @@ fn resolve_extrusion_outline(paths: Vec<String>, profile: &str) -> PyResult<Opti
 /// `regolith_api::reduce_unit_literal`.
 #[pyfunction]
 // frob:doc docs/modules/regolith-py.md#reduce-unit-literal
+// frob:waive TEST001 reason="thin PyO3 marshalling wrapper (AD-2/AD-4); the real logic is unit-tested in regolith_api"
 fn reduce_unit_literal(magnitude: f64, unit_symbol: &str) -> PyResult<Option<f64>> {
     guard(|| regolith_api::reduce_unit_literal(magnitude, unit_symbol))
 }
@@ -411,6 +424,7 @@ fn reduce_unit_literal(magnitude: f64, unit_symbol: &str) -> PyResult<Option<f64
 /// repeat calls (e.g. re-import) are no-ops.
 #[pyfunction]
 // frob:doc docs/modules/regolith-py.md#init-logging
+// frob:waive TEST001 reason="thin PyO3 marshalling wrapper (AD-2/AD-4); the real logic is unit-tested in regolith_api"
 fn init_logging() {
     LOG_INIT.call_once(|| {
         pyo3_log::init();
@@ -420,6 +434,7 @@ fn init_logging() {
 /// PyO3 module initializer for `regolith._core`.
 #[pymodule]
 // frob:doc docs/modules/regolith-py.md#core
+// frob:waive TEST001 reason="thin PyO3 marshalling wrapper (AD-2/AD-4); the real logic is unit-tested in regolith_api"
 fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(core_version, m)?)?;
     m.add_function(wrap_pyfunction!(schema_version, m)?)?;

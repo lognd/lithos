@@ -47,6 +47,7 @@ def _reset_progress_logger() -> Iterator[None]:
         handler.flush()
 
 
+# frob:tests python/regolith/progress.py kind="integration"
 def test_log_progress_emits_parseable_line(caplog: pytest.LogCaptureFixture) -> None:
     with caplog.at_level(logging.DEBUG, logger=pr.PROGRESS_LOGGER_NAME):
         started = pr.start()

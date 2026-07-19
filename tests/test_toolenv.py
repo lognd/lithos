@@ -22,6 +22,7 @@ def _fake_version_runner(stdout: bytes = b"v1.2.3\n"):
     return runner
 
 
+# frob:tests python/regolith/toolenv.py kind="integration"
 def test_catalog_covers_the_owner_directive_tool_set() -> None:
     names = {spec.name for spec in toolenv.catalog()}
     # WO-126 (charter 40 sec. 3): sigrok-cli joins the catalog for the

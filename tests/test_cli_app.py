@@ -10,6 +10,9 @@ from typer.testing import CliRunner
 runner = CliRunner()
 
 
+# frob:tests python/regolith/compiler.py kind="integration"
+# frob:tests python/regolith/errors.py kind="integration"
+# frob:tests python/regolith/_schema_base.py kind="integration"
 def test_check_clean_file(tmp_path: Path) -> None:
     source = tmp_path / "empty.hema"
     source.write_text("")

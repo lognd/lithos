@@ -40,6 +40,7 @@ def _record(
     )
 
 
+# frob:tests python/regolith/logging_setup.py kind="integration"
 def test_plain_info_is_message_only() -> None:
     out = ls._StderrLogFormatter().format(_record("hello world"))
     assert out == "hello world"
