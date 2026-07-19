@@ -1113,7 +1113,7 @@ See docs/workflow/work-orders/WO-159-surface-facade.md. Charter AD-44. Graphite-
 ```yaml
 id: T-0040
 title: 'WO-160: artifact provenance tier (AD-45)'
-state: in-progress
+state: done
 kind: feature
 origin: human
 created: '2026-07-19'
@@ -1123,19 +1123,28 @@ scope:
 - python/regolith/backends/artifact_index.py
 - python/regolith/backends/*.py
 - docs/spec/toolchain/38-emission-and-release.md
-evidence: []
+evidence:
+- tests/backends/test_artifact_index.py::test_artifact_row_provenance_field_is_required
+- tests/backends/test_artifact_index.py::test_check_index_consistency_catches_malformed_provenance_missing_tool
 attachments: []
 acceptance:
 - see docs/workflow/work-orders/WO-160-artifact-provenance-tier.md
 threat: null
 ```
+## Done report
+
+WO-160 landed (b28d7cf8): ArtifactProvenance/ToolIdentity models,
+required ArtifactRow.provenance, real/fake KiCad tiers stamp
+correctly, consistency check extended. No schema bump needed
+(ArtifactRow plain pydantic). 348 backend tests green.
+
 See docs/workflow/work-orders/WO-160-artifact-provenance-tier.md. Charter AD-45. If ArtifactRow is schemars-sourced by dispatch time, this rides WO-147's cycle-37 bump per D211 one-bump discipline -- check WO-147 Status first.
 
 <!-- ticket:T-0041 -->
 ```yaml
 id: T-0041
 title: 'WO-161: registration-derived artifact classification (AD-46)'
-state: in-progress
+state: done
 kind: feature
 origin: human
 created: '2026-07-19'
@@ -1144,12 +1153,21 @@ parent: null
 scope:
 - python/regolith/backends/artifact_index.py
 - python/regolith/backends/registry.py
-evidence: []
+evidence:
+- tests/backends/test_artifact_index.py::test_check_index_consistency_catches_unmatched_path_pattern
+- tests/backends/test_artifact_index.py::test_match_path_pattern_returns_none_when_nothing_matches
 attachments: []
 acceptance:
 - see docs/workflow/work-orders/WO-161-registration-derived-classification.md
 threat: null
 ```
+## Done report
+
+WO-161 landed (b28d7cf8): classify() deleted; path patterns on
+ArtifactFamilyRegistration; build_index consults the registry;
+unmatched-pattern negative checks; behavior-preserving migration of
+every classify case. 348 backend tests green.
+
 See docs/workflow/work-orders/WO-161-registration-derived-classification.md. Charter AD-46. Independent of WO-160 (T-0040).
 
 <!-- ticket:T-0042 -->
