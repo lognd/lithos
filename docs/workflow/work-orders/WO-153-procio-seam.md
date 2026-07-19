@@ -1,8 +1,10 @@
 # WO-153 -- the in-house process-I/O seam: `regolith.procio` (D264 ruling 1)
 
-Status: open (Depends: the D256 hash window, merged -- this WO
-  touches shipped Python; first of the cuprite sim/timing gate
-  track, everything else in the track builds on this seam)
+Status: done (landed cycle-37: python/regolith/procio.py -- ToolArgs/
+  ToolFailure/run_tool/expect_json -- all six call sites migrated
+  [verilator_adapter.py, hdl/models.py, elec/kicad.py,
+  elec/kicad_wrapper.py, toolenv.py, harness/adapter.py], docs/guide/
+  18-external-tools.md updated, tests/test_procio.py green)
 Language: Python (`python/regolith/procio.py`, new; call-site
   migrations across `harness/`, `realizer/elec/`, `toolenv.py`;
   docs update).
