@@ -735,3 +735,29 @@ waveform/sim chains correctly excluded pending their blockers;
 ticket-ledger parse errors (COV003 or otherwise). `make check`-
 equivalent gate run: cargo-check/clippy/fmt/test all still pass,
 810 Rust tests green.
+
+<!-- ticket:T-0032 -->
+```yaml
+id: T-0032
+title: 'campaign: python+periphery annotation sweep (waves W2-W3)'
+state: in-progress
+kind: docs
+origin: agent
+created: '2026-07-18'
+blocked_by: []
+parent: null
+scope:
+- python/regolith/**
+- tools/**
+- editors/vscode/**
+- demos/*.py
+- examples/**
+- tests/**
+- docs/modules/**
+- pyproject.toml
+- frob.toml
+evidence: []
+attachments: []
+acceptance: []
+threat: null
+```
