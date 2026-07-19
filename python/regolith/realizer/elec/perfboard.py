@@ -148,6 +148,7 @@ def manhattan_length_mm(from_hole: str, to_hole: str, pitch_mm: float) -> float:
 
 
 # frob:doc docs/modules/py-realizer.md#elec-perfboard
+# frob:waive PERF004 reason="one-shot per-net canonical-order sort (AD-6 determinism), not a repeated re-sort of the same collection"
 def assign_jumpers(
     netlist: PerfboardNetlist,
 ) -> Result[tuple[WireAssignment, ...], PerfboardAssignmentError]:

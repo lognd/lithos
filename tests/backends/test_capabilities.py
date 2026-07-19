@@ -120,6 +120,7 @@ def test_mech_capability_is_honestly_populated() -> None:
     assert any("std.mech" in rec for rec in mech.process_records)
 
 
+# frob:tests python/regolith/backends/capabilities.py::get_capability kind="unit"
 def test_elec_capability_is_honestly_populated() -> None:
     registry = default_capability_registry()
     elec = get_capability(registry, "elec")
@@ -135,6 +136,7 @@ def test_elec_capability_is_honestly_populated() -> None:
     assert any("std.elec" in rec for rec in elec.process_records)
 
 
+# frob:tests python/regolith/backends/capabilities.py::default_capability_registry kind="unit"
 def test_default_registry_has_exactly_mech_elec_perfboard() -> None:
     # WO-165: perfboard joins mech/elec as the first NEW capability
     # program registered through this registry (mech/elec were a

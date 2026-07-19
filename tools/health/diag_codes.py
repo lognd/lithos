@@ -244,6 +244,13 @@ EXEMPT: dict[tuple[str, str], str] = {
         "python/regolith/backends/artifact_index.py",
         "artifact_path_unclassified",
     ): "deferred: F-WO131-2 (artifact path classification, WO-161)",
+    # perfboard v1 (WO-165): realized-IR unavailability refusal; code
+    # assignment deferred to the same make-codes next-free batch shape
+    # WO-153's siblings used.
+    (
+        "python/regolith/backends/perfboard.py",
+        "board_assignment_ir_unavailable",
+    ): "deferred: WO-165 close-out (perfboard realized-IR refusal)",
 }
 
 

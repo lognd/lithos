@@ -42,6 +42,7 @@ def _small_netlist() -> PerfboardNetlist:
 
 
 # frob:tests python/regolith/realizer/elec/perfboard.py::assign_jumpers kind="unit"
+# frob:waive PERF002 reason="tiny fixture list .count() in a test assertion loop; N<=6"
 def test_every_net_is_assigned_exactly_once() -> None:
     """The closest-to-INV completeness guarantee WO-165 acceptance
     names: no net left unassigned, no net assigned twice."""
