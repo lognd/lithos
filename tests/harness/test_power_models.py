@@ -22,6 +22,7 @@ from regolith.harness.models.power import (
     POWER_FACTOR_KIND,
     TRANSFORMER_LOADING_KIND,
     VOLTAGE_DROP_KIND,
+    WORKING_CLEARANCE_KIND,
     AmpacityModel,
     DemandLoadModel,
     MotorStartDipModel,
@@ -29,6 +30,7 @@ from regolith.harness.models.power import (
     TransformerFaultCurrentScreeningModel,
     TransformerLoadingModel,
     VoltageDropModel,
+    WorkingClearanceModel,
 )
 
 
@@ -328,10 +330,114 @@ def test_every_power_model_has_a_real_citation() -> None:
         MotorStartDipModel(),
         TransformerLoadingModel(),
         PowerFactorModel(),
+        WorkingClearanceModel(),
     )
     for model in power_models:
         assert citations.get(model.model_id) == model.citation
         assert model.citation, f"{model.model_id} has no citation"
+
+
+# ---------------------------------------------------------------------------
+# 7. Working clearance (WO-136/D249/AD-42): the calcite tandem's new
+# claim kind -- the first whose SUBJECT is electrical and whose
+# EVIDENCE is architectural.
+# ---------------------------------------------------------------------------
+
+
+def test_working_clearance_available_equals_room_minus_footprint() -> None:
+    model = WorkingClearanceModel()
+    request = DischargeRequest(
+        claim_kind=WORKING_CLEARANCE_KIND,
+        limit=1.0,
+        inputs={"room_dim_m": _iv(3.0), "footprint_dim_m": _iv(1.2)},
+    )
+    prediction = model.estimate(request)
+    assert prediction.is_ok, prediction
+    assert prediction.danger_ok.value == pytest.approx(1.8)
+    outcome = model.discharge(request, registry_version="test")
+    assert outcome.is_ok
+    assert outcome.danger_ok.status.value == "discharged"
+
+
+def test_working_clearance_worst_corner_is_min_room_max_footprint() -> None:
+    """INV-9: available clearance shrinks with a SMALLER room dimension
+    and a LARGER footprint, so the worst corner is ``room.lo -
+    footprint.hi`` even when both inputs are given as intervals."""
+    model = WorkingClearanceModel()
+    request = DischargeRequest(
+        claim_kind=WORKING_CLEARANCE_KIND,
+        limit=1.0,
+        inputs={
+            "room_dim_m": _iv((2.8, 3.2)),
+            "footprint_dim_m": _iv((1.0, 1.2)),
+        },
+    )
+    prediction = model.estimate(request)
+    assert prediction.is_ok, prediction
+    assert prediction.danger_ok.value == pytest.approx(2.8 - 1.2)
+
+
+def test_working_clearance_violates_when_room_is_undersized() -> None:
+    model = WorkingClearanceModel()
+    request = DischargeRequest(
+        claim_kind=WORKING_CLEARANCE_KIND,
+        limit=1.0,
+        inputs={"room_dim_m": _iv(1.5), "footprint_dim_m": _iv(1.2)},
+    )
+    outcome = model.discharge(request, registry_version="test")
+    assert outcome.is_ok
+    assert outcome.danger_ok.status.value == "violated"
+
+
+def test_working_clearance_rejects_bad_domain() -> None:
+    model = WorkingClearanceModel()
+    non_positive_room = DischargeRequest(
+        claim_kind=WORKING_CLEARANCE_KIND,
+        limit=1.0,
+        inputs={"room_dim_m": _iv(0.0), "footprint_dim_m": _iv(0.5)},
+    )
+    assert model.estimate(non_positive_room).is_err
+
+    negative_footprint = DischargeRequest(
+        claim_kind=WORKING_CLEARANCE_KIND,
+        limit=1.0,
+        inputs={"room_dim_m": _iv(3.0), "footprint_dim_m": _iv(-0.1)},
+    )
+    assert model.estimate(negative_footprint).is_err
+
+
+def test_working_clearance_named_absence_refuses_without_default() -> None:
+    """D250.3: a request missing ``footprint_dim_m`` refuses by name --
+    never a synthesized "typical" apparatus footprint."""
+    model = WorkingClearanceModel()
+    request = DischargeRequest(
+        claim_kind=WORKING_CLEARANCE_KIND,
+        limit=1.0,
+        inputs={"room_dim_m": _iv(3.0)},
+    )
+    outcome = model.discharge(request, registry_version="test")
+    assert outcome.is_err
+    err = outcome.danger_err
+    assert isinstance(err, InputError)
+    assert err.missing == ("footprint_dim_m",)
+
+
+def test_working_clearance_citation_is_nec_110_26() -> None:
+    model = WorkingClearanceModel()
+    assert model.citation is not None
+    assert "110.26" in model.citation
+    assert "NEC" in model.citation
+
+
+def test_working_clearance_registered_in_default_registry() -> None:
+    registry = default_registry()
+    request = DischargeRequest(
+        claim_kind=WORKING_CLEARANCE_KIND,
+        limit=1.0,
+        inputs={"room_dim_m": _iv(3.0), "footprint_dim_m": _iv(1.2)},
+    )
+    outcome = registry.discharge(request)
+    assert outcome.status.value == "discharged", outcome
 
 
 # ---------------------------------------------------------------------------

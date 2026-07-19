@@ -1343,3 +1343,96 @@ def test_link_budget_with_an_unresolved_term_defers_naming_it(tmp_path) -> None:
     ]
     assert deferred, "the unresolved gain must defer as given_unresolved"
     assert any("ant.gain" in r.deferral.detail for r in deferred if r.deferral)
+
+
+# --- WO-136 (D249/AD-42): the cuprite-calcite working-clearance tandem ------
+
+# The calcite half: a real electrical room whose declared linear
+# dimension (`depth`) beyond calcite/02 sec. 2's documented `space`
+# field set -- an ordinary declared field, `SpaceDecl` walks every
+# `Field` child generically (calcite.rs).
+_XDOMAIN_ROOM_SRC = "space ElectricalRoom:\n    area: 12m2\n    depth: {depth}\n"
+
+# The cuprite half: a transformer sited in that room. `elec.power.
+# working_clearance` is the new claim kind whose subject is electrical
+# and whose evidence is architectural (charter 43 sec. 4) -- the rhs
+# names the room's real declared depth and the apparatus's own
+# declared footprint, resolved cross-file through the SAME D103
+# entity-DB reference machinery the Kestrel link budget above already
+# proves crosses domain boundaries.
+_XDOMAIN_XFMR_SRC = (
+    "part MainXfmr:\n"
+    "    footprint_depth: 1.2m\n"
+    "system SubstationRoom:\n"
+    "    parts:\n"
+    "        xfmr: MainXfmr\n"
+    "    require Siting:\n"
+    "        front: elec.power.working_clearance(xfmr)\n"
+    "                   >= ElectricalRoom.depth - xfmr.footprint_depth - 1.0m\n"
+)
+
+
+def test_working_clearance_discharges_end_to_end_via_build(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    """WO-136 acceptance: a transformer sited in a calcite electrical
+    room discharges `elec.power.working_clearance` against the room's
+    REAL declared geometry -- the tandem is proven, not asserted."""
+    calx_path = tmp_path / "room.calx"
+    calx_path.write_text(_XDOMAIN_ROOM_SRC.format(depth="3.0m"), encoding="ascii")
+    cupr_path = tmp_path / "xfmr.cupr"
+    cupr_path.write_text(_XDOMAIN_XFMR_SRC, encoding="ascii")
+
+    report = build((str(calx_path), str(cupr_path)), BuildTier.BUILD).danger_ok
+    assert report.ok, "the sited-transformer fixture must lower and discharge clean"
+
+    results = [
+        r
+        for r in report.results
+        if r.evidence is not None
+        and r.evidence.model_id == "elec_power_working_clearance@1"
+    ]
+    assert results, "the working_clearance claim must reach its registered model"
+    assert results[0].evidence.status.value == "discharged"
+
+
+def test_working_clearance_violates_for_an_undersized_room(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    """Acceptance: a deliberately-undersized room FAILS working_clearance
+    -- the same claim, the same apparatus, only the room's real declared
+    depth shrinks below what the transformer's footprint plus the
+    NEC-cited required depth demands (1.2m + 1.0m = 2.2m > 1.5m)."""
+    calx_path = tmp_path / "room.calx"
+    calx_path.write_text(_XDOMAIN_ROOM_SRC.format(depth="1.5m"), encoding="ascii")
+    cupr_path = tmp_path / "xfmr.cupr"
+    cupr_path.write_text(_XDOMAIN_XFMR_SRC, encoding="ascii")
+
+    report = build((str(calx_path), str(cupr_path)), BuildTier.BUILD).danger_ok
+    results = [
+        r
+        for r in report.results
+        if r.evidence is not None
+        and r.evidence.model_id == "elec_power_working_clearance@1"
+    ]
+    assert results, "the working_clearance claim must still reach its model"
+    assert results[0].evidence.status.value == "violated"
+
+
+def test_working_clearance_with_no_declared_room_dimension_defers_naming_it(
+    tmp_path,
+) -> None:  # type: ignore[no-untyped-def]
+    """The honest-absence path: a room with no declared `depth` field at
+    all (only the documented `area:`) defers `given_unresolved` naming
+    the reference -- never a fabricated dimension (D250.3)."""
+    calx_path = tmp_path / "room.calx"
+    calx_path.write_text("space ElectricalRoom:\n    area: 12m2\n", encoding="ascii")
+    cupr_path = tmp_path / "xfmr.cupr"
+    cupr_path.write_text(_XDOMAIN_XFMR_SRC, encoding="ascii")
+
+    report = build((str(calx_path), str(cupr_path)), BuildTier.BUILD).danger_ok
+    deferred = [
+        r
+        for r in report.results
+        if r.deferral is not None and r.deferral.reason == "given_unresolved"
+    ]
+    assert deferred, "the undeclared room depth must defer as given_unresolved"
+    assert any(
+        "ElectricalRoom.depth" in r.deferral.detail for r in deferred if r.deferral
+    )

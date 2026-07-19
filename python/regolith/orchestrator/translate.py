@@ -140,6 +140,12 @@ from regolith.harness.models.power import (
 )
 from regolith.harness.models.power import VOLTAGE_DROP_INPUTS as _POWER_VOLTAGE_DROP_INPUTS
 from regolith.harness.models.power import VOLTAGE_DROP_KIND as _POWER_VOLTAGE_DROP_KIND
+from regolith.harness.models.power import (
+    WORKING_CLEARANCE_INPUTS as _WORKING_CLEARANCE_INPUTS,
+)
+from regolith.harness.models.power import (
+    WORKING_CLEARANCE_KIND as _WORKING_CLEARANCE_KIND,
+)
 from regolith.harness.models.shaft_torsion import CLAIM_KIND as _TWIST_KIND
 from regolith.harness.models.shaft_torsion import INPUTS as _TWIST_INPUTS
 from regolith.harness.models.workload_realization import CLAIM_KIND as _REALIZATION_KIND
@@ -379,11 +385,16 @@ _BUCK_TRANSIENT_FORM_NAMES: tuple[str, ...] = (_BUCK_TRANSIENT_KIND,)
 # non-frame call-form shape as the buck/thermo/fluid_dp siblings above
 # -- matched by the same `_split_named_call_predicate`/`_match_call_lhs`
 # pair, no new grammar. `withstand`/`coordination`/`arc_flash`/
-# `grounding`/`harmonics`/`working_clearance` register NO model
-# (D250.4) and are deliberately left OFF this list: they fall through
-# to the generic dotted-call path, which names the call in an honest
+# `grounding`/`harmonics` register NO model (D250.4) and are
+# deliberately left OFF this list: they fall through to the generic
+# dotted-call path, which names the call in an honest
 # `unmatched_call_path` deferral rather than a misleading "missing
-# inputs" one for ports no model will ever read.
+# inputs" one for ports no model will ever read. `working_clearance`
+# is NOT in this list either -- WO-136 lands it as its own D103
+# general-comparison shape (`_translate_working_clearance`,
+# `_WORKING_CLEARANCE_KIND`), not a plain kwargs call, since its
+# inputs cross the elec/calcite file boundary through entity-DB
+# reference resolution rather than inline literals.
 _POWER_DEMAND_LOAD_FORM_NAMES: tuple[str, ...] = (_POWER_DEMAND_LOAD_KIND,)
 _POWER_VOLTAGE_DROP_FORM_NAMES: tuple[str, ...] = (_POWER_VOLTAGE_DROP_KIND,)
 _POWER_AMPACITY_FORM_NAMES: tuple[str, ...] = (_POWER_AMPACITY_KIND,)
@@ -393,6 +404,18 @@ _POWER_TRANSFORMER_LOADING_FORM_NAMES: tuple[str, ...] = (
     _POWER_TRANSFORMER_LOADING_KIND,
 )
 _POWER_FACTOR_FORM_NAMES: tuple[str, ...] = (_POWER_FACTOR_KIND,)
+# WO-136 (D249/AD-42, the calcite tandem): `elec.power.working_
+# clearance(<apparatus>)` -- unlike its seven siblings above, this
+# claim's shape is `elec.power.working_clearance(<apparatus>) <op>
+# <room ref> - <footprint ref> - <required literal>` (a D103 general
+# comparison, `_match_call_lhs` on `form.lhs` alone, then
+# `_translate_working_clearance` reads `form.rhs`'s signed reference
+# terms out of `given.refs` -- the SAME entity-DB cross-file
+# resolution the Kestrel link-budget shape (`_try_link_budget`) already
+# proves crosses domain boundaries). Not part of `_POWER_CLAIM_INPUTS`/
+# `_translate_power_claim`'s pure-kwargs wrapper for exactly that
+# reason.
+_WORKING_CLEARANCE_FORM_NAMES: tuple[str, ...] = (_WORKING_CLEARANCE_KIND,)
 # The kind -> declared-inputs map every `_translate_power_claim` call
 # site shares (avoids seven near-identical wrapper functions -- NO
 # DUPLICATION): each entry is exactly one T-0009 model's own `INPUTS`.
@@ -3772,6 +3795,148 @@ def _try_link_budget(
     )
 
 
+def _translate_working_clearance(
+    obligation: Obligation, form: ClaimForm1
+) -> Result[DischargeRequest, Deferral]:
+    """Lower `elec.power.working_clearance(<apparatus>) <op> <room ref>
+    - <footprint ref> - <required literal>` (WO-136/D249/AD-42, charter
+    43 sec. 4 -- "the first claim whose subject is electrical and whose
+    evidence is architectural").
+
+    Reuses the D103 general-comparison shape VERBATIM -- the exact same
+    entity-DB cross-file reference resolution `_try_link_budget` already
+    proves crosses domain boundaries (the Kestrel downlink's `gs.
+    sensitivity`), never new lowering machinery (D102: reuse, do not
+    reinvent). `form.lhs` is matched as the whole call (the claim's
+    NAME/kind + its apparatus subject -- it carries no numeric value of
+    its own); `form.rhs` is a `_signed_terms` expression naming exactly
+    TWO dotted entity-field references (the calcite space's real
+    declared linear dimension on the checked face, and the apparatus's
+    own declared footprint on that same face) plus exactly ONE literal
+    (the author-declared, NEC-110.26-cited required clearance,
+    D250.3 -- never a lithos-transcribed table value, D266).
+
+    Both reference terms resolve through `obligation.given.refs` (the
+    core's `resolve_entity_ref`, domain-agnostic -- it walks whichever
+    top-level decl the dotted head names, calcite `space` or cuprite
+    `part` alike). Either side missing/unresolved defers by name,
+    never a fabricated number; a shape that is not exactly two refs
+    plus one literal defers `working_clearance_shape_mismatch` rather
+    than silently mis-routing to a different reading.
+    """
+    subject_match = _match_call_lhs(form.lhs, _WORKING_CLEARANCE_FORM_NAMES)
+    if subject_match is None:
+        return Err(
+            Deferral(
+                reason="working_clearance_shape_mismatch",
+                detail=(
+                    f"lhs {form.lhs!r} is not a whole "
+                    f"{_WORKING_CLEARANCE_KIND}(<apparatus>) call"
+                ),
+            )
+        )
+    _, subject = subject_match
+    subject = subject.strip()
+
+    refs = {ref.root[0]: ref.root[1] for ref in (obligation.given.refs or ())}
+    ref_terms: list[tuple[str, str]] = []
+    literal_terms: list[tuple[str, float]] = []
+    for sign, term in _signed_terms(form.rhs):
+        value = _parse_float(term)
+        if value is not None:
+            literal_terms.append((sign, value))
+        else:
+            ref_terms.append((sign, term))
+
+    if len(ref_terms) != 2 or len(literal_terms) != 1:
+        return Err(
+            Deferral(
+                reason="working_clearance_shape_mismatch",
+                detail=(
+                    f"{_WORKING_CLEARANCE_KIND}({subject}): rhs {form.rhs!r} "
+                    "must name exactly two entity-field references (room "
+                    "dimension, apparatus footprint) and one literal "
+                    "(the NEC-cited required clearance); found "
+                    f"{len(ref_terms)} reference(s) and {len(literal_terms)} "
+                    "literal(s)"
+                ),
+            )
+        )
+    (room_sign, room_term), (footprint_sign, footprint_term) = ref_terms
+    if room_sign != "+" or footprint_sign != "-":
+        return Err(
+            Deferral(
+                reason="working_clearance_shape_mismatch",
+                detail=(
+                    f"{_WORKING_CLEARANCE_KIND}({subject}): expected "
+                    f"`+<room ref> -<footprint ref>`, got signs "
+                    f"{room_sign!r}/{footprint_sign!r} on {room_term!r}/"
+                    f"{footprint_term!r}"
+                ),
+            )
+        )
+    literal_sign, required_m = literal_terms[0]
+    if literal_sign != "-":
+        return Err(
+            Deferral(
+                reason="working_clearance_shape_mismatch",
+                detail=(
+                    f"{_WORKING_CLEARANCE_KIND}({subject}): the required-"
+                    f"clearance literal must be SUBTRACTED (`- <n>`), got "
+                    f"sign {literal_sign!r}"
+                ),
+            )
+        )
+
+    resolved: dict[str, float] = {}
+    for name, term in zip(
+        _WORKING_CLEARANCE_INPUTS, (room_term, footprint_term), strict=True
+    ):
+        value_text = refs.get(term)
+        value = _parse_float(value_text) if value_text is not None else None
+        if value is None:
+            _log.info(
+                "obligation %s: working_clearance reference %r unresolved; deferring",
+                obligation.subject_ref,
+                term,
+            )
+            return Err(
+                Deferral(
+                    reason="given_unresolved",
+                    detail=(
+                        f"{_WORKING_CLEARANCE_KIND}({subject}) reference "
+                        f"{term!r} did not resolve to a value through the "
+                        "entity DB"
+                    ),
+                )
+            )
+        resolved[name] = value
+    _log.debug(
+        "translated working_clearance claim subject=%s room=%s footprint=%s "
+        "required=%g",
+        subject,
+        room_term,
+        footprint_term,
+        required_m,
+    )
+    return Ok(
+        DischargeRequest(
+            claim_kind=_WORKING_CLEARANCE_KIND,
+            limit=required_m,
+            inputs={
+                "room_dim_m": Interval(
+                    lo=resolved["room_dim_m"], hi=resolved["room_dim_m"]
+                ),
+                "footprint_dim_m": Interval(
+                    lo=resolved["footprint_dim_m"], hi=resolved["footprint_dim_m"]
+                ),
+            },
+            deterministic=True,
+            regimes=_regimes_for(_WORKING_CLEARANCE_KIND),
+        )
+    )
+
+
 def _payload_ref(kind: str, digest: str, origin: str) -> PayloadRef:
     """One home for building an outgoing `DischargeRequest` payload ref
     (WO-69: every `_translate_cam` port uses this exact construction)."""
@@ -4807,6 +4972,19 @@ def translate(
         return _pin_model(
             _translate_si_termination(obligation, args_text, bound_text),
             model_pin,
+        )
+    # WO-136 (D249/AD-42): checked here, BEFORE `_resolve_bound` -- this
+    # claim's bound is not a bare literal (it is a room/footprint
+    # reference expression), so the generic literal-bound path a few
+    # lines down would defer `unresolved_limit` before ever reaching
+    # the shape this claim actually is (the same ordering rationale as
+    # `_try_link_budget`, except that shape is checked AFTER
+    # `_resolve_bound` fails since its own bound text mixes a ref and a
+    # literal on ONE side rather than naming a whole call on the other).
+    working_clearance_lhs = _match_call_lhs(form.lhs, _WORKING_CLEARANCE_FORM_NAMES)
+    if working_clearance_lhs is not None:
+        return _pin_model(
+            _translate_working_clearance(obligation, form), model_pin
         )
     cost_fields = _load_fields(obligation.given.loads)
     if _COST_SUBJECT_FIELD in cost_fields:

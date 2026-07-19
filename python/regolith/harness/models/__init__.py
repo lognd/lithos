@@ -41,6 +41,7 @@ from regolith.harness.models.power import (
     TransformerFaultCurrentScreeningModel,
     TransformerLoadingModel,
     VoltageDropModel,
+    WorkingClearanceModel,
 )
 from regolith.harness.models.shaft_torsion import ShaftTorsionModel
 from regolith.harness.models.sheet_bend import SheetBendModel
@@ -143,6 +144,13 @@ def register_all(registry: ModelRegistry) -> None:
     registry.register(MotorStartDipModel())
     registry.register(TransformerLoadingModel())
     registry.register(PowerFactorModel())
+    # WO-136 (D249/AD-42): the calcite tandem's new claim kind -- the
+    # first whose SUBJECT is electrical and whose EVIDENCE is
+    # architectural (charter 43 sec. 4). Checked as spatial containment
+    # over the calcite space's real declared geometry (D102's reuse
+    # instruction), never a lithos-transcribed NEC clearance table
+    # (D250.3/D266).
+    registry.register(WorkingClearanceModel())
 
 
 __all__ = [
@@ -177,5 +185,6 @@ __all__ = [
     "TransformerFaultCurrentScreeningModel",
     "TransformerLoadingModel",
     "VoltageDropModel",
+    "WorkingClearanceModel",
     "register_all",
 ]

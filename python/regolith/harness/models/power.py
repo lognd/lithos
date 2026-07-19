@@ -682,6 +682,111 @@ class PowerFactorModel(Model):
         return Ok(Prediction(value=pf, eps=0.0, coverage=1.0, in_domain=True))
 
 
+# ---------------------------------------------------------------------------
+# 7. Working clearance (WO-136/D249/AD-42): the calcite tandem.
+# ---------------------------------------------------------------------------
+
+# frob:doc docs/modules/py-harness.md#models
+WORKING_CLEARANCE_KIND = "elec.power.working_clearance"
+# frob:doc docs/modules/py-harness.md#models
+# ``room_dim_m``: the calcite space's real declared linear dimension on
+# the checked face (depth/width/headroom -- whichever the claim names);
+# ``footprint_dim_m``: the apparatus's own declared footprint on that
+# same face. Both are DECLARED quantities the orchestrator resolves
+# through the entity DB across the elec/calcite file boundary (D103's
+# general-comparison reference machinery, `_translate_working_clearance`
+# in `regolith.orchestrator.translate` -- the exact "reuse, do not
+# reinvent" instruction of D102), never re-declared/copied by hand.
+WORKING_CLEARANCE_INPUTS = ("room_dim_m", "footprint_dim_m")
+
+
+# frob:doc docs/modules/py-harness.md#models
+class WorkingClearanceModel(Model):
+    """NEC 110.26 working-space depth/width/headroom check (D249/D250.3).
+
+    ``available_m = room_dim_m - footprint_dim_m`` (the real clear
+    dimension left in front of/beside/above the apparatus once its own
+    footprint is subtracted from the room's real declared extent on
+    that face) compared against the claim's own bound: the REQUIRED
+    clearance for the apparatus's voltage class/condition, an
+    AUTHOR-DECLARED literal cited to its exact NEC 110.26 table row
+    (e.g. ``>= 1.0m # NFPA 70 (NEC), 2023 ed., Table 110.26(A)(1),
+    Condition 2, 0-150V``) -- never transcribed as a lithos table
+    (D250.3/D266 posture: the dimensional CLASS is declared by the
+    author who reads the real table for their real voltage/condition,
+    exactly the ``demand_factor``/``site.soil.bearing`` "declared, not
+    derived" precedent this charter already set).
+
+    Lower bound (``available_m >= required_m``): the available
+    clearance shrinks with a SMALLER room dimension and a LARGER
+    footprint, so the worst corner is ``room_dim.lo - footprint_dim.hi``
+    (INV-9); ``eps`` is zero -- both inputs are exact declared reads,
+    no model-side approximation.
+    """
+
+    @property
+    # frob:doc docs/modules/py-harness.md#models
+    def signature(self) -> ModelSignature:
+        """Lower-bound available-clearance claim over the two linear inputs."""
+        return ModelSignature(
+            name="elec_power_working_clearance",
+            claim_kind=WORKING_CLEARANCE_KIND,
+            sense=ClaimSense.lower_bound(),
+            inputs=WORKING_CLEARANCE_INPUTS,
+            domain=("power", "working_clearance", "calcite_tandem"),
+        )
+
+    @property
+    # frob:doc docs/modules/py-harness.md#models
+    def version(self) -> str:
+        """Model version (bump on any formula/eps change; INV-1)."""
+        return "1"
+
+    @property
+    # frob:doc docs/modules/py-harness.md#models
+    def cost(self) -> int:
+        """Closed-form: the cheapest tier."""
+        return 1
+
+    @property
+    # frob:doc docs/modules/py-harness.md#models
+    def citation(self) -> str | None:
+        """NEC 110.26's working-space depth/width/headroom rule (D250.1).
+
+        The specific table row (voltage class, condition 1/2/3) is the
+        author's own citation on the claim's declared bound, not this
+        model's job to name -- see the class docstring's D250.3 note.
+        """
+        return (
+            "NFPA 70 (NEC), 2023 ed., Art. 110.26 -- working space "
+            "about electrical equipment"
+        )
+
+    # frob:doc docs/modules/py-harness.md#models
+    def estimate(self, request: DischargeRequest) -> Result[Prediction, HarnessError]:
+        """Predict the worst-corner (minimum) available clearance."""
+        room = request.inputs["room_dim_m"]
+        footprint = request.inputs["footprint_dim_m"]
+
+        if room.lo <= 0.0:
+            return Err(
+                DomainError(
+                    model_id=self.model_id,
+                    message=f"room_dim_m must be strictly positive: lo={room.lo}",
+                )
+            )
+        if footprint.lo < 0.0:
+            return Err(
+                DomainError(
+                    model_id=self.model_id,
+                    message=f"footprint_dim_m must be non-negative: lo={footprint.lo}",
+                )
+            )
+
+        available = room.lo - footprint.hi
+        return Ok(Prediction(value=available, eps=0.0, coverage=1.0, in_domain=True))
+
+
 __all__ = [
     "AMPACITY_INPUTS",
     "AMPACITY_KIND",
@@ -697,6 +802,8 @@ __all__ = [
     "TRANSFORMER_LOADING_KIND",
     "VOLTAGE_DROP_INPUTS",
     "VOLTAGE_DROP_KIND",
+    "WORKING_CLEARANCE_INPUTS",
+    "WORKING_CLEARANCE_KIND",
     "AmpacityModel",
     "DemandLoadModel",
     "MotorStartDipModel",
@@ -704,4 +811,5 @@ __all__ = [
     "TransformerFaultCurrentScreeningModel",
     "TransformerLoadingModel",
     "VoltageDropModel",
+    "WorkingClearanceModel",
 ]

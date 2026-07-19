@@ -1,0 +1,35 @@
+# WO-136 (D249/AD-42, charter 43 sec. 4): the cuprite half of the
+# calcite tandem -- a transformer declared ONCE, sited in
+# sited_transformer.calx's `ElectricalRoom`. Proves the seam
+# `regolith/10-domain-binding.md` sec. 3 designed: the interface lives
+# in one home language (cuprite, this file); its foreign-domain role
+# (the room it occupies) is an ordinary dotted reference to the
+# calcite file's declared geometry, resolved through the SAME entity-DB
+# machinery the Kestrel link-budget shape already crosses domain
+# boundaries with (D103; `_translate_working_clearance`,
+# `regolith.orchestrator.translate` -- D102's "reuse, do not reinvent").
+#
+# `elec.power.working_clearance(<apparatus>)` is the new claim kind:
+# "the first claim whose subject is electrical and whose evidence is
+# architectural" (charter 43 sec. 4). Its bound is `room dim -
+# footprint dim - required`: the room's REAL declared depth minus the
+# transformer's own declared footprint depth must clear the AUTHOR-
+# DECLARED, NEC-cited required working depth (D250.1/D250.3 -- the
+# 1.0m below is NOT a lithos-transcribed table value; it is this
+# design's own read of the real NEC table for its own voltage class
+# and condition, exactly the `demand_factor`/`site.soil.bearing`
+# "declared, not derived" precedent charter 43 sec. 3 already set).
+
+part MainXfmr:
+    footprint_depth: 1.2m   # nameplate footprint, front-to-back
+
+system SubstationRoom:
+    parts:
+        xfmr: MainXfmr
+
+    require Siting:
+        # NFPA 70 (NEC), 2023 ed., Table 110.26(A)(1), Condition 2
+        # (exposed live parts on one side, grounded on the other),
+        # 0-150V to ground: 1.0m minimum depth of working space.
+        front: elec.power.working_clearance(xfmr)
+                   >= ElectricalRoom.depth - xfmr.footprint_depth - 1.0m

@@ -1,0 +1,20 @@
+# The calcite half of WO-136's tandem (charter 43 sec. 4; D249/AD-42):
+# a single electrical room whose REAL declared geometry both the
+# working-clearance check and (in a fuller design) the room's
+# egress/bearing claims would read. Paired with sited_transformer.cupr
+# (D23's mixed-domain reference pattern: an ordinary dotted reference
+# into this file's `space` fields, no bridge syntax).
+#
+# `depth`/`width`/`clear_height` are ordinary declared fields beyond
+# calcite/02 sec. 2's documented set (`area`/`occupancy`/`at`/
+# `bounded_by`/`offers`) -- `SpaceDecl` walks EVERY `Field` child
+# generically (crates/regolith-lower/src/calcite.rs), exactly the same
+# way a structure's `site.<datum>` boundary truth is an ordinary
+# declared field, not a fixed schema slot (regolith/10-domain-binding.md
+# sec. 3: "boundary truth" is declared quantities, not special forms).
+
+space ElectricalRoom:
+    area:         12m2
+    depth:        3.0m     # the working-clearance check's "front" face
+    width:        4.0m
+    clear_height: 3.0m

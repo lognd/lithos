@@ -1771,6 +1771,63 @@ fn link_budget_refs_resolve_through_the_parsed_declarations() {
     }
 }
 
+/// Obligations lowered from TWO files together (a calcite `.calx`
+/// paired with a cuprite `.cupr`) -- WO-136's own shape: an
+/// entity-field reference crossing the domain boundary needs both
+/// files parsed into the SAME `ObligationSet` pass, unlike every other
+/// helper above (single file, single language).
+fn xdomain_obligations(calx_src: &str, cupr_src: &str) -> Vec<super::Obligation> {
+    let calx_path = Utf8PathBuf::from("t.calx");
+    let cupr_path = Utf8PathBuf::from("t.cupr");
+    let files = vec![
+        ParsedFile {
+            path: calx_path.clone(),
+            parse: regolith_syntax::parse(calx_src, &calx_path),
+        },
+        ParsedFile {
+            path: cupr_path.clone(),
+            parse: regolith_syntax::parse(cupr_src, &cupr_path),
+        },
+    ];
+    let snaps = build_entities(&files);
+    let checks = run_checks(&files, &snaps);
+    let graph = build_contract_ir(&files, &snaps);
+    let realized_inputs = crate::realized_input::RealizedInputs::new();
+    build_obligations(&files, &snaps, &checks, &graph, &realized_inputs).obligations
+}
+
+#[test]
+fn working_clearance_ref_resolves_across_the_calcite_cuprite_boundary() {
+    // WO-136 (D249/AD-42): `resolve_entity_ref`'s calcite fallback
+    // (`find_calcite_space_syntax`) -- a `space`'s declared field is
+    // NOT a `Decl` (calcite.rs reads spaces through their own
+    // `file.spaces()` accessor), so without the fallback this
+    // cross-domain reference could never resolve at all. This is the
+    // Rust-half proof; the Python-half end-to-end proof (real
+    // discharge) lives in `tests/orchestrator/test_orchestrator.py`'s
+    // `test_working_clearance_discharges_end_to_end_via_build`.
+    let calx_src = "space ElectricalRoom:\n    area: 12m2\n    depth: 3.0m\n";
+    let cupr_src = "part MainXfmr:\n    footprint_depth: 1.2m\n\
+                     system SubstationRoom:\n    parts:\n        xfmr: MainXfmr\n\
+                     \x20   require Siting:\n        front: elec.power.working_clearance(xfmr) \
+                     >= ElectricalRoom.depth - xfmr.footprint_depth - 1.0m\n";
+    let obls = xdomain_obligations(calx_src, cupr_src);
+    let front = obls
+        .iter()
+        .find(|o| o.claim.name.as_deref() == Some("front"))
+        .unwrap_or_else(|| panic!("no front obligation among {obls:?}"));
+    let refs: std::collections::BTreeMap<_, _> = front.given.refs.iter().cloned().collect();
+    assert_eq!(
+        refs.get("ElectricalRoom.depth").map(String::as_str),
+        Some("3.0m"),
+        "the calcite space's field must resolve through the fallback: {refs:?}"
+    );
+    assert_eq!(
+        refs.get("xfmr.footprint_depth").map(String::as_str),
+        Some("1.2m")
+    );
+}
+
 #[test]
 fn an_unresolvable_ref_is_skipped_never_invented() {
     // The REAL Kestrel posture: `antenna.gain` names nothing the

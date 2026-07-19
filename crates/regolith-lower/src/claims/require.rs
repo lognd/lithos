@@ -8,7 +8,7 @@ use super::comparison::{
 use super::compute::with_field_refs;
 use super::{
     codes, push_cost_claim_obligation, AstNode, BTreeMap, Claim, ClaimForm, Decl, Diagnostic,
-    Field, File, Given, LabeledSpan, Obligation, ParsedFile, Span, SweepDomain,
+    Field, File, Given, LabeledSpan, Obligation, ParsedFile, Span, SweepDomain, SyntaxNode,
 };
 
 /// Lower one `require` group's `Field` line (`subject: predicate`) into
@@ -753,9 +753,67 @@ pub(crate) fn parse_forall_prefix(predicate: &str) -> Option<(String, String, St
 pub(crate) fn resolve_entity_ref(ctx: &ClaimLoweringCtx<'_>, reference: &str) -> Option<String> {
     let (head, field_name) = reference.split_once('.')?;
     let target = part_type_of(ctx.decl, head).unwrap_or_else(|| head.to_string());
-    let decl = find_decl(ctx.files, &target)?;
-    let text = find_field_value_text(&decl, field_name)?;
+    if let Some(decl) = find_decl(ctx.files, &target) {
+        if let Some(text) = find_field_value_text(&decl, field_name) {
+            return Some(bound_or_value_text(&text));
+        }
+    }
+    // WO-136 (D249/AD-42, the calcite tandem): `find_decl` only walks
+    // `File::decls()` -- the generic `board`/`system`/`block`/`part`/
+    // `site`/`member`/`structure` Decl wrapper -- which calcite's
+    // `space` (and `circulation`) never cast to (`calcite.rs` reads
+    // them through their OWN `file.spaces()`/`file.circulations()`
+    // accessors). Without this fallback a cross-domain reference into a
+    // calcite space's declared fields (the working_clearance claim's
+    // whole reason to exist -- "the first claim whose subject is
+    // electrical and whose evidence is architectural", charter 43 sec.
+    // 4) could never resolve. Reuses the SAME field-scan
+    // (`find_field_value_text_in_node`) over the space's raw syntax
+    // node -- no new resolution machinery, only a wider search.
+    let node = find_calcite_space_syntax(ctx.files, &target)?;
+    let text = find_field_value_text_in_node(&node, field_name)?;
     Some(bound_or_value_text(&text))
+}
+
+/// The raw syntax node of the top-level `space` declaration named
+/// `name` across every parsed file, if any (the calcite-side fallback
+/// [`resolve_entity_ref`] tries once the generic [`find_decl`] search
+/// comes up empty -- WO-136).
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
+pub(crate) fn find_calcite_space_syntax(files: &[ParsedFile], name: &str) -> Option<SyntaxNode> {
+    for pf in files {
+        let Some(file) = File::cast(pf.parse.syntax()) else {
+            continue;
+        };
+        for space in file.spaces() {
+            if space.name().as_deref() == Some(name) {
+                return Some(space.syntax().clone());
+            }
+        }
+    }
+    None
+}
+
+/// The full `: ...` value text of the FIRST field named `field_name`
+/// anywhere under `node` (source order), if any -- the same scan
+/// [`find_field_value_text`] runs, generalized to any raw syntax node
+/// rather than only a generic [`Decl`] (WO-136: a calcite `space`'s
+/// node is not a `Decl`, see [`find_calcite_space_syntax`]).
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
+pub(crate) fn find_field_value_text_in_node(node: &SyntaxNode, field_name: &str) -> Option<String> {
+    for child in node.descendants() {
+        if let Some(field) = Field::cast(child) {
+            if field.name() == field_name {
+                let text = full_predicate_text(&field);
+                if !text.is_empty() {
+                    return Some(text);
+                }
+            }
+        }
+    }
+    None
 }
 
 /// The declared type name of the enclosing decl's part/field `name`

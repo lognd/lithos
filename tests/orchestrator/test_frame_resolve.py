@@ -1113,6 +1113,63 @@ def test_translate_civil_bearing_discharges_with_declared_area_and_literal_bound
     assert request.inputs["area_m2"].lo == 1.8
 
 
+def test_translate_civil_bearing_discharges_a_transformers_pad_loading() -> None:
+    """WO-136 deliverable 2 (D249/AD-42, charter 43 sec. 4): "a
+    transformer's mass on a slab is an EXISTING claim kind, not a new
+    one" -- proved here with a transformer-shaped reaction (a 2500kg
+    dry-type unit's weight, 2500kg * 9.81m/s2 = 24525N, expressed as
+    the SAME `loads:` distributed-load shape `_frame_with_footing_
+    transfer` already builds column gravity demand from) landing on a
+    `BasePlate<bearing=1.8m2>` pad footing, through the SAME `civil.
+    bearing_pressure` closed-form chain cycle 33/D196 already lands --
+    no new model, no new claim kind, exactly the charter's own framing."""
+    frame = _frame_with_footing_transfer(
+        tributary={"lo": 1.8, "hi": 1.8, "unit": "m2"},
+        loads=[
+            {
+                "case": "dead",
+                "target": "P1",
+                "kind": "distributed",
+                # 24525N over the 3m column length (see
+                # `_frame_with_footing_transfer`'s default length) ->
+                # an 8175 N/m equivalent UDL, reproducing the
+                # transformer's full declared weight as the column's
+                # axial demand.
+                "value": {"lo": 8175.0, "hi": 8175.0, "unit": "N/m"},
+                "direction": "gravity",
+            }
+        ],
+    )
+    ctx = load_frame_context(
+        ".", build_payload={"frames": {"Bridge": frame}}, record_search_paths=_STDLIB
+    ).danger_ok
+    obligation = _obligation(
+        "bearing", "civil.bearing_pressure(FA) <= 150000", "Bridge"
+    )
+    lowered = translate(obligation, frame_context=ctx)
+    assert lowered.is_ok, lowered
+    request = lowered.danger_ok
+    assert request.claim_kind == "civil.bearing_pressure"
+    assert request.inputs["reaction_n"].lo == pytest.approx(24525.0)
+    assert request.inputs["area_m2"].lo == 1.8
+    from regolith.harness.model import DischargeRequest as HarnessDischargeRequest
+    from regolith.harness.models.bearing_pressure import BearingPressureModel
+
+    prediction = BearingPressureModel().estimate(
+        HarnessDischargeRequest(
+            claim_kind="civil.bearing_pressure",
+            limit=request.limit,
+            inputs=request.inputs,
+        )
+    )
+    assert prediction.is_ok, prediction
+    assert prediction.danger_ok.value == pytest.approx(24525.0 / 1.8)
+    assert prediction.danger_ok.value < request.limit, (
+        "the transformer's pad loading must clear the allowable (discharged, "
+        "not violated)"
+    )
+
+
 def test_load_frame_context_is_none_without_frames(tmp_path: Path) -> None:
     """A build payload with no `frames` key skips context load entirely
     (no honest reason to load std.civil records for a frame-less build)."""
