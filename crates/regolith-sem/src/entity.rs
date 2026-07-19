@@ -19,6 +19,7 @@ use crate::symmetry::OrbitId;
 /// only within one build.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 // frob:doc docs/modules/regolith-sem.md#entity-db
+// frob:invariant INV-027
 pub struct EntityId(pub u32);
 
 /// The broad kind of an entity (domain-tagged). Measures carry the

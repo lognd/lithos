@@ -45,6 +45,7 @@ pub struct SweepDomain {
 /// A self-contained verification obligation.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 // frob:doc docs/modules/regolith-oblig.md#obligation
+// frob:invariant INV-019
 pub struct Obligation {
     /// The claim being discharged.
     pub claim: Claim,
