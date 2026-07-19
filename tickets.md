@@ -1068,8 +1068,313 @@ scope:
 evidence: []
 attachments: []
 acceptance:
-- 'D270 rulings 1-3 (design-log 2026-07-19-cycle-38.md): cited community-tier records for compositions/crystal structures/price classes; PD-GOV or GEK-with-posture provenance; price as cost classes from USGS-class sources; NEVER transcribed ASM chart data'
-- 'Consumes the record schema feldspar T-0018 defines; blocked_by that schema landing'
-- 'First slice: the D268 die-set materials (D2/A2-class tool steel, 1018/A36-class mild plate) with heat-treat state hooks'
+- 'D270 rulings 1-3 (design-log 2026-07-19-cycle-38.md): cited community-tier records
+  for compositions/crystal structures/price classes; PD-GOV or GEK-with-posture provenance;
+  price as cost classes from USGS-class sources; NEVER transcribed ASM chart data'
+- Consumes the record schema feldspar T-0018 defines; blocked_by that schema landing
+- 'First slice: the D268 die-set materials (D2/A2-class tool steel, 1018/A36-class
+  mild plate) with heat-treat state hooks'
 threat: null
 ```
+
+<!-- ticket:T-0039 -->
+```yaml
+id: T-0039
+title: 'WO-159: regolith.surface UI read facade (AD-44)'
+state: queued
+kind: feature
+origin: human
+created: '2026-07-19'
+blocked_by: []
+parent: null
+scope:
+- python/regolith/surface.py
+- design/lithos.strata
+evidence: []
+attachments: []
+acceptance:
+- see docs/workflow/work-orders/WO-159-surface-facade.md
+threat: null
+```
+See docs/workflow/work-orders/WO-159-surface-facade.md. Charter AD-44. Graphite-side migration + frob.toml forbidden-import policy is a companion filed in graphite's own tickets.md, not tracked here.
+
+<!-- ticket:T-0040 -->
+```yaml
+id: T-0040
+title: 'WO-160: artifact provenance tier (AD-45)'
+state: queued
+kind: feature
+origin: human
+created: '2026-07-19'
+blocked_by: []
+parent: null
+scope:
+- python/regolith/backends/artifact_index.py
+- python/regolith/backends/*.py
+- docs/spec/toolchain/38-emission-and-release.md
+evidence: []
+attachments: []
+acceptance:
+- see docs/workflow/work-orders/WO-160-artifact-provenance-tier.md
+threat: null
+```
+See docs/workflow/work-orders/WO-160-artifact-provenance-tier.md. Charter AD-45. If ArtifactRow is schemars-sourced by dispatch time, this rides WO-147's cycle-37 bump per D211 one-bump discipline -- check WO-147 Status first.
+
+<!-- ticket:T-0041 -->
+```yaml
+id: T-0041
+title: 'WO-161: registration-derived artifact classification (AD-46)'
+state: queued
+kind: feature
+origin: human
+created: '2026-07-19'
+blocked_by: []
+parent: null
+scope:
+- python/regolith/backends/artifact_index.py
+- python/regolith/backends/registry.py
+evidence: []
+attachments: []
+acceptance:
+- see docs/workflow/work-orders/WO-161-registration-derived-classification.md
+threat: null
+```
+See docs/workflow/work-orders/WO-161-registration-derived-classification.md. Charter AD-46. Independent of WO-160 (T-0040).
+
+<!-- ticket:T-0042 -->
+```yaml
+id: T-0042
+title: 'WO-162: promotion-ticket rule gains teeth (AD-22 teeth)'
+state: queued
+kind: feature
+origin: human
+created: '2026-07-19'
+blocked_by: []
+parent: null
+scope:
+- python/regolith/orchestrator/programs.py
+- frob.toml
+- tools/**
+evidence: []
+attachments: []
+acceptance:
+- see docs/workflow/work-orders/WO-162-promotion-ticket-rule.md
+threat: null
+```
+See docs/workflow/work-orders/WO-162-promotion-ticket-rule.md. Charter AD-22 hardened. Marks FeatureProgram with frob:ticket directive; creates or points at its promotion ticket.
+
+<!-- ticket:T-0043 -->
+```yaml
+id: T-0043
+title: 'WO-163: RealizedLayout put seam, generalized for board-shaped capabilities
+  (A7)'
+state: queued
+kind: feature
+origin: human
+created: '2026-07-19'
+blocked_by: []
+parent: null
+scope:
+- python/regolith/realizer/elec/realized.py
+- python/regolith/_schema/models.py
+- python/regolith/orchestrator/orchestrate.py
+- crates/regolith-syntax/**
+evidence: []
+attachments: []
+acceptance:
+- see docs/workflow/work-orders/WO-163-realized-layout-put-seam.md
+threat: null
+```
+See docs/workflow/work-orders/WO-163-realized-layout-put-seam.md. AD-47 prerequisite for board-shaped capabilities. Recon correction: KiCad-copper put seam already lands (realized.py:97, orchestrate.py:1465); the real gap is a non-copper realized_kind for perf-board.
+
+<!-- ticket:T-0044 -->
+```yaml
+id: T-0044
+title: 'WO-164: realizer capability registry (AD-47)'
+state: queued
+kind: feature
+origin: human
+created: '2026-07-19'
+blocked_by:
+- T-0040
+- T-0041
+parent: null
+scope:
+- python/regolith/backends/registry.py
+- python/regolith/capabilities.py
+evidence: []
+attachments: []
+acceptance:
+- see docs/workflow/work-orders/WO-164-realizer-capability-registry.md
+threat: null
+```
+See docs/workflow/work-orders/WO-164-realizer-capability-registry.md. AD-47. Retrofits mech + elec as first registrations. Depends on WO-160/WO-161 (T-0040/T-0041) so artifact_families/provenance shape is final.
+
+<!-- ticket:T-0045 -->
+```yaml
+id: T-0045
+title: 'WO-165: perf-board routing capability program'
+state: queued
+kind: feature
+origin: human
+created: '2026-07-19'
+blocked_by:
+- T-0043
+- T-0044
+parent: null
+scope:
+- python/regolith/realizer/**
+- python/regolith/backends/**
+- stdlib/std.process/**
+- demos/**
+evidence: []
+attachments: []
+acceptance:
+- see docs/workflow/work-orders/WO-165-perfboard-program.md
+threat: null
+```
+See docs/workflow/work-orders/WO-165-perfboard-program.md. D268 item 3, smallest board-shaped win (D268 sequencing). Consumes WO-163's realized_kind seam and WO-164's capability registry.
+
+<!-- ticket:T-0046 -->
+```yaml
+id: T-0046
+title: 'WO-166: wire-EDM die-set production program'
+state: queued
+kind: feature
+origin: human
+created: '2026-07-19'
+blocked_by:
+- T-0044
+- T-0038
+- T-0049
+parent: null
+scope:
+- crates/regolith-syntax/**
+- crates/regolith-lower/**
+- python/regolith/realizer/**
+- python/regolith/backends/**
+- docs/spec/hematite/**
+- demos/**
+evidence: []
+attachments: []
+acceptance:
+- see docs/workflow/work-orders/WO-166-wire-edm-die-set-program.md
+threat: null
+```
+See docs/workflow/work-orders/WO-166-wire-edm-die-set-program.md. D268 item 1 + D269 sequencing. Four internal slices (a-d): material-state modeling, profile-cut program kind, die-set assembly+stamping DFM, two-station demo. Also depends on feldspar T-0018 (cross-repo, material-state MODELS) and lithos WO-169 (process records wave 1, T-0049) -- blocked_by edge to T-0049 added.
+
+<!-- ticket:T-0047 -->
+```yaml
+id: T-0047
+title: 'WO-167: dwelling/house wiring program'
+state: queued
+kind: feature
+origin: human
+created: '2026-07-19'
+blocked_by:
+- T-0007
+- T-0008
+- T-0009
+- T-0010
+- T-0011
+- T-0044
+parent: null
+scope:
+- docs/spec/cuprite/**
+- docs/spec/calcite/**
+- python/regolith/**
+- demos/**
+evidence: []
+attachments: []
+acceptance:
+- see docs/workflow/work-orders/WO-167-dwelling-wiring-program.md
+threat: null
+```
+See docs/workflow/work-orders/WO-167-dwelling-wiring-program.md. D268 item 4, rides WO-132..137 power track completion (T-0007..T-0011) per D268 sequencing item 5. Licensing posture D250/D268 verbatim: representation-first, named refusals, no new NEC table transcription, no new breaker/panel catalog content absent an owner source.
+
+<!-- ticket:T-0048 -->
+```yaml
+id: T-0048
+title: 'WO-168: std.process record schema + DFM check-set contract'
+state: queued
+kind: feature
+origin: human
+created: '2026-07-19'
+blocked_by:
+- T-0044
+parent: null
+scope:
+- stdlib/**
+- tools/stdlib/**
+- docs/spec/toolchain/39-stdlib-organization.md
+evidence: []
+attachments: []
+acceptance:
+- see docs/workflow/work-orders/WO-168-process-record-schema.md
+threat: null
+```
+See docs/workflow/work-orders/WO-168-process-record-schema.md. D269 item 1. Schema first, data second (WO-169/170/171). Provenance posture (pd_gov/gek/named_refusal) is a required first-class marker per the D269 amendment.
+
+<!-- ticket:T-0049 -->
+```yaml
+id: T-0049
+title: 'WO-169: process population wave 1 -- EDM + heat-treat + stamping + grinding
+  + shot-peen'
+state: queued
+kind: feature
+origin: human
+created: '2026-07-19'
+blocked_by:
+- T-0048
+parent: null
+scope:
+- stdlib/std.process/**
+evidence: []
+attachments: []
+acceptance:
+- see docs/workflow/work-orders/WO-169-process-population-wave1.md
+threat: null
+```
+See docs/workflow/work-orders/WO-169-process-population-wave1.md. D269 item 4 population order: this wave first (the die-set program's consumers). Feeds WO-166 (T-0046)'s die-set capability registration.
+
+<!-- ticket:T-0050 -->
+```yaml
+id: T-0050
+title: 'WO-170: process population wave 2 -- PCB fab/assembly + perf-board + elec-install'
+state: queued
+kind: feature
+origin: human
+created: '2026-07-19'
+blocked_by:
+- T-0048
+parent: null
+scope:
+- stdlib/std.process/**
+evidence: []
+attachments: []
+acceptance:
+- see docs/workflow/work-orders/WO-170-process-population-wave2.md
+threat: null
+```
+See docs/workflow/work-orders/WO-170-process-population-wave2.md. D269 item 4. Feeds WO-165 (T-0045) perf-board DFM stub and WO-167 (T-0047) elec-install.
+
+<!-- ticket:T-0051 -->
+```yaml
+id: T-0051
+title: 'WO-171: process population wave 3 -- the long tail'
+state: queued
+kind: feature
+origin: human
+created: '2026-07-19'
+blocked_by:
+- T-0048
+parent: null
+scope:
+- stdlib/std.process/**
+evidence: []
+attachments: []
+acceptance:
+- see docs/workflow/work-orders/WO-171-process-population-wave3.md
+threat: null
+```
+See docs/workflow/work-orders/WO-171-process-population-wave3.md. D269 item 4, remainder of the 100-entry process-research denominator not owned by WO-169/WO-170.
