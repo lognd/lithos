@@ -58,13 +58,13 @@ require Hydronics:                              # fluorite/02 sec. 6
         basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
         by doc(memos/release-residuals.md)
     waive margin:
-        basis: "fluids.dp_inputs_missing: the supply riser Pipe edge lacks density/diameter/friction/length inputs; the record chain cannot close at build (recorded machinery residual)"
+        basis: "WO-144 F152 update: the WO-139/140/141 chain now ROUTES this claim to the feldspar Hardy-Cross pack (fluids_dp_multipath@1), superseding the old 'inputs missing' basis -- but the solver itself abstains: 'hardy_cross: unsupported feature edge_kind:hx_segment (coil1)'. coil1/coil2 are HxSegment edges (fluorite/02), a payload feature the pack's Hardy-Cross engine does not yet carry (feldspar-side solver gap, F-WO144-1, not a lithos bridge gap)"
         by doc(memos/release-residuals.md)
     waive balance:
-        basis: "no registered harness model for claim kind 'fluids.flow_imbalance' (F126.1 model gap)"
+        basis: "WO-144 F152 update: a registered model now exists (fluids_flow_imbalance@1, WO-141) and the claim routes to it -- but it abstains on the SAME feldspar Hardy-Cross gap as margin: 'hardy_cross: unsupported feature edge_kind:hx_segment (coil1)' (F-WO144-1). The old 'no registered harness model' basis is stale and false; the true blocker is the solver's HxSegment coverage"
         by doc(memos/release-residuals.md)
     waive npsh:
-        basis: "no registered harness model for claim kind 'fluids.npsh_margin' (F126.1 model gap)"
+        basis: "WO-144 F152 update: a registered model exists (NpshMarginModel, WO-110) and the npsh channel routes -- but 'registry(grundfos_ups32)' names a pump-curve record that does not exist anywhere in std.fluid/records/components.toml (verified 2026-07-19: only grundfos_up15_10su7p, sunon_mf40201vx_1000u_a99, delta_bfb0524hh are on file), so no NPSH_r curve resolves. The old 'no registered harness model' basis is stale and false; the true blocker is a missing catalog record, never fabricated per D224.1"
         by doc(memos/release-residuals.md)
     waive regime:
         basis: "window claim outside the scalar-comparison lowering surface (comparator 'require' defers; translate() wall)"

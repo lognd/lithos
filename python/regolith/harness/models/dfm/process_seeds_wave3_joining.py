@@ -443,21 +443,25 @@ def _bool_checks(family: str, detail: str) -> DfmCheckSet:
     )
 
 
+# frob:doc docs/modules/py-harness.md#models-dfm-process
 TIG_CHECKS = _window_checks(
     "tig_welding",
     "joint fit-up gap <= declared max for the process/thickness "
     "(procres/joining.md #55 DFM rule 1)",
 )
+# frob:doc docs/modules/py-harness.md#models-dfm-process
 MIG_CHECKS = _window_checks(
     "mig_welding",
     "joint fit-up gap window, wider/looser than TIG (procres/"
     "joining.md #56 DFM rule 1)",
 )
+# frob:doc docs/modules/py-harness.md#models-dfm-process
 STICK_CHECKS = _window_checks(
     "stick_welding",
     "min thickness floor, thin material burns through easily "
     "(procres/joining.md #57 DFM rule 1)",
 )
+# frob:doc docs/modules/py-harness.md#models-dfm-process
 RESISTANCE_SPOT_WELDING_CHECKS = DfmCheckSet(
     family="resistance_spot_welding",
     checks=(
@@ -477,21 +481,25 @@ RESISTANCE_SPOT_WELDING_CHECKS = DfmCheckSet(
         ),
     ),
 )
+# frob:doc docs/modules/py-harness.md#models-dfm-process
 BRAZING_CHECKS = _window_checks(
     "brazing",
     "joint_gap within declared min/max capillary window, the "
     "signature brazing DFM rule (procres/joining.md #59 DFM rule 1)",
 )
+# frob:doc docs/modules/py-harness.md#models-dfm-process
 SOLDERING_CHECKS = _window_checks(
     "soldering",
     "joint_gap within declared capillary window, same predicate KIND "
     "as brazing (procres/joining.md #60 DFM rule 1)",
 )
+# frob:doc docs/modules/py-harness.md#models-dfm-process
 ADHESIVE_BONDING_CHECKS = _window_checks(
     "adhesive_bonding",
     "bond_line_thickness within declared adhesive-specific window "
     "(procres/joining.md #61 DFM rule 1)",
 )
+# frob:doc docs/modules/py-harness.md#models-dfm-process
 THREADED_FASTENERS_CHECKS = DfmCheckSet(
     family="threaded_fasteners",
     checks=(
@@ -512,6 +520,7 @@ THREADED_FASTENERS_CHECKS = DfmCheckSet(
         ),
     ),
 )
+# frob:doc docs/modules/py-harness.md#models-dfm-process
 RIVETING_CHECKS = DfmCheckSet(
     family="riveting",
     checks=(
@@ -532,21 +541,25 @@ RIVETING_CHECKS = DfmCheckSet(
         ),
     ),
 )
+# frob:doc docs/modules/py-harness.md#models-dfm-process
 PRESS_FITS_CHECKS = _bool_checks(
     "press_fits",
     "bore and shaft tolerance CLASSES declared, a fit-class "
     "containment predicate (procres/joining.md #64 DFM rule 1)",
 )
+# frob:doc docs/modules/py-harness.md#models-dfm-process
 FSW_CHECKS = _bool_checks(
     "friction_stir_welding",
     "joint path must be accessible to a linear (or curved-but-"
     "traversable) tool path (procres/joining.md #65 DFM rule 1)",
 )
+# frob:doc docs/modules/py-harness.md#models-dfm-process
 LASER_WELDING_CHECKS = _window_checks(
     "laser_welding",
     "joint fit-up gap <= declared max, tighter threshold than MIG "
     "(procres/joining.md #66 DFM rule 1)",
 )
+# frob:doc docs/modules/py-harness.md#models-dfm-process
 ULTRASONIC_WELDING_CHECKS = _bool_checks(
     "ultrasonic_welding",
     "energy-director geometry declared present at the joint line, a "

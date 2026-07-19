@@ -54,6 +54,7 @@ DEMOS = (
     "demo17_physical_bringup_pack",
     "demo18_perfboard_wiring",
     "demo19_wire_edm_die_set",
+    "demo20_fluid_demo",
 )
 
 

@@ -1,0 +1,29 @@
+{
+  "artifacts": [
+    {
+      "bytes": 1996,
+      "deterministic": true,
+      "path": "espresso_dp_sheet.json",
+      "sha256": "sha256:5a413c729f645d19cb2231e243e9f801e1a9c9f1f96f6adadc4497fbfaa6aaa3"
+    },
+    {
+      "bytes": 10632,
+      "deterministic": true,
+      "path": "moody_diagram.json",
+      "sha256": "sha256:51ffbd8341c82d2ac4212e308e40e2b8d06243a33dcb32cfb546bf4b2288022a"
+    },
+    {
+      "bytes": 20149,
+      "deterministic": true,
+      "path": "small_office_explain.txt",
+      "sha256": "sha256:0a87c6b372bb0a3e8f7424f343273c608280a2a1b1d2e7c85ec7f304f6badf2b"
+    }
+  ],
+  "cause_row": "n/a",
+  "demo": "demo20_fluid_demo",
+  "domain": "small_office hydronics (F-WO144-1 finding) + espresso_machine thermosiphon dp discharge + Moody figure",
+  "live": true,
+  "optimized_quantity": "n/a (waiver-basis + calc-sheet proof pack, not an optimizer surface)",
+  "surface": "fluids chain close-out (WO-144): small_office hydronics waiver burn-down attempt (F-WO144-1 finding) + the espresso fallback's real single-segment dp discharge with its Moody figure",
+  "winner": "n/a"
+}

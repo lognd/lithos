@@ -289,6 +289,7 @@ SWAGING_RECORD = ProcessRecord(
 
 # --- check sets ---------------------------------------------------------
 
+# frob:doc docs/modules/py-harness.md#models-dfm-process
 OPEN_DIE_FORGING_CHECKS = DfmCheckSet(
     family="open_die_forging",
     checks=(
@@ -304,6 +305,7 @@ OPEN_DIE_FORGING_CHECKS = DfmCheckSet(
     ),
 )
 
+# frob:doc docs/modules/py-harness.md#models-dfm-process
 CLOSED_DIE_FORGING_CHECKS = DfmCheckSet(
     family="closed_die_forging",
     checks=(
@@ -324,6 +326,7 @@ CLOSED_DIE_FORGING_CHECKS = DfmCheckSet(
     ),
 )
 
+# frob:doc docs/modules/py-harness.md#models-dfm-process
 EXTRUSION_CHECKS = DfmCheckSet(
     family="metal_extrusion",
     checks=(
@@ -344,6 +347,7 @@ EXTRUSION_CHECKS = DfmCheckSet(
     ),
 )
 
+# frob:doc docs/modules/py-harness.md#models-dfm-process
 ROLLING_CHECKS = DfmCheckSet(
     family="rolling",
     checks=(
@@ -359,6 +363,7 @@ ROLLING_CHECKS = DfmCheckSet(
     ),
 )
 
+# frob:doc docs/modules/py-harness.md#models-dfm-process
 WIRE_BAR_DRAWING_CHECKS = DfmCheckSet(
     family="wire_bar_drawing",
     checks=(
@@ -374,6 +379,7 @@ WIRE_BAR_DRAWING_CHECKS = DfmCheckSet(
     ),
 )
 
+# frob:doc docs/modules/py-harness.md#models-dfm-process
 COLD_HEADING_CHECKS = DfmCheckSet(
     family="cold_heading",
     checks=(
@@ -396,6 +402,7 @@ COLD_HEADING_CHECKS = DfmCheckSet(
     ),
 )
 
+# frob:doc docs/modules/py-harness.md#models-dfm-process
 SWAGING_CHECKS = DfmCheckSet(
     family="swaging",
     checks=(
