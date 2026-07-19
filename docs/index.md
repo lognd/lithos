@@ -41,6 +41,11 @@ document under `docs/` reachable by markdown link, not to duplicate
 - [docs/workflow/research/README.md](workflow/research/README.md)
   -- standalone research/market/benchmark notes.
 
+## Modules (crate contracts)
+
+- [docs/modules/README.md](modules/README.md) -- per-crate module
+  contract docs backing `frob:doc` edges under `crates/**` (COV001).
+
 ## Guide (teaching)
 
 - [docs/guide/README.md](guide/README.md) -- one guide per language

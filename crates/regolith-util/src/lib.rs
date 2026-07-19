@@ -17,6 +17,7 @@ pub use indexmap::{IndexMap, IndexSet};
 /// shares an algorithm (full domain-tagged addressing lives in
 /// [`canon::content_address`], here at the bottom of the layering,
 /// AD-18; this is the primitive it builds on).
+// frob:doc docs/modules/regolith-util.md#hash-hex
 #[must_use]
 pub fn hash_hex(bytes: &[u8]) -> String {
     blake3::hash(bytes).to_hex().to_string()
@@ -26,6 +27,7 @@ pub fn hash_hex(bytes: &[u8]) -> String {
 mod tests {
     use super::hash_hex;
 
+    // frob:tests crates/regolith-util/src/lib.rs::hash_hex kind="unit"
     #[test]
     fn hash_is_stable_and_hex() {
         let digest = hash_hex(b"regolith");

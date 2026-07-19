@@ -134,6 +134,7 @@ use serde::Serialize;
 /// constraint item -- the input the F123 tangent-arc closure solve
 /// needs; the cycle's single granted bump (D225), scoped to this
 /// field alone.
+// frob:doc docs/modules/regolith-util.md#schema-version
 pub const SCHEMA_VERSION: u32 = 30;
 
 /// Canonically encode a value to CBOR bytes: deterministic key order,
@@ -152,6 +153,7 @@ pub const SCHEMA_VERSION: u32 = 30;
 /// non-finite float (a compiler bug upstream, surfaced here rather
 /// than silently hashed), or [`EncodeError::Serialize`] if the
 /// underlying CBOR codec fails.
+// frob:doc docs/modules/regolith-util.md#canonical-cbor
 pub fn canonical_cbor<T: Serialize>(value: &T) -> Result<Vec<u8>, EncodeError> {
     let mut raw = Vec::new();
     ciborium::into_writer(value, &mut raw).map_err(|e| EncodeError::Serialize(e.to_string()))?;
@@ -207,6 +209,7 @@ fn canonicalize(value: Value) -> Result<Value, EncodeError> {
 ///
 /// # Errors
 /// Propagates [`canonical_cbor`] failure.
+// frob:doc docs/modules/regolith-util.md#content-address
 pub fn content_address<T: Serialize>(domain_tag: &str, value: &T) -> Result<String, EncodeError> {
     let payload = canonical_cbor(value)?;
     let mut bytes = Vec::with_capacity(domain_tag.len() + 4 + payload.len());
@@ -217,6 +220,7 @@ pub fn content_address<T: Serialize>(domain_tag: &str, value: &T) -> Result<Stri
 }
 
 /// Failure canonically encoding a value.
+// frob:doc docs/modules/regolith-util.md#encode-error
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum EncodeError {
     /// A non-finite float reached the canonical encoder (upstream bug).

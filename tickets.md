@@ -49,25 +49,40 @@ fmt/test and Python collection all still pass.
 <!-- ticket:T-0002 -->
 ```yaml
 id: T-0002
-title: Annotate crates/regolith-oblig doc edges for COV001
-state: queued
+title: Close COV001/TEST001/TEST003 across crates/** (lane L2)
+state: in-progress
 kind: docs
 origin: agent
 created: '2026-07-17'
 blocked_by: []
 parent: null
 scope:
-- crates/regolith-oblig/src/**
+- crates/**
+- docs/**
+- fuzz/**
 evidence: []
 attachments: []
 acceptance: []
 threat: null
 ```
-frob check --type python --only gates reports 146 COV001 warnings under crates/regolith-oblig (e.g. flownet.rs::RecordRef, flownet.rs::ScalarInterval) -- public symbols with no frob:doc edge. This is the obligation-graph core crate (AD-1/AD-2 territory), the highest-value place to start closing COV001 given regolith-lower/regolith-syntax/regolith-oblig account for most of the 6900+ COV001 hits repo-wide.
+ORIGINAL SCOPE (regolith-oblig only) WIDENED 2026-07-18 by lane L2 to cover
+the full crates/** surface: frob check --only gates reports ~854 COV001
+(public symbols with no frob:doc edge), ~300 TEST001 (public fns with no
+frob:tests binding) and 10 TEST003 (crates missing an integration test
+binding) across crates/regolith-lower (251/148), regolith-syntax (185/57),
+regolith-oblig (146/-), regolith-diag (115/-), regolith-qty (105/23),
+regolith-sem (93/30), regolith-ir (64/17), regolith-ls (55/24),
+regolith-api (32/-), regolith-util (5/-).
 
-Add frob:doc / frob:describes anchors (or doc comments the doclink/coverage gate already recognizes) for the public API surface of crates/regolith-oblig/src/, prioritizing flownet.rs and any other file with more than 10 undocumented public symbols. Re-run frob check --only gates and confirm the COV001 count for this crate drops to 0.
+Add frob:doc edges backed by new docs/modules/<crate>.md module-contract
+docs (linked from docs/index.md, keeping DOC001 at 0), and frob:tests
+bindings on existing or new unit/integration tests, crate by crate, until
+COV001/TEST001/TEST003 are 0 under crates/**. Re-run frob check --only
+gates after each crate and confirm the crate's counts hit 0 with no new
+rule ids introduced.
 
-Origin: frob enforcement adoption sweep (frob check --only gates dry run).
+Origin: frob enforcement adoption sweep (frob check --only gates dry run);
+scope widened by lane L2 of the crates/** frob-adoption campaign.
 
 <!-- ticket:T-0003 -->
 ```yaml
