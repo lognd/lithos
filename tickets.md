@@ -1355,7 +1355,7 @@ See docs/workflow/work-orders/WO-167-dwelling-wiring-program.md. D268 item 4, ri
 ```yaml
 id: T-0048
 title: 'WO-168: std.process record schema + DFM check-set contract'
-state: queued
+state: in-progress
 kind: feature
 origin: human
 created: '2026-07-19'
