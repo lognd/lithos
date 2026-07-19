@@ -173,6 +173,45 @@ impl Mux by vendor(nxp_74hc4514_bank)     # purchased
   static tier plus the ordinary equivalence obligation; opaque ones
   enter measured-or-evidenced at L4. Hand-written does not mean less
   checked.
+- **`by sim(<stimulus-ref>)`** (D264, WO-154/155) binds a behavioral
+  or extern impl's discharge to a declared stimulus record instead
+  of a foreign realization:
+
+  ```
+  impl Mux by spec
+    require: sim(mux_directed_vectors)
+  ```
+
+  The spelling deliberately mirrors `by extern(ref, <hdl-dialect>)`
+  rather than introducing a parallel binding mechanism -- both name
+  a hash-pinned external artifact (a stimulus/expectation record vs.
+  a foreign source file) that the discharge machinery resolves by
+  digest, never by convention. Argued against the two mantras this
+  spelling could otherwise violate:
+
+  - **Unambiguous-first.** `sim(<stimulus-ref>)` names exactly one
+    artifact -- the `signal_table` payload (charter 38 registry
+    addition, sec. below) identified by its own digest -- so a
+    reader never has to guess which stimulus a discharge used; the
+    same discipline `extern(ref, format)` already applies to foreign
+    sources.
+  - **Single-Home.** Composing `sim(...)` as a clause on the
+    existing `impl ... by <strategy>` grammar (or, as shown, inside
+    a `require:` clause on an existing impl) means there is still
+    ONE realization-binding mechanism in the language, with `sim`
+    naming which EVIDENCE FAMILY discharges the requirement rather
+    than growing a second `impl ... by sim(...)` strategy variant
+    that would fork the binding story in two. A behavioral impl's
+    functional correctness and its sim coverage are orthogonal
+    facts (what it IS vs. what evidence backs it), so `sim(...)`
+    lives beside `require:`/claims, not beside `by spec`/`by
+    composing`/`by extern` as a sixth realization strategy.
+
+  The stimulus/expectation record itself carries D260 ruling 3's
+  evidence-honesty posture (an authored/drawn stimulus can never
+  upgrade to a model-backed or measured tier) -- see
+  `docs/spec/regolith/13-invariants.md`'s new cuprite sim/timing
+  entry, leg (b).
 - Multiple impls of one block may coexist (per target, per assembly
   choice); selection is the ordinary `use <impl>` pin, lockfile-caused.
 

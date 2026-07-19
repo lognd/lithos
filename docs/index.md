@@ -24,7 +24,7 @@ document under `docs/` reachable by markdown link, not to duplicate
 - [docs/spec/calcite/README.md](spec/calcite/README.md) -- the
   civil/architectural language (`.calx`).
 - [docs/spec/toolchain/README.md](spec/toolchain/README.md) -- the
-  normative toolchain architecture (`00-architecture.md`, AD-1..43)
+  normative toolchain architecture (`00-architecture.md`, AD-1..47)
   and the numbered design charters.
 
 ## Workflow (process)

@@ -1,6 +1,6 @@
 # toolchain spec index
 
-Normative toolchain architecture (`00-architecture.md`, AD-1..43) plus
+Normative toolchain architecture (`00-architecture.md`, AD-1..47) plus
 the numbered design charters it wins over any WO body conflicting with
 it. This is a link index; `00-architecture.md` is still the normative
 root.
@@ -35,3 +35,4 @@ root.
 | 43-power-distribution | [43-power-distribution.md](43-power-distribution.md) |
 | 44-boundary-charter | [44-boundary-charter.md](44-boundary-charter.md) |
 | 45-process-record-schema | [45-process-record-schema.md](45-process-record-schema.md) |
+| 46-traced-profiles | [46-traced-profiles.md](46-traced-profiles.md) |

@@ -156,7 +156,11 @@ Rules:
   extern("outline.dxf", dxf)` -- a transparent format elaborates into
   the sketch layer with the full static tier (regolith
   `08-lowering-architecture.md` section 4); the industrial-design
-  handoff path.
+  handoff path. `rgp` (scan-traced profiles, ratified by WO-146:
+  `docs/spec/toolchain/46-traced-profiles.md`) enters through this
+  same slot beside `dxf` -- image-space geometry, calibration
+  transform, and mandatory provenance, elaborated deterministically
+  at build time.
 - Constraint solving drives an existing engine (SolveSpace). The
   constraint vocabulary is a closed v1 set equal in power to the
   SolveSpace constraint kinds (coincident, distance, angle,

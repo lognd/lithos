@@ -70,21 +70,25 @@ truth, `workflow/` is process, `guide/` is for people.
 docs/
   spec/          TECHNICAL -- normative specifications
     regolith/    the shared abstract layer (domain-neutral), 01-13;
-                 13-invariants.md is the guarantee ledger (INV-1..30)
+                 13-invariants.md is the guarantee ledger (INV-1..35;
+                 INV-33 withdrawn/RESERVED, D253.4)
     hematite/    mechanical track (unified spec; version on header)
     cuprite/     electrical + computer track
     fluorite/    fluid-circuit track, `.fluo` (ratified v1, cycle 20)
     calcite/     civil/architectural track, `.calx` (charter cycle 26;
                  ratified D149, 2026-07-08)
-    toolchain/   00-architecture.md (NORMATIVE, AD-1..39),
-                 grammar.ebnf, numbered design charters (10-..41-);
+    toolchain/   00-architecture.md (NORMATIVE, AD-1..47),
+                 grammar.ebnf, numbered design charters (10-..46-);
                  20-solver-abstraction.md sec. 7-8 is the feldspar
                  pack contract (AD-26 plugin seam)
 
   workflow/      PROCESS -- how the project is built
     README.md    ground rules, the dispatch protocol, the WO
                  dependency graph
-    work-orders/ WO-01..127, agent-executable, one per dispatchable unit
+    work-orders/ WO-01..171, agent-executable, one per dispatchable
+                 unit; the live dispatch queue is `tickets.md`
+                 (`frob ticket doable`) -- WO `Status:` lines are
+                 historical narrative, not a second queue
     design-log/  dated findings + decisions ledgers, one per design
                  cycle -- THE project history, verbatim (never edited)
 

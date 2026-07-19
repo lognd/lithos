@@ -189,3 +189,33 @@ artifact (GLB, SVG, DXF, PDF, kicad_pcb-fake, index, ledgers).
 The sweep is census-goldened: per-project counts of discharged /
 deviated / accepted obligations, so acceptance creep is a visible
 diff, never drift.
+
+## 5. Registry additions: `signal_table` and `sim/` (D264, WO-154)
+
+The cuprite sim/timing gate (D264, WO-155/156/157) needs two
+registry additions, written here in the same table format as this
+charter's existing registries (sec. 1-2) and the `harness/` family
+row precedent (`40-debug-and-bring-up.md` sec. 3):
+
+- **`signal_table` payload kind.** A new `RealizedInput`/payload
+  kind carrying stimulus and expectation vectors for a behavioral or
+  timing subject: digest-addressed like every other realized
+  payload (AD-25 purity), carrying the D260-seam provenance/trust-
+  tier fields (`method`, `trust_tier` -- authored/asserted for a
+  drawn stimulus, per D260 ruling 3; never model-backed or
+  measured). This is the payload `by sim(<stimulus-ref>)`
+  (`../cuprite/03-behavioral-layer.md` sec. 2) resolves by digest.
+- **`sim/` artifact family**, registered through the AD-36 registry
+  seam like every other `dist/` family (charter 38 sec. 1's
+  per-family directory list gains this sibling): `sim/<subject>/
+  trace.vcd` (the waveform trace; rendering is the signal-design
+  surface's job, D263) and `sim/<subject>/sim_report.json` (verdict,
+  stimulus digest, source digest, tool version -- the exact triple
+  INV-<N>'s leg (a), `13-invariants.md`, requires every shipped sim
+  artifact to name). A subject with no sim coverage or no timing
+  budget appears in this family as a NAMED ABSENCE row (leg (c)),
+  never as silence.
+
+Schema discipline: if `signal_table` needs a wire-schema change, it
+rides WO-147's single cycle-37 `SCHEMA_VERSION` bump, or sequences
+strictly after it -- never a second bump (D264 ruling 4).

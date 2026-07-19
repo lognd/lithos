@@ -1,0 +1,106 @@
+# Stub `.rgp` fixture for `docs/spec/toolchain/46-traced-profiles.md`
+# (WO-146). Hand-written, no graphite involved -- demonstrates the
+# declarative non-GUI authoring path (D259/D260 admission test): a
+# human with a ruler and a text editor can produce this file directly.
+#
+# NOTE (docs-agent placement): the WO's acceptance criteria describe
+# this as an examples/ fixture; this docs-ticket's dispatch scope is
+# docs/** only, so it is placed here under the spec's own fixtures/
+# directory rather than examples/tracks/hematite/. WO-147/148 (Rust
+# schema + Python realizer, non-docs scope) should relocate or mirror
+# it under examples/ if the elaborated schema wants a fixture there;
+# this file remains the docs-normative stub either way.
+
+[profile]
+name  = "group_gasket_stub"
+units = "mm"
+
+[[outline]]
+kind = "line"
+from = [40, 40]
+to   = [360, 40]
+
+[[outline]]
+kind = "line"
+from = [360, 40]
+to   = [360, 360]
+
+[[outline]]
+kind = "line"
+from = [360, 360]
+to   = [40, 360]
+
+[[outline]]
+kind = "line"
+from = [40, 360]
+to   = [40, 40]
+
+[[hole]]
+name = "bore"
+[[hole.loop]]
+kind   = "arc"
+from   = [260, 200]
+to     = [260, 200]
+center = [200, 200]
+sense  = "ccw"
+
+[[datum]]
+name = "gasket_plane"
+kind = "point"
+at   = [200, 200]
+
+[calibration]
+model = "homography"
+
+[calibration.target]
+kind        = "grid"
+grid_pitch  = "10mm"
+grid_count  = [8, 6]
+pitch_basis = "printed"
+
+[[calibration.observations]]
+image_px   = [40, 40]
+grid_index = [0, 0]
+confirmed  = true
+
+[[calibration.observations]]
+image_px   = [360, 40]
+grid_index = [7, 0]
+confirmed  = true
+
+[[calibration.observations]]
+image_px   = [360, 360]
+grid_index = [7, 5]
+confirmed  = true
+
+[[calibration.observations]]
+image_px   = [40, 360]
+grid_index = [0, 5]
+confirmed  = true
+
+[calibration.params]
+H = [
+  [1.0, 0.0, 0.0],
+  [0.0, 1.0, 0.0],
+  [0.0, 0.0, 1.0],
+]
+
+residual_rms_mm   = 0.08
+residual_max_mm   = 0.15
+accuracy_bound_mm = 0.2
+
+[provenance]
+method     = "traced_scan"
+trust_tier = "authored"
+
+[provenance.scan]
+file         = "traced/scans/group_gasket.png"
+content_hash = "blake3:0000000000000000000000000000000000000000000000000000000000000000"
+captured     = "2026-07-16"
+capture_kind = "flatbed_scan"
+
+[provenance.tracer]
+by        = "j.doe"
+date      = "2026-07-16"
+assisted  = "none"
+confirmed = true

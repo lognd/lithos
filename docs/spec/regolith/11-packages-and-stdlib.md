@@ -34,7 +34,7 @@
 | `matings` | connection declarations + their harness model nodes (two halves) | `std.mech.bolted`, `std.elec.buses` |
 | `models` | harness model packs implementing signatures | `fea.shell`, `spice.ngspice`, `sta.basic`, `cam.mill3ax` |
 | `verbs` | intent-verb schemas + lowering skeletons (elec intent layer; mech may grow them) | `std.intents`, `std.debug` |
-| `formats` | readers for external-linkage formats (`by extern`, import stages, supplied plans), hash-pinned; each declares transparent (elaborates to design IR) or opaque (measured/evidenced entry) | `fmt.verilog`, `fmt.step`, `fmt.dxf`, `fmt.gcode_fanuc`, `fmt.elf` |
+| `formats` | readers for external-linkage formats (`by extern`, import stages, supplied plans), hash-pinned; each declares transparent (elaborates to design IR) or opaque (measured/evidenced entry) | `fmt.verilog`, `fmt.step`, `fmt.dxf`, `fmt.rgp` (scan-traced profiles, WO-146, `../toolchain/46-traced-profiles.md`), `fmt.gcode_fanuc`, `fmt.elf` |
 | `parts` | reusable designed artifacts (parts/blocks/boards) with their contracts | a published gearbox; an open-hardware PSU block |
 
 One package may provide several kinds; the manifest declares what it

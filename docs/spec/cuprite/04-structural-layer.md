@@ -249,6 +249,43 @@ between machining operations -- same math shape (sum of interval
 contributions vs a limit), same `E0432` failure naming the worst
 contributors.
 
+## 5a. Timing-fact vocabulary v1, and deferred with a reopen criterion (D264, WO-154)
+
+The v1 timing vocabulary is CONTRIBUTION-SUM `kind=timing` budgets
+only, exactly the grammar already shown above and already accepted
+by the parser (`crates/regolith-syntax/src/parser.rs:257`) and IR
+(`crates/regolith-ir/src/budget.rs:46`): a timing budget sums
+member contributions (silicon promise + route delay) against a
+single slack requirement, evaluated at whichever corner the budget
+names.
+
+Deferred with a reopen criterion (cycle 37, D264 ruling 6), in the
+same style as this track's other named deferrals (hematite/07 sec.
+2a, cuprite/08 sec. 1a, fluorite/04, calcite charter sec. 7):
+
+- **`setup_slack(...)` per-corner spread and `corners(all)` as a
+  first-class multi-corner sweep operator.** v1 closes generic
+  budgets over WO-145's cited record values plus route delays via
+  the existing `E0432` path; a budget MAY name `at corners(all)`
+  today (the grammar already accepts it, sec. 5 example), but the
+  v1 timing gate (WO-156) evaluates it as a single worst-declared-
+  corner contribution-sum, not a genuine per-corner spread analysis.
+  Reopen only on the first real design whose corner spread (not
+  its worst single corner) flips a timing verdict -- i.e. the
+  worst-case-corner approximation is provably insufficient for a
+  design that actually shipped or was about to ship
+  (`scratch_recon_cuprite_sim_gate.md` sec. 4a). Until that
+  evidence exists, this is staging with a stated reason, not a
+  silent gap: the vocabulary is closed and named here so no future
+  agent invents a second timing-budget grammar to fill it.
+
+The sibling functional-coverage gate binds through the
+`by sim(<stimulus-ref>)` clause on behavioral/extern impls
+(`03-behavioral-layer.md` sec. 2) -- timing budgets stay a structural
+(this layer's) concern; sim stimulus binding is a behavioral-layer
+concern; the two are SIBLING gates (D264), never one mechanism
+pretending to be both.
+
 ## 6. Frequency-domain and noise verification
 
 Noise and signal integrity follow the standard margin-driven ladder,

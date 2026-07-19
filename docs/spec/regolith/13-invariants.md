@@ -698,3 +698,56 @@ the citations, tests, or close-outs that referenced INV-33. If the
 injection channel is ever revived from `experimental/injection-channel`,
 it comes back with a proof that runs the REAL pipeline (D226, D252.3) and
 takes a NEW invariant number.
+
+## INV-35 (cuprite sim/timing honesty) -- RESERVED/PENDING, WO-154
+
+Number confirmed next-free after INV-34 (do not reuse INV-33,
+RESERVED per D253.4). Entry TEXT drafted now per WO-154 (D264); the
+ENFORCING code that discharges each leg has NOT landed as of this
+docs pass and lands across WO-155 (leg a, functional sim), WO-156
+(timing's share of legs a/c), and WO-157 (the totality of leg c, the
+coverage sweep) -- per house law "new guarantees need a proof
+argument in the SAME change," this entry is PARKED/PROVISIONAL until
+those WOs land, the same accretion pattern the ledger already used
+for INV-24's acceptance-ledger proof across WO-98 and its
+dependents. Do not read this entry as `discharged` until the cited
+WOs' close-outs update it.
+
+**Every released cuprite design's simulation and timing verdicts are
+grounded: (a) a shipped sim artifact always names the exact
+stimulus digest, source digest, and tool version that produced it;
+(b) an authored (drawn/typed) stimulus or expectation can never
+carry, or upgrade to, a model-backed or measured trust tier; (c) a
+behavioral subject with no sim coverage and a clocked subject with
+no timing budget appear as named absences on the audit surface,
+never as silence.**
+
+Proof-argument sketch (parked; see the PENDING note above):
+
+- (a) by construction: the sim model's evidence is built only from
+  the `DischargeRequest`'s own payload digests and the seam-resolved
+  tool version (the AD-19 cache-key law already folds tool version
+  into `Model.version`, `verilator_adapter.py:8-11`); a ship-path
+  check (the INV-32 tap-agreement pattern,
+  `../toolchain/40-debug-and-bring-up.md` sec. 3) refuses a `sim/`
+  artifact whose digests do not re-verify against the payload store.
+- (b) by unreachability (the D246/D260.3 "cannot forge a pass"
+  pattern): the stimulus payload model's provenance field for
+  authored artifacts has a tier vocabulary containing only
+  authored/asserted; no constructor accepts a model/measured tier
+  for an authored `signal_table` -- the same unrepresentability move
+  as D257's citation-less datasheet value.
+- (c) by totality of the coverage sweep: the parity/coverage
+  producer enumerates subjects from the SAME lowered entity set the
+  build used (not from the claims that happen to exist), so every
+  HDL extern edge or `on <clk>` body either matches a sim/timing
+  obligation or produces a named-absence row (the WO-114
+  zero-unexplained-rows partition precedent,
+  `tools/health/fleet.py:36-40`).
+
+Cross-references: `../cuprite/03-behavioral-layer.md` sec. 2 (`by
+sim(<stimulus-ref>)`); `../cuprite/04-structural-layer.md` sec. 5a
+(the `setup_slack`/`corners` deferral this entry's leg (c) does NOT
+cover -- that deferral has its own reopen criterion, independent of
+this invariant landing); `../toolchain/38-emission-and-release.md`
+sec. 5 (`signal_table`, `sim/` registry additions).
