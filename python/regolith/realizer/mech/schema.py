@@ -480,6 +480,7 @@ class MaterialProps(BaseModel):
 
 
 # frob:doc docs/modules/py-realizer.md#mech-schema
+# frob:ticket T-0052
 class FeatureProgram(BaseModel):
     """The whole deterministic, resolved feature program for one part.
 

@@ -3,7 +3,7 @@
 .DEFAULT_GOAL := help
 .PHONY: help install dev check fmt-check test test-rs test-py snapshots \
         schema schema-check codes codes-check fmt lint typecheck coverage bench fuzz build clean guard-core ls kicad-link \
-        demos demos-strict feldspar-link \
+        demos demos-strict feldspar-link promotion-tickets-check \
         health health-check health-fleet health-demos health-consistency health-smoke
 
 UV ?= uv
@@ -57,7 +57,7 @@ kicad-link: ## Link the system KiCad pcbnew module into the venv (no-op if absen
 dev: ## Rebuild the extension into the venv on Rust change
 	$(UV) run watchexec -e rs -- $(UV) run maturin develop --uv
 
-check: fmt-check lint typecheck guard-core schema-check codes-check test-rs test-py health-smoke ## Full gate, cheapest first
+check: fmt-check lint typecheck guard-core schema-check codes-check promotion-tickets-check test-rs test-py health-smoke ## Full gate, cheapest first
 
 fmt-check:
 	$(CARGO) fmt --all --check
@@ -73,6 +73,9 @@ lint: ## clippy (-D warnings) + ruff lint
 
 typecheck: ## astral ty type-check on the Python package
 	$(UV) run ty check python/regolith
+
+promotion-tickets-check: ## Enforce: every forward-authored type's frob:ticket marker names an OPEN ticket (WO-162, AD-22 teeth)
+	$(UV) run python -m tools.health.promotion_tickets
 
 guard-core: ## Enforce: only compiler.py may import regolith._core (AD-4)
 	@bad=$$(grep -rElE '^[[:space:]]*(from[[:space:]]+regolith[[:space:]]+import[[:space:]]+_core|from[[:space:]]+regolith\._core[[:space:]]+import|import[[:space:]]+regolith\._core)' \

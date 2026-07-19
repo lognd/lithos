@@ -1378,3 +1378,25 @@ acceptance:
 threat: null
 ```
 See docs/workflow/work-orders/WO-171-process-population-wave3.md. D269 item 4, remainder of the 100-entry process-research denominator not owned by WO-169/WO-170.
+
+<!-- ticket:T-0052 -->
+```yaml
+id: T-0052
+title: 'Promote FeatureProgram: lower emits it from .hema; delete programs.py extraction'
+state: queued
+kind: feature
+origin: agent
+created: '2026-07-19'
+blocked_by: []
+parent: null
+scope:
+- crates/regolith-lower/**
+- python/regolith/orchestrator/programs.py
+- python/regolith/realizer/mech/schema.py
+evidence: []
+attachments: []
+acceptance:
+- 'AD-22 promotion (charter sec. 2, D267): regolith-lower emits FeatureProgram from real .hema source; orchestrator/programs.py extraction deleted or demoted to drift check in the SAME change; the frob:ticket marker on the class comes off at close'
+- 'Pre-promotion ledger: this OPEN ticket is the honest record; tools/health/promotion_tickets.py (WO-162) enforces the marker->open-ticket join'
+threat: null
+```

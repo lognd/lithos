@@ -50,6 +50,16 @@ The docs-agreement sweeps (WO-121, D230): standalone, mechanically
 checkable agreement rules between committed docs and the repo they
 describe, folded into the `consistency` leg.
 
+<a id="health-promotion-tickets-leg"></a>
+### `tools/health/promotion_tickets.py`
+The `promotion-tickets` leg (WO-162, AD-22 teeth): every forward-
+authored contract type's `frob:ticket T-####` marker must name a
+ticket `state: queued`/`in-progress` in `tickets.md`; a missing, done,
+or nonexistent ticket fails `make check`. Home (b) (a `tools/` script),
+not a `frob.toml` `[[policy]]` rule -- see the module docstring for why
+the policy engine's three rule kinds cannot express the cross-file
+ticket-state join.
+
 <a id="health-fleet-leg"></a>
 ### `tools/health/fleet.py`
 The `fleet` leg: proves every D210 fleet project (an `examples/`

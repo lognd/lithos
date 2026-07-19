@@ -153,6 +153,17 @@ generated `RealizedLayout` payload from a completed `run_layout`/
 (`kind: layout.realized`), mirroring
 `orchestrate.put_realized_geometry`'s fresh-blake3-digest precedent.
 
+`realizer/elec/board_assignment.py` (WO-163, A7): the sibling
+`board_assignment.realized` kind for board-shaped capabilities OTHER
+than an etched-copper KiCad board (perf-board today, WO-165) --
+`RealizedBoardAssignment` carries no `copper`/`kicad_pcb_content_hash`
+field, since neither applies to a fixed-grid perf-board substrate.
+`put_realized_board_assignment` follows `put_realized_layout`'s exact
+pattern (`PayloadStore.put`, fresh digest). Defined as a plain pydantic
+model rather than a schemars-sourced type for now (D211 sequencing:
+WO-147 owns the cycle-37 SCHEMA_VERSION bump and was still open at this
+WO's dispatch) -- see the module docstring for the promotion note.
+
 ## Firmware realizer
 
 <a id="firmware-init"></a>

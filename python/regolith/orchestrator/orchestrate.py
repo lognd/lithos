@@ -113,11 +113,17 @@ REALIZER_PACK_ELEC = "elec"
 _REALIZER_PACK_BY_KIND: Mapping[str, str] = {
     "geometry.realized": REALIZER_PACK_MECH,
     "layout.realized": REALIZER_PACK_ELEC,
+    # WO-163 (A7): a board-shaped, non-copper realized kind (perf-board
+    # today, WO-165) -- same elec pack, a sibling `put` seam
+    # (`regolith.realizer.elec.board_assignment.
+    # put_realized_board_assignment`), not a `RealizedLayout` field.
+    "board_assignment.realized": REALIZER_PACK_ELEC,
 }
 # The lockfile slot suffix per realized-IR kind (`<subject>.<suffix>`).
 _LOCK_SLOT_SUFFIX_BY_KIND: Mapping[str, str] = {
     "geometry.realized": "geometry",
     "layout.realized": "layout",
+    "board_assignment.realized": "board_assignment",
 }
 
 
