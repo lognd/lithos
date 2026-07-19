@@ -29,6 +29,7 @@ use super::{
 /// Every argument [`push_require_obligations`] needs but the claim
 /// line/subject/predicate themselves -- bundled so the function stays
 /// under clippy's argument-count lint.
+// frob:doc docs/modules/regolith-lower.md#claims
 pub(crate) struct ClaimLoweringCtx<'a> {
     pub(crate) path: &'a camino::Utf8Path,
     pub(crate) decl_name: &'a str,
@@ -41,6 +42,8 @@ pub(crate) struct ClaimLoweringCtx<'a> {
     pub(crate) files: &'a [ParsedFile],
 }
 
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn push_require_obligations(
     out: &mut Vec<Obligation>,
     diagnostics: &mut Vec<Diagnostic>,
@@ -199,6 +202,8 @@ pub(crate) fn push_require_obligations(
 /// SI-base numeral) -- a predicate whose bound is not a recognized unit
 /// expression passes through unchanged and the orchestrator defers it
 /// exactly as before, never a silently invented number.
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn push_opaque_require_obligation(
     out: &mut Vec<Obligation>,
     ctx: &ClaimLoweringCtx<'_>,
@@ -258,6 +263,8 @@ pub(crate) fn push_opaque_require_obligation(
               is one call site's locals; bundling them into a struct would \
               only rename the same nine things"
 )]
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn push_window_family_obligations(
     out: &mut Vec<Obligation>,
     diagnostics: &mut Vec<Diagnostic>,
@@ -319,6 +326,8 @@ pub(crate) fn push_window_family_obligations(
               is one call site's locals; bundling them into a struct would \
               only rename the same nine things"
 )]
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn push_impedance_window_obligations(
     out: &mut Vec<Obligation>,
     diagnostics: &mut Vec<Diagnostic>,
@@ -418,6 +427,8 @@ pub(crate) fn push_impedance_window_obligations(
               bounds/pin) is one call site's locals; a struct would only \
               rename the same eight things"
 )]
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn push_within_window_obligations(
     out: &mut Vec<Obligation>,
     ctx: &ClaimLoweringCtx<'_>,
@@ -485,6 +496,8 @@ pub(crate) fn push_within_window_obligations(
               is one call site's locals; bundling them into a struct would \
               only rename the same eight things"
 )]
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn push_temporal_obligation(
     out: &mut Vec<Obligation>,
     diagnostics: &mut Vec<Diagnostic>,
@@ -535,6 +548,8 @@ pub(crate) fn push_temporal_obligation(
 /// D103: build the one obligation for a general comparison claim
 /// (`lhs_expr <op> rhs_expr`, comparator mid-expression), resolving
 /// each side's entity-field reference terms into `given.refs`.
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn push_general_comparison_obligation(
     out: &mut Vec<Obligation>,
     ctx: &ClaimLoweringCtx<'_>,
@@ -604,6 +619,8 @@ pub(crate) fn push_general_comparison_obligation(
 /// itself the AD-3 opaque-degrade case (no bound variable found -- a
 /// malformed header the parser recorded structure for but could not
 /// fully type).
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn sweep_domain_from_ast(
     sweep: &regolith_syntax::ast::ForallSweepClaim,
 ) -> Option<SweepDomain> {
@@ -623,6 +640,7 @@ pub(crate) fn sweep_domain_from_ast(
 /// sweep silently covers zero points. An explicitly EMPTY declared
 /// domain (`{}`, `[]`) stays legal (it starts with a bracket) -- an
 /// honest empty sweep, not this trap.
+// frob:doc docs/modules/regolith-lower.md#claims
 pub(crate) fn is_undeclared_bare_plural_domain(domain: &str) -> bool {
     let d = domain.trim();
     if d.is_empty() {
@@ -643,6 +661,8 @@ pub(crate) fn is_undeclared_bare_plural_domain(domain: &str) -> bool {
 /// constructively naming the declared domain forms. A well-formed
 /// declared domain (or a malformed header with no domain text) is left
 /// untouched.
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn check_forall_domain(
     diagnostics: &mut Vec<Diagnostic>,
     path: &camino::Utf8Path,
@@ -683,6 +703,8 @@ pub(crate) fn check_forall_domain(
 /// `... forall <cfg>` SUFFIX form is a config-quantification axis, a
 /// different surface, and never matches here because it does not LEAD
 /// the predicate).
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn parse_forall_prefix(predicate: &str) -> Option<(String, String, String)> {
     let rest = predicate.trim_start().strip_prefix("forall ")?;
     // The axis may itself carry parens (`i(out)`), so find the ` in `
@@ -725,6 +747,8 @@ pub(crate) fn parse_forall_prefix(predicate: &str) -> Option<(String, String, St
 /// reference -- never an invented number). Resolution provenance is
 /// the reference path plus the resolving declaration/field, logged at
 /// info level with its INV-21 cause class (`obligation`).
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn resolve_entity_ref(ctx: &ClaimLoweringCtx<'_>, reference: &str) -> Option<String> {
     let (head, field_name) = reference.split_once('.')?;
     let target = part_type_of(ctx.decl, head).unwrap_or_else(|| head.to_string());
@@ -735,6 +759,8 @@ pub(crate) fn resolve_entity_ref(ctx: &ClaimLoweringCtx<'_>, reference: &str) ->
 
 /// The declared type name of the enclosing decl's part/field `name`
 /// (`comms: CommsPcb(...)` -> `CommsPcb`), if any.
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn part_type_of(decl: &Decl, name: &str) -> Option<String> {
     for node in decl.syntax().descendants() {
         if let Some(field) = Field::cast(node) {
@@ -754,6 +780,8 @@ pub(crate) fn part_type_of(decl: &Decl, name: &str) -> Option<String> {
 }
 
 /// The top-level declaration named `name` across every parsed file.
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn find_decl(files: &[ParsedFile], name: &str) -> Option<Decl> {
     for pf in files {
         let Some(file) = File::cast(pf.parse.syntax()) else {
@@ -770,6 +798,8 @@ pub(crate) fn find_decl(files: &[ParsedFile], name: &str) -> Option<Decl> {
 
 /// The full `: ...` value text of the FIRST field named `field_name`
 /// anywhere under `decl` (source order), if any.
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn find_field_value_text(decl: &Decl, field_name: &str) -> Option<String> {
     for node in decl.syntax().descendants() {
         if let Some(field) = Field::cast(node) {
@@ -789,6 +819,8 @@ pub(crate) fn find_field_value_text(decl: &Decl, field_name: &str) -> Option<Str
 /// promise (`elec.power(x) >= 26dBm during ...`) resolves to the bound
 /// side; a plain value field passes through whole. The trailing
 /// window/quantifier clause is dropped either way.
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn bound_or_value_text(text: &str) -> String {
     let trimmed = text.trim();
     let after_comparator = ["<=", ">=", "<", ">"]
@@ -833,6 +865,8 @@ pub(crate) fn bound_or_value_text(text: &str) -> String {
 /// memo-waivable end-to-end (F124 hole). We extract the floor, skip the
 /// directive line, lower every other claim, then stamp the floor onto each
 /// obligation the group emitted.
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn push_group_obligations(
     obligations: &mut Vec<Obligation>,
     diagnostics: &mut Vec<Diagnostic>,
@@ -883,6 +917,8 @@ pub(crate) fn push_group_obligations(
 /// claim line whose subject is literally `trust` and whose predicate is a
 /// `>= <tier>` floor. Such a line sets its group's `Claim.trust_floor`
 /// instead of lowering to a standalone claim obligation.
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn is_trust_directive(line: &Field) -> bool {
     line.name() == "trust" && trust_floor_tier(&full_predicate_text(line)).is_some()
 }
@@ -891,6 +927,8 @@ pub(crate) fn is_trust_directive(line: &Field) -> bool {
 /// direct `trust: >= <tier>` directive is present. Only DIRECT claim
 /// lines are scanned -- a floor is a group-level property, so a directive
 /// nested inside a `forall` block is not a group floor.
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn group_trust_floor(group: &regolith_syntax::ast::RequireClaim) -> Option<String> {
     group
         .claims()
@@ -904,6 +942,8 @@ pub(crate) fn group_trust_floor(group: &regolith_syntax::ast::RequireClaim) -> O
 /// resolves it through the ONE tier table (`magnetite.trust`); the tier
 /// vocabulary is deliberately NOT re-encoded here. `None` for any predicate
 /// that is not a single `>= <identifier>` floor.
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn trust_floor_tier(predicate: &str) -> Option<String> {
     let rest = predicate.trim().strip_prefix(">=")?.trim();
     if rest.is_empty() || !rest.chars().all(|c| c.is_ascii_alphanumeric() || c == '_') {
@@ -927,6 +967,8 @@ pub(crate) fn trust_floor_tier(predicate: &str) -> Option<String> {
 /// (`thermo.temperature(...)`), NOT the bare claim label -- otherwise
 /// translate's call-form recognition (`_match_call_lhs`) can never fire
 /// on a windowed claim.
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn within_window_bounds(predicate: &str) -> Option<(String, String, String)> {
     let mut search_from = 0usize;
     loop {

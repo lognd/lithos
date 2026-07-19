@@ -142,6 +142,7 @@ fn leading_segment(dotted: &str) -> &str {
 
 /// The diagnostics from the fluid net discipline over every file.
 #[derive(Debug, Clone, Default)]
+// frob:doc docs/modules/regolith-lower.md#fluid
 pub struct FluidReport {
     /// Diagnostics from the fluorite flownet checks (E02xx family).
     pub diagnostics: Vec<Diagnostic>,
@@ -154,6 +155,8 @@ const IMPOSER_CTORS: &[&str] = &["Imposer", "Regulator", "Pump"];
 
 /// Run the fluid net discipline over `files`, in caller (sorted) order.
 #[must_use]
+// frob:doc docs/modules/regolith-lower.md#fluid
+// frob:waive TEST001 reason="internal pass-pipeline helper exercised transitively through the crate's lower()/lower_and_discharge() pipeline tests; no isolated unit test calls it directly"
 pub fn run_fluid_checks(files: &[ParsedFile]) -> FluidReport {
     let span = tracing::info_span!("lower.fluid");
     let _enter = span.enter();

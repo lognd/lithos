@@ -40,6 +40,7 @@ use crate::output::ParsedFile;
 /// `impl ... by extern` foreign linkage, or an `import` edge. One
 /// `Obligation` is emitted per edge in pass 5 (`claims.rs`).
 #[derive(Debug, Clone, PartialEq, Eq)]
+// frob:doc docs/modules/regolith-lower.md#contracts
 pub struct ConformanceEdge {
     /// The binding kind: `impl`, `extern`, or `import`.
     pub kind: String,
@@ -64,6 +65,7 @@ pub struct ConformanceEdge {
 /// `claims.rs`); the derived case additionally tags its obligation
 /// `cause: derived(intent <name>)` for the lockfile.
 #[derive(Debug, Clone, PartialEq, Eq)]
+// frob:doc docs/modules/regolith-lower.md#contracts
 pub struct RealizationEdge {
     /// The enclosing system/computer node name (obligation subject).
     pub system: String,
@@ -80,6 +82,7 @@ pub struct RealizationEdge {
 /// The (partial) contract IR this pass can build from structured
 /// syntax, plus its diagnostics and resolutions.
 #[derive(Debug, Clone, Default)]
+// frob:doc docs/modules/regolith-lower.md#contracts
 pub struct ContractGraph {
     /// Interfaces named at the top level (bodies mostly opaque today).
     pub interfaces: Vec<Interface>,
@@ -117,6 +120,7 @@ pub struct ContractGraph {
 
 /// Build the contract IR available from `files`' structured syntax.
 #[must_use]
+// frob:doc docs/modules/regolith-lower.md#contracts
 pub fn build_contract_ir(files: &[ParsedFile], _snapshots: &EntitySnapshots) -> ContractGraph {
     let span = tracing::info_span!("lower.contracts");
     let _enter = span.enter();
@@ -963,6 +967,8 @@ fn select_choice_point(node: &SyntaxNode, subject: &str) -> Option<regolith_obli
 /// `extern` linkage (lower = the quoted ref); a `for <target>` marks an
 /// ordinary `impl` binding (lower = the target). Returns `None` if no
 /// interface name is present.
+// frob:doc docs/modules/regolith-lower.md#contracts
+// frob:waive TEST001 reason="internal pass-pipeline helper exercised transitively through the crate's lower()/lower_and_discharge() pipeline tests; no isolated unit test calls it directly"
 pub(crate) fn impl_edge(node: &SyntaxNode, subject: &str) -> Option<ConformanceEdge> {
     let toks = header_tokens(node);
     // First Ident after the `impl` keyword is the interface.
@@ -1051,6 +1057,7 @@ pub(crate) fn impl_edge(node: &SyntaxNode, subject: &str) -> Option<ConformanceE
 /// `from=` ref is (`flownet_lower::RealizedFlownetInputs::geometry`),
 /// keyed on the subject name rather than a second declared reference.
 #[derive(Debug, Clone, PartialEq, Eq)]
+// frob:doc docs/modules/regolith-lower.md#contracts
 pub(crate) struct PlanClause {
     /// The extern ref (the first quoted string in `extern(...)`), or
     /// empty when the clause supplied none (E0449).
@@ -1072,6 +1079,7 @@ pub(crate) struct PlanClause {
 /// The registered `fmt.gcode_*` dialect names (regolith/11 sec. formats
 /// row) a `plan:` clause may declare. ONE list, here, so the negative
 /// diagnostic and the obligation emitter agree on membership.
+// frob:doc docs/modules/regolith-lower.md#contracts
 pub(crate) const KNOWN_PLAN_DIALECTS: [&str; 2] = ["gcode_fanuc", "gcode_marlin"];
 
 /// Every non-trivia token inside `field`'s VALUE (descending into the
@@ -1142,6 +1150,8 @@ fn trailing_resolution(toks: &[(SyntaxKind, String)]) -> Option<String> {
 /// named `plan` or carries no `extern(...)` call at all (a `plan:` field
 /// with no `extern(` is not this WO's concern -- regolith/08 sec. 4 only
 /// defines the extern-linkage form for L6).
+// frob:doc docs/modules/regolith-lower.md#contracts
+// frob:waive TEST001 reason="internal pass-pipeline helper exercised transitively through the crate's lower()/lower_and_discharge() pipeline tests; no isolated unit test calls it directly"
 pub(crate) fn plan_clause(field: &Field) -> Option<PlanClause> {
     if field.name() != "plan" {
         return None;
@@ -1205,6 +1215,7 @@ fn literal_qty_from_text(text: &str) -> Option<Qty> {
 /// already assembled -- no second read path into compiler internals
 /// (AD-22).
 #[must_use]
+// frob:doc docs/modules/regolith-lower.md#contracts
 pub fn build_contract_graph_payload(graph: &ContractGraph) -> regolith_oblig::ContractGraphPayload {
     use regolith_oblig::{ContractEdge, ContractGraphPayload, ContractNode};
     use std::collections::BTreeSet;
@@ -1338,6 +1349,7 @@ mod tests {
     }
 
     #[test]
+    // frob:tests crates/regolith-lower/src/contracts.rs::build_contract_ir kind="unit"
     fn import_and_impl_edges_are_collected() {
         let src =
             "import std.mech.cnc (saw_stock)\npart p:\n    impl Seat for self:\n        x: 1\n";
@@ -1630,6 +1642,7 @@ mod tests {
     }
 
     #[test]
+    // frob:tests crates/regolith-lower/src/contracts.rs::build_contract_graph_payload kind="unit"
     fn contract_graph_payload_names_matings_by_readable_sides() {
         // WO-61 deliverable 2/4: the payload names sides by their
         // readable connect-instance strings (never a hash), and the

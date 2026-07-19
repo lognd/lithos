@@ -29,10 +29,12 @@ use regolith_util::IndexMap;
 /// The v1 lattice cell families (charter 34 sec. 2 / D200). An
 /// unsupported cell family is a NAMED skip downstream, but an unknown
 /// cell NAME is malformed here -- the discrete domain is closed.
+// frob:doc docs/modules/regolith-lower.md#removal
 pub const LATTICE_CELLS: &[&str] = &["gyroid", "honeycomb", "cubic"];
 
 /// What value class a family slot accepts.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+// frob:doc docs/modules/regolith-lower.md#removal
 pub enum SlotType {
     /// A positive integer count (`count`, `nx`, `ny`).
     Int,
@@ -46,6 +48,7 @@ pub enum SlotType {
 
 /// One slot of a family signature.
 #[derive(Debug, Clone, Copy)]
+// frob:doc docs/modules/regolith-lower.md#removal
 pub struct SlotSpec {
     /// The slot name as spelled in source (`count`, `t`).
     pub name: &'static str,
@@ -62,6 +65,7 @@ pub struct SlotSpec {
 /// One material-removal family: constructor verb, emitted kind word,
 /// human signature (the E0451 text), and slots.
 #[derive(Debug, Clone, Copy)]
+// frob:doc docs/modules/regolith-lower.md#removal
 pub struct FamilySpec {
     /// The constructor verb (`Ribs`).
     pub ctor: &'static str,
@@ -74,6 +78,7 @@ pub struct FamilySpec {
 }
 
 /// The four family signatures (D200 verbatim; charter 34 sec. 2).
+// frob:doc docs/modules/regolith-lower.md#removal
 pub const FAMILIES: &[FamilySpec] = &[
     FamilySpec {
         ctor: "Ribs",
@@ -209,12 +214,14 @@ pub const FAMILIES: &[FamilySpec] = &[
 
 /// The family a constructor verb names, if any.
 #[must_use]
+// frob:doc docs/modules/regolith-lower.md#removal
 pub fn family_for_constructor(ctor: &str) -> Option<&'static FamilySpec> {
     FAMILIES.iter().find(|f| f.ctor == ctor)
 }
 
 /// One parsed slot value, before validation.
 #[derive(Debug, Clone, PartialEq, Eq)]
+// frob:doc docs/modules/regolith-lower.md#removal
 pub enum SlotValue {
     /// `k=v` -- a spelled literal.
     Literal(String),
@@ -231,6 +238,8 @@ impl SlotValue {
     /// optimizer decides, regolith/03 sec. 2 -- exactly the Cause class
     /// `feature_program::resolved_param` already assigns `[..]` texts).
     #[must_use]
+    // frob:doc docs/modules/regolith-lower.md#removal
+    // frob:waive TEST001 reason="internal pass-pipeline helper exercised transitively through the crate's lower()/lower_and_discharge() pipeline tests; no isolated unit test calls it directly"
     pub fn to_param(&self) -> ResolvedFeatureParam {
         match self {
             SlotValue::Literal(text) => ResolvedFeatureParam {
@@ -258,6 +267,7 @@ impl SlotValue {
 /// slot; the caller renders them with the family signature into ONE
 /// `E0451`). An `Err` means the op must be omitted -- partial
 /// projection of a malformed family op is never done.
+// frob:doc docs/modules/regolith-lower.md#removal
 pub fn validate_family_params(
     family: &FamilySpec,
     args_text: &str,
@@ -319,6 +329,7 @@ pub fn validate_family_params(
 /// validate (the E0451 is `lower.programs`' job; entities stay
 /// best-effort like every other projector input).
 #[must_use]
+// frob:doc docs/modules/regolith-lower.md#removal
 pub fn family_measures(family: &FamilySpec, args_text: &str) -> IndexMap<String, String> {
     match validate_family_params(family, args_text) {
         Ok(params) => params.into_iter().map(|(k, v)| (k, v.text)).collect(),
@@ -554,6 +565,7 @@ mod tests {
     }
 
     #[test]
+    // frob:tests crates/regolith-lower/src/removal.rs::validate_family_params kind="unit"
     fn bounded_and_literal_slots_parse_and_validate() {
         let params = validate_family_params(
             ribs(),
@@ -629,6 +641,7 @@ mod tests {
     }
 
     #[test]
+    // frob:tests crates/regolith-lower/src/removal.rs::family_for_constructor kind="unit"
     fn lattice_density_and_cell_domains_are_closed() {
         let lattice = family_for_constructor("Lattice").unwrap();
         let errs =
@@ -684,6 +697,7 @@ mod tests {
     }
 
     #[test]
+    // frob:tests crates/regolith-lower/src/removal.rs::family_measures kind="unit"
     fn family_measures_mirror_the_param_texts() {
         let m = super::family_measures(
             ribs(),

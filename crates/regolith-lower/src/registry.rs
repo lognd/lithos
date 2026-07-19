@@ -31,9 +31,11 @@ use crate::realized_input::RealizedInputs;
 /// The realized-input `kind` string carrying registry records (D198).
 /// The Python serializer and this reader both cite this constant --
 /// nothing else spells it.
+// frob:doc docs/modules/regolith-lower.md#registry
 pub const REGISTRY_RECORDS_KIND: &str = "registry.records";
 
 /// One record's scalar fields (field name -> value text).
+// frob:doc docs/modules/regolith-lower.md#registry
 pub type RecordFields = IndexMap<String, String>;
 
 /// The unit-suffix spellings the stdlib record convention embeds in
@@ -59,6 +61,7 @@ const UNIT_SUFFIXES: &[(&str, &str)] = &[
 /// Every registry record supplied to this build, keyed by record key.
 /// Empty when no `registry.records` payload was supplied -- dependent
 /// rule terms then defer honestly (D-E), naming the missing fact.
+// frob:doc docs/modules/regolith-lower.md#registry
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct RegistryRecords {
     records: IndexMap<String, RecordFields>,
@@ -72,6 +75,7 @@ struct PayloadEnvelope {
 
 impl RegistryRecords {
     /// The no-records default (every lookup misses; rules defer).
+    // frob:doc docs/modules/regolith-lower.md#registry
     #[must_use]
     pub fn empty() -> RegistryRecords {
         RegistryRecords::default()
@@ -84,6 +88,7 @@ impl RegistryRecords {
     /// records it would have carried simply stay missing and the
     /// dependent rules defer (D-E) -- the same posture as an absent
     /// payload.
+    // frob:doc docs/modules/regolith-lower.md#registry
     #[must_use]
     pub fn from_realized_inputs(inputs: &RealizedInputs) -> RegistryRecords {
         let mut records: IndexMap<String, RecordFields> = IndexMap::new();
@@ -116,6 +121,7 @@ impl RegistryRecords {
     }
 
     /// Build directly from (key, fields) pairs (test fixtures).
+    // frob:doc docs/modules/regolith-lower.md#registry
     #[must_use]
     pub fn from_pairs(pairs: &[(&str, &[(&str, &str)])]) -> RegistryRecords {
         let mut records = IndexMap::new();
@@ -130,12 +136,14 @@ impl RegistryRecords {
     }
 
     /// True when no records were supplied.
+    // frob:doc docs/modules/regolith-lower.md#registry
     #[must_use]
     pub fn is_empty(&self) -> bool {
         self.records.is_empty()
     }
 
     /// A record's raw field map, by record key.
+    // frob:doc docs/modules/regolith-lower.md#registry
     #[must_use]
     pub fn get(&self, key: &str) -> Option<&RecordFields> {
         self.records.get(key)
@@ -148,6 +156,7 @@ impl RegistryRecords {
     /// so the value re-parses through the same quantity grammar rule
     /// predicates use. `None` when the record or field is absent --
     /// the caller's honest-deferral signal.
+    // frob:doc docs/modules/regolith-lower.md#registry
     #[must_use]
     pub fn field(&self, key: &str, field: &str) -> Option<String> {
         let record = self.records.get(key)?;
@@ -218,6 +227,7 @@ mod tests {
         assert_eq!(fields.get("cl_pf").map(String::as_str), Some("18"));
     }
 
+    // frob:tests crates/regolith-lower/src/registry.rs::RegistryRecords.from_pairs kind="unit"
     #[test]
     fn unit_suffix_field_lookup_composes_the_literal() {
         let reg = RegistryRecords::from_pairs(&[(

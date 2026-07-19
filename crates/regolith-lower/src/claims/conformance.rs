@@ -13,6 +13,8 @@ use super::{
 /// structurally available here -- `intents:` bodies are opaque islands,
 /// WO-05 -- so no numeric copy happens in the core; the harness/lockfile
 /// side threads the demand values, tracked in `docs/audit/TRIAGE.md`).
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn realization_obligation(
     edge: &RealizationEdge,
     snapshots: &EntitySnapshots,
@@ -76,6 +78,7 @@ pub(crate) fn realization_obligation(
 /// Build the INV-13 conformance obligation for one impl/extern/import
 /// [`ConformanceEdge`]: a `<upper> conforms <lower>` claim keyed on the
 /// enclosing subject's snapshot (empty for a file-level `import`).
+// frob:doc docs/modules/regolith-lower.md#claims
 pub(crate) fn conformance_obligation(
     edge: &ConformanceEdge,
     snapshots: &EntitySnapshots,
@@ -175,6 +178,7 @@ pub(crate) fn conformance_obligation(
 /// The refinement window an `impl` conformance edge carries (D195):
 /// both sides resolved (dischargeable), or the spec side only (the
 /// teaching-deferral shape -- the impl owes a bound).
+// frob:doc docs/modules/regolith-lower.md#claims
 pub(crate) enum ConformanceWindow {
     /// Both the promised and the realized bound resolved, same sense --
     /// the harness conformance model can discharge this (WO-26 D104).
@@ -233,6 +237,8 @@ pub(crate) enum ConformanceWindow {
 /// refinement window, and the obligation still defers honestly with the
 /// blanket reason rather than the compiler inventing a verdict
 /// (INV-13/26).
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn conformance_windows(
     edge: &ConformanceEdge,
     files: &[ParsedFile],
@@ -338,6 +344,7 @@ pub(crate) fn conformance_windows(
 /// A promise's spec-side bound expression: a literal magnitude, or a
 /// reference to a generic parameter the impl header's pin closes (D195,
 /// `power: <= watts` against `impl HeaterDrive<watts=50W>`).
+// frob:doc docs/modules/regolith-lower.md#claims
 pub(crate) enum PromisedBound {
     Literal(f64),
     Param(String),
@@ -347,6 +354,8 @@ pub(crate) enum PromisedBound {
 /// -3.5); `None` when `text` does not open with a number. The unit
 /// suffix is NOT interpreted here -- callers that need SI-base values
 /// run [`resolve_unit_suffix`] first.
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn leading_magnitude(text: &str) -> Option<f64> {
     let number: String = text
         .trim_start()
@@ -360,6 +369,8 @@ pub(crate) fn leading_magnitude(text: &str) -> Option<f64> {
 /// off a field's value text into `(sense, magnitude)`; `sense` is
 /// `"upper"` for `<`/`<=` and `"lower"` for `>`/`>=`. `None` when the
 /// text is not a leading comparator over a bare number.
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn bound_from_value_text(text: &str) -> Option<(String, f64)> {
     if let Some((sense, PromisedBound::Literal(magnitude))) = promised_bound_from_value_text(text) {
         return Some((sense, magnitude));
@@ -374,6 +385,8 @@ pub(crate) fn bound_from_value_text(text: &str) -> Option<(String, f64)> {
 /// (D195). `None` when the text is neither shape -- a compound
 /// expression (`<= watts * 1.1`) is honestly not extracted rather than
 /// half-parsed.
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn promised_bound_from_value_text(text: &str) -> Option<(String, PromisedBound)> {
     let trimmed = text.trim();
     let (sense, rest) = if let Some(rest) = trimmed.strip_prefix("<=") {
@@ -407,6 +420,8 @@ pub(crate) fn promised_bound_from_value_text(text: &str) -> Option<(String, Prom
 /// body or impl body), keyed by its field NAME (WO-26 D104 -- name is
 /// the promised-bound identity; source order, first bound per name
 /// wins if a name somehow repeats).
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn collect_bound_fields(node: &SyntaxNode) -> Vec<(String, (String, f64))> {
     let mut out = Vec::new();
     for descendant in node.descendants() {
@@ -424,6 +439,8 @@ pub(crate) fn collect_bound_fields(node: &SyntaxNode) -> Vec<(String, (String, f
 /// The upper contract's promised bounds: every comparator-bound field
 /// (literal or parametric, D195) of the `interface <name>` declaration,
 /// by name, in source order.
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn interface_promised_bounds(
     name: &str,
     files: &[ParsedFile],
@@ -462,6 +479,8 @@ pub(crate) fn interface_promised_bounds(
 /// edges (two `impl HeaterDrive<...> for self` instantiations in one
 /// board) all appear; consumers take the first node that carries what
 /// they need, the same first-wins convention D104 set.
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn matching_impl_nodes(edge: &ConformanceEdge, files: &[ParsedFile]) -> Vec<SyntaxNode> {
     let mut out = Vec::new();
     for pf in files {
@@ -490,6 +509,8 @@ pub(crate) fn matching_impl_nodes(edge: &ConformanceEdge, files: &[ParsedFile]) 
 /// The lower realization's declared bounds: every comparator-bound
 /// field of the first matching impl node that declares any, keyed by
 /// name (the D104 first-wins convention over [`matching_impl_nodes`]).
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn impl_bound_fields(impl_nodes: &[SyntaxNode]) -> BTreeMap<String, (String, f64)> {
     impl_nodes
         .iter()
@@ -507,6 +528,8 @@ pub(crate) fn impl_bound_fields(impl_nodes: &[SyntaxNode]) -> BTreeMap<String, (
 /// (the module's convention): the pin list is read off the node's first
 /// source line, between the first `<` and its matching `>` at bracket
 /// depth 0, split at top-level commas.
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn impl_generic_pins(impl_nodes: &[SyntaxNode]) -> BTreeMap<String, String> {
     for node in impl_nodes {
         let text = node.text().to_string();

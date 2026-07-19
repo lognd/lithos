@@ -108,6 +108,7 @@ enum CapTier {
 /// `board` declaration; anything else yields nothing (the pass is
 /// board-scoped by the WO). `next_id` advances past every allocated id
 /// (the `feature_entities` convention, AD-6 determinism).
+// frob:doc docs/modules/regolith-lower.md#board-entities
 #[must_use]
 pub fn board_entities(
     decl: &Decl,
@@ -165,6 +166,7 @@ pub fn board_entities(
 /// nothing; the rule engine's realized-tier gate then defers the
 /// domain by name (INV-29: an un-realized build is "not yet checked",
 /// never a vacuous pass).
+// frob:doc docs/modules/regolith-lower.md#board-entities
 #[must_use]
 pub fn realized_trace_entities(
     decl: &Decl,
@@ -1044,6 +1046,7 @@ mod tests {
         );
     }
 
+    // frob:tests crates/regolith-lower/src/board_entities.rs::board_entities kind="unit"
     #[test]
     fn non_board_decls_and_empty_registry_populate_nothing_extra() {
         let path = Utf8PathBuf::from("t.cupr");
@@ -1136,6 +1139,7 @@ mod tests {
         (pf, decl)
     }
 
+    // frob:tests crates/regolith-lower/src/board_entities.rs::realized_trace_entities kind="unit"
     #[test]
     fn realized_layout_populates_traces_with_mm_quantities() {
         let (_pf, decl) = board_decl(BOARD);

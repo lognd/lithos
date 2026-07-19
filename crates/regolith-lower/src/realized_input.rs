@@ -15,6 +15,7 @@ use std::collections::BTreeMap;
 /// (kind, subject) -- the content digest is the [`RealizedInputs`] map
 /// key (AD-18), so `bytes` alone would be enough for extraction but not
 /// for inspectability.
+// frob:doc docs/modules/regolith-lower.md#realized-input
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RealizedInput {
     /// The D96 payload kind (e.g. `"geometry.realized"`, `"layout.realized"`).
@@ -32,6 +33,7 @@ pub struct RealizedInput {
 /// digest (AD-18). Empty for a build with no realized-domain inputs --
 /// the D128 placeholder path: dependent obligations stay honestly
 /// indeterminate, naming the missing IR.
+// frob:doc docs/modules/regolith-lower.md#realized-input
 pub type RealizedInputs = BTreeMap<String, RealizedInput>;
 
 #[cfg(test)]

@@ -51,6 +51,7 @@ use crate::output::ParsedFile;
 /// One rule lifted off the typed `RuleDecl` CST into plain data the
 /// engine and the CLI runners evaluate without re-walking the tree.
 #[derive(Debug, Clone)]
+// frob:doc docs/modules/regolith-lower.md#rule-engine
 pub struct RuleDef {
     /// The owning pack's (possibly dotted) name.
     pub pack: String,
@@ -90,6 +91,7 @@ impl RuleDef {
     /// The citable qualified name (`pack.rule`) waives, causes, and
     /// E06xx provenance all use.
     #[must_use]
+    // frob:doc docs/modules/regolith-lower.md#rule-engine
     pub fn qualified(&self) -> String {
         format!("{}.{}", self.pack, self.name)
     }
@@ -98,6 +100,7 @@ impl RuleDef {
     /// used as the lowered obligation's claim name so the waive ladder
     /// matches rule obligations with zero new machinery (D-D).
     #[must_use]
+    // frob:doc docs/modules/regolith-lower.md#rule-engine
     pub fn claim_name(&self) -> String {
         format!("{}({})", self.family, self.qualified())
     }
@@ -105,6 +108,7 @@ impl RuleDef {
 
 /// One `process` pack: its capability table and rules.
 #[derive(Debug, Clone)]
+// frob:doc docs/modules/regolith-lower.md#rule-engine
 pub struct PackDef {
     /// The pack's declared name (dotted names supported).
     pub name: String,
@@ -120,6 +124,7 @@ pub struct PackDef {
 /// order (AD-6). Collisions of whole PACK names keep the first decl
 /// (rule-level E0602 collisions are `rules.rs`'s check).
 #[derive(Debug, Clone, Default)]
+// frob:doc docs/modules/regolith-lower.md#rule-engine
 pub struct PackIndex {
     packs: IndexMap<String, PackDef>,
 }
@@ -128,6 +133,7 @@ impl PackIndex {
     /// Build the index from every parsed file's `process` decls.
     /// Poisoned decls are skipped (INV-20 gating, as everywhere).
     #[must_use]
+    // frob:doc docs/modules/regolith-lower.md#rule-engine
     pub fn build(files: &[ParsedFile]) -> PackIndex {
         let mut packs: IndexMap<String, PackDef> = IndexMap::new();
         for pf in files {
@@ -165,17 +171,20 @@ impl PackIndex {
 
     /// Look up a pack by name.
     #[must_use]
+    // frob:doc docs/modules/regolith-lower.md#rule-engine
     pub fn get(&self, name: &str) -> Option<&PackDef> {
         self.packs.get(name)
     }
 
     /// Every indexed pack, in index (file-then-source) order.
+    // frob:doc docs/modules/regolith-lower.md#rule-engine
     pub fn iter(&self) -> impl Iterator<Item = &PackDef> {
         self.packs.values()
     }
 
     /// True when no packs were declared.
     #[must_use]
+    // frob:doc docs/modules/regolith-lower.md#rule-engine
     pub fn is_empty(&self) -> bool {
         self.packs.is_empty()
     }
@@ -186,6 +195,7 @@ impl PackIndex {
     /// dotted-identifier ARGUMENT -- `process=pcb_fab(jlc_2l)` attaches
     /// `jlc_2l`; `process=sheet_metal` attaches `sheet_metal`).
     #[must_use]
+    // frob:doc docs/modules/regolith-lower.md#rule-engine
     pub fn attached_to<'a>(&'a self, decl: &Decl) -> Vec<&'a PackDef> {
         let mut seen: Vec<String> = Vec::new();
         let mut out = Vec::new();
@@ -498,6 +508,7 @@ fn process_ref_candidates(decl: &Decl) -> Vec<String> {
 /// declaration (see the module doc's binding order: decl fields first,
 /// then stage process kwargs).
 #[derive(Debug, Clone, Default)]
+// frob:doc docs/modules/regolith-lower.md#rule-engine
 pub struct BindingEnv {
     bindings: IndexMap<String, String>,
 }
@@ -507,6 +518,7 @@ impl BindingEnv {
     /// tier -- that is per-pack, applied at lookup time by the caller
     /// passing the owning pack's table to [`EvalCtx`]).
     #[must_use]
+    // frob:doc docs/modules/regolith-lower.md#rule-engine
     pub fn for_decl(decl: &Decl) -> BindingEnv {
         let mut bindings = IndexMap::new();
         // Tier 1: the decl's own direct fields.
@@ -551,6 +563,7 @@ impl BindingEnv {
     /// Build an environment directly from `name=value` pairs (the
     /// `expect:` fixture runner's synthetic facts).
     #[must_use]
+    // frob:doc docs/modules/regolith-lower.md#rule-engine
     pub fn from_pairs(pairs: &[(String, String)]) -> BindingEnv {
         let mut bindings = IndexMap::new();
         for (k, v) in pairs {
@@ -561,6 +574,7 @@ impl BindingEnv {
 
     /// Look up a bare identifier's bound value text.
     #[must_use]
+    // frob:doc docs/modules/regolith-lower.md#rule-engine
     pub fn get(&self, name: &str) -> Option<&str> {
         self.bindings.get(name).map(String::as_str)
     }
@@ -570,6 +584,7 @@ impl BindingEnv {
 /// reasons (D-E). These are DATA the caller lowers into a deferred
 /// obligation naming the term, never a panic.
 #[derive(Debug, Clone, PartialEq, Eq)]
+// frob:doc docs/modules/regolith-lower.md#rule-engine
 pub enum EvalError {
     /// A term is not bound by any layer (entity measure absent, bare
     /// ident unbound, capability key missing) -- a realized/unavailable
@@ -588,6 +603,7 @@ pub enum EvalError {
 impl EvalError {
     /// The missing/blocking fact this error names, for `given.refs`.
     #[must_use]
+    // frob:doc docs/modules/regolith-lower.md#rule-engine
     pub fn fact(&self) -> String {
         match self {
             EvalError::Unbound(t)
@@ -600,6 +616,7 @@ impl EvalError {
 
 /// A demand's evaluated verdict.
 #[derive(Debug, Clone, PartialEq)]
+// frob:doc docs/modules/regolith-lower.md#rule-engine
 pub struct Verdict {
     /// Whether the demand holds.
     pub holds: bool,
@@ -614,6 +631,7 @@ pub struct Verdict {
 /// The evaluation context: the owning pack's capability table, the
 /// consuming decl's binding environment, and (when quantified) the
 /// bound variable + the matched entity's measures.
+// frob:doc docs/modules/regolith-lower.md#rule-engine
 pub struct EvalCtx<'a> {
     /// The owning pack's `capability:` table.
     pub capability: &'a IndexMap<String, String>,
@@ -640,6 +658,7 @@ pub struct EvalCtx<'a> {
 /// # Errors
 /// [`EvalError`] when a term is unbound/unparseable or the expression
 /// uses an unmodeled shape -- the caller's honest-deferral signal.
+// frob:doc docs/modules/regolith-lower.md#rule-engine
 pub fn eval_demand(text: &str, ctx: &EvalCtx<'_>) -> Result<Verdict, EvalError> {
     let trimmed = text.trim();
     match trimmed {
@@ -702,6 +721,7 @@ pub fn eval_demand(text: &str, ctx: &EvalCtx<'_>) -> Result<Verdict, EvalError> 
 /// # Errors
 /// [`EvalError`] when the demand is not in the solvable shape or its
 /// bound side does not evaluate.
+// frob:doc docs/modules/regolith-lower.md#rule-engine
 pub fn solve_resolves(
     demand: &str,
     target_var: &str,
@@ -730,6 +750,7 @@ pub fn solve_resolves(
 /// dimensionless symbol factors (`1.mm` -> `mm`) so a resolved measure
 /// re-parses through the same literal grammar that produced it.
 #[must_use]
+// frob:doc docs/modules/regolith-lower.md#rule-engine
 pub fn render_qty(q: &Qty) -> String {
     let symbol = normalize_symbol(&q.unit().symbol);
     let mut s = format!("{:.9}", q.magnitude());
@@ -754,6 +775,8 @@ pub fn render_qty(q: &Qty) -> String {
 /// lockfile and rewritten measures store. Falls back to the input when
 /// the render is not re-lexable (never invents a value).
 #[must_use]
+// frob:doc docs/modules/regolith-lower.md#rule-engine
+// frob:waive TEST001 reason="internal pass-pipeline helper exercised transitively through the crate's lower()/lower_and_discharge() pipeline tests; no isolated unit test calls it directly"
 pub fn normalize_qty(q: &Qty) -> Qty {
     let rendered = render_qty(q);
     match lex_qty_literal(&rendered) {
@@ -779,6 +802,8 @@ fn normalize_symbol(symbol: &str) -> String {
 
 /// Split a comparison expression at its top-level comparator.
 #[must_use]
+// frob:doc docs/modules/regolith-lower.md#rule-engine
+// frob:waive TEST001 reason="internal pass-pipeline helper exercised transitively through the crate's lower()/lower_and_discharge() pipeline tests; no isolated unit test calls it directly"
 pub fn split_comparison(text: &str) -> Option<(&str, &str, &str)> {
     let mut depth = 0usize;
     let bytes = text.as_bytes();
@@ -1089,6 +1114,7 @@ fn lex_qty_literal(text: &str) -> Option<(Qty, usize)> {
 /// seam is `claims::push_rule_obligations`, which consumes a slice of
 /// these; the two halves are discoverable from either file.
 #[derive(Debug, Clone)]
+// frob:doc docs/modules/regolith-lower.md#rule-engine
 pub struct RuleEvaluation {
     /// The evaluated rule (cloned out of the index so downstream passes
     /// need no lifetime tie to the CST).
@@ -1113,6 +1139,7 @@ impl RuleEvaluation {
     /// diagnostic (every match passed, or no matches existed for a
     /// modeled domain -- a part with no holes satisfies hole rules).
     #[must_use]
+    // frob:doc docs/modules/regolith-lower.md#rule-engine
     pub fn is_clean_pass(&self) -> bool {
         self.violations.is_empty() && self.deferrals.is_empty()
     }
@@ -1123,6 +1150,8 @@ impl RuleEvaluation {
 /// `known_measure_keys` vocabulary) evaluate per entity; unmodeled
 /// domains, query tails, and unevaluable terms defer honestly.
 #[must_use]
+// frob:doc docs/modules/regolith-lower.md#rule-engine
+// frob:waive TEST001 reason="internal pass-pipeline helper exercised transitively through the crate's lower()/lower_and_discharge() pipeline tests; no isolated unit test calls it directly"
 pub fn evaluate_rules_for_decl(
     decl: &Decl,
     decl_name: &str,
@@ -1144,6 +1173,8 @@ pub fn evaluate_rules_for_decl(
 /// (WO-87/D198): record-field terms in rule predicates resolve through
 /// `registry` instead of deferring.
 #[must_use]
+// frob:doc docs/modules/regolith-lower.md#rule-engine
+// frob:waive TEST001 reason="internal pass-pipeline helper exercised transitively through the crate's lower()/lower_and_discharge() pipeline tests; no isolated unit test calls it directly"
 pub fn evaluate_rules_for_decl_with_registry(
     decl: &Decl,
     decl_name: &str,
@@ -1169,6 +1200,8 @@ pub fn evaluate_rules_for_decl_with_registry(
 /// entities, regardless of attachment (the `rules try` runner forces
 /// exactly this; `evaluate_rules_for_decl` calls it per attached pack).
 #[must_use]
+// frob:doc docs/modules/regolith-lower.md#rule-engine
+// frob:waive TEST001 reason="internal pass-pipeline helper exercised transitively through the crate's lower()/lower_and_discharge() pipeline tests; no isolated unit test calls it directly"
 pub fn evaluate_pack_for_decl(
     pack: &PackDef,
     decl: &Decl,
@@ -1189,6 +1222,8 @@ pub fn evaluate_pack_for_decl(
 /// [`evaluate_pack_for_decl`] plus the registry-records payload (the
 /// WO-87/D198 dereference seam threaded into every [`EvalCtx`]).
 #[must_use]
+// frob:doc docs/modules/regolith-lower.md#rule-engine
+// frob:waive TEST001 reason="internal pass-pipeline helper exercised transitively through the crate's lower()/lower_and_discharge() pipeline tests; no isolated unit test calls it directly"
 pub fn evaluate_pack_for_decl_with_registry(
     pack: &PackDef,
     decl: &Decl,
@@ -1287,6 +1322,7 @@ pub fn evaluate_pack_for_decl_with_registry(
 
 /// One `expect:` fixture case's run outcome (the `rules test` unit).
 #[derive(Debug, Clone, PartialEq, Eq)]
+// frob:doc docs/modules/regolith-lower.md#rule-engine
 pub enum CaseOutcome {
     /// The fixture behaved as its verdict word promised.
     Ok,
@@ -1307,6 +1343,7 @@ pub enum CaseOutcome {
 /// One run `expect:` case: which rule, which verdict was promised,
 /// what happened.
 #[derive(Debug, Clone)]
+// frob:doc docs/modules/regolith-lower.md#rule-engine
 pub struct ExpectCaseRun {
     /// The owning rule's qualified name.
     pub rule: String,
@@ -1322,6 +1359,7 @@ pub struct ExpectCaseRun {
 /// missing-case lint warnings (a rule without both a pass and a fail
 /// case is untested law, D-H).
 #[derive(Debug, Clone, Default)]
+// frob:doc docs/modules/regolith-lower.md#rule-engine
 pub struct ExpectReport {
     /// Every case run, rule/source order.
     pub cases: Vec<ExpectCaseRun>,
@@ -1333,6 +1371,7 @@ impl ExpectReport {
     /// True when every case behaved (lints do not fail the run; they
     /// are warnings by design).
     #[must_use]
+    // frob:doc docs/modules/regolith-lower.md#rule-engine
     pub fn ok(&self) -> bool {
         self.cases.iter().all(|c| c.outcome == CaseOutcome::Ok)
     }
@@ -1345,6 +1384,7 @@ impl ExpectReport {
 /// `bend(radius=2.4mm, sheet=1.5mm)` supplies the design fact the
 /// demand names); bare flag words (`interior`) are logged and ignored.
 #[must_use]
+// frob:doc docs/modules/regolith-lower.md#rule-engine
 pub fn run_expect_cases(pack: &PackDef) -> ExpectReport {
     let span = tracing::info_span!("rules.test", pack = %pack.name);
     let _enter = span.enter();
@@ -1450,6 +1490,8 @@ mod tests {
     const PACK: &str = "process sheet_metal:\n    capability:\n        min_bend_ratio: 1.6\n    dfm:\n        rule min_bend_radius:\n            forall b in bends\n            demand: b.radius >= capability.min_bend_ratio * sheet\n            resolves: b.radius from free\n            why: \"press pack minimum inside radius\"\n";
 
     #[test]
+    // frob:tests crates/regolith-lower/src/rule_engine.rs::RuleDef.qualified kind="unit"
+    // frob:tests crates/regolith-lower/src/rule_engine.rs::RuleDef.claim_name kind="unit"
     fn pack_index_lifts_capability_and_rules() {
         let files = parsed(PACK);
         let index = PackIndex::build(&files);
@@ -1464,6 +1506,8 @@ mod tests {
     }
 
     #[test]
+    // frob:tests crates/regolith-lower/src/rule_engine.rs::BindingEnv.from_pairs kind="unit"
+    // frob:tests crates/regolith-lower/src/rule_engine.rs::eval_demand kind="unit"
     fn demand_evaluates_with_units_and_capability() {
         let files = parsed(PACK);
         let index = PackIndex::build(&files);
@@ -1548,6 +1592,8 @@ mod tests {
     }
 
     #[test]
+    // frob:tests crates/regolith-lower/src/rule_engine.rs::solve_resolves kind="unit"
+    // frob:tests crates/regolith-lower/src/rule_engine.rs::render_qty kind="unit"
     fn solve_resolves_yields_the_bound() {
         let files = parsed(PACK);
         let index = PackIndex::build(&files);
@@ -1571,6 +1617,7 @@ mod tests {
     }
 
     #[test]
+    // frob:tests crates/regolith-lower/src/rule_engine.rs::PackIndex.attached_to kind="unit"
     fn attachment_resolves_head_and_bare_args() {
         let src = format!(
             "{PACK}part p:\n    stage cut: process=laser_cut(sheet=1.5mm)\n    stage formed: process=press_brake(sheet_metal), from=cut\n"
@@ -1589,6 +1636,7 @@ mod tests {
     }
 
     #[test]
+    // frob:tests crates/regolith-lower/src/rule_engine.rs::BindingEnv.for_decl kind="unit"
     fn binding_env_reads_decl_fields_and_stage_kwargs() {
         let src =
             "part p:\n    material: AISI_304\n    stage cut: process=laser_cut(sheet=1.5mm)\n";
@@ -1723,6 +1771,8 @@ mod expect_tests {
     const PACK: &str = "process sheet_metal:\n    capability:\n        min_bend_ratio: 1.6\n    dfm:\n        rule min_bend_radius:\n            forall b in bends\n            demand: b.radius >= capability.min_bend_ratio * sheet\n            why: \"press pack minimum inside radius\"\n            expect:\n                pass: bend(radius=2.4mm, sheet=1.5mm)\n                fail: bend(radius=1.0mm, sheet=1.5mm)\n";
 
     #[test]
+    // frob:tests crates/regolith-lower/src/rule_engine.rs::ExpectReport.ok kind="unit"
+    // frob:tests crates/regolith-lower/src/rule_engine.rs::run_expect_cases kind="unit"
     fn expect_cases_run_green_when_verdicts_hold() {
         let report = run_expect_cases(&pack_of(PACK));
         assert!(report.ok(), "{report:?}");
@@ -1778,6 +1828,7 @@ mod corpus_shape_tests {
     /// edge_distance; radius=free resolves at 2.4mm) cannot drift from
     /// the files the golden suite checks.
     #[test]
+    // frob:tests crates/regolith-lower/src/rule_engine.rs::PackIndex.iter kind="unit"
     fn sheet_bracket_pair_resolves_and_defers_as_documented() {
         let root = Utf8PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
         let mut files = Vec::new();

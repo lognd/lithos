@@ -12,6 +12,7 @@ use super::{
 /// ONE list, source order fixed, so "exactly five obligations, keyed
 /// distinctly" (this WO's acceptance criterion) is provable by
 /// construction rather than by convention.
+// frob:doc docs/modules/regolith-lower.md#claims
 pub(crate) const CAM_CLAIM_KINDS: [&str; 5] = [
     "cam.parse",
     "cam.envelope",
@@ -28,6 +29,7 @@ pub(crate) const CAM_CLAIM_KINDS: [&str; 5] = [
 /// one, exactly as before this WO. cuprite/09 sec. 3 names these
 /// transparent/embedded formats; the string tags match the `std.hdl`
 /// pack's `FixtureSpec.regime` tags verbatim (single-sourced there).
+// frob:doc docs/modules/regolith-lower.md#claims
 pub(crate) const KNOWN_HDL_REGIMES: &[&str] =
     &["verilog2001", "verilog2005", "sv2012", "sv2017", "vhdl2008"];
 
@@ -38,6 +40,7 @@ pub(crate) const KNOWN_HDL_REGIMES: &[&str] =
 /// testbench + oracle the compiler cannot author, so they stay pack-
 /// internal (WO-82's own scope shape). ONE kind, so "one added
 /// obligation per HDL extern edge" is provable by construction.
+// frob:doc docs/modules/regolith-lower.md#claims
 pub(crate) const HDL_BUILD_KIND: &str = "hdl.build";
 
 /// WO-69 (regolith/08 sec. 4's L6 row, WO-67's close-out ledger
@@ -55,6 +58,8 @@ pub(crate) const HDL_BUILD_KIND: &str = "hdl.build";
 /// silence, never a guess (removing the `plan:` field removes exactly
 /// these five, satisfying the WO's other acceptance line by the same
 /// construction).
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn push_plan_obligations(
     out: &mut Vec<Obligation>,
     diagnostics: &mut Vec<Diagnostic>,
@@ -135,6 +140,8 @@ pub(crate) fn push_plan_obligations(
 /// `ModelSignature.claim_kind` registers (WO-67's landed model ids),
 /// keyed distinctly per kind (INV-1) by that name alone -- no two of
 /// the five obligations from the same clause ever collide.
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn plan_obligation(
     kind: &str,
     clause: &PlanClause,
@@ -216,6 +223,7 @@ pub(crate) fn plan_obligation(
 /// orchestrator-side exactly like a `plan:` ref. Mirrors
 /// [`plan_obligation`]'s shape (NO DUPLICATION of the given-threading
 /// idiom -- same `key: value` loads convention `_load_fields` parses).
+// frob:doc docs/modules/regolith-lower.md#claims
 pub(crate) fn hdl_build_obligation(
     edge: &ConformanceEdge,
     snapshots: &EntitySnapshots,
@@ -279,6 +287,8 @@ pub(crate) fn hdl_build_obligation(
 /// key their obligations on payload digests; a top-level cost claim's
 /// priced content is resolved orchestrator-side, where the staged
 /// inputs doc's digest folds it into the evidence hash).
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn push_top_level_cost_obligations(
     out: &mut Vec<Obligation>,
     diagnostics: &mut Vec<Diagnostic>,

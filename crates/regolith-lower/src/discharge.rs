@@ -26,6 +26,7 @@ use regolith_oblig::{
 /// The evidence the static tiers produced plus any solve diagnostics
 /// (singular networks are diagnostics -- values, AD-7 -- surfaced
 /// through the pipeline, never panics).
+// frob:doc docs/modules/regolith-lower.md#discharge
 #[derive(Debug, Clone, Default)]
 pub struct DischargeOutcome {
     /// Evidence for every obligation a static model could evaluate.
@@ -50,6 +51,7 @@ const L2_STIFFNESS_REL_EPS: f64 = 0.05;
 /// AD-1), threaded here so it is folded into every evidence-cache key
 /// (BE-1/INV-1): a model fix/upgrade bumps the version, which changes the
 /// keys and forces re-verification rather than reusing stale evidence.
+// frob:doc docs/modules/regolith-lower.md#discharge
 #[must_use]
 pub fn discharge_static(
     obligations: &[Obligation],
@@ -326,6 +328,7 @@ mod tests {
         }
     }
 
+    // frob:tests crates/regolith-lower/src/discharge.rs::discharge_static kind="unit"
     #[test]
     fn fat_margin_stiffness_claim_discharges_statically() {
         // WO-23 acceptance: k_eff = 120 against a limit of 50 clears

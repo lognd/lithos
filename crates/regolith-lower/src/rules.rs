@@ -54,6 +54,7 @@ struct RuleSite {
 /// (parse-error) decls are skipped, matching the INV-20 gating the rest
 /// of `lower.checks` uses.
 #[must_use]
+// frob:doc docs/modules/regolith-lower.md#rules
 pub fn check_rule_packs(files: &[ParsedFile]) -> Vec<Diagnostic> {
     let span = tracing::info_span!("lower.checks.rules");
     let _enter = span.enter();
@@ -255,6 +256,7 @@ fn leading_ident(text: &str) -> String {
 /// (violated AND deferred -- the release gate and waive machinery see
 /// both). File-then-source order (AD-6).
 #[must_use]
+// frob:doc docs/modules/regolith-lower.md#rules
 pub fn evaluate_static_rules(
     files: &[ParsedFile],
     snapshots: &EntitySnapshots,
@@ -270,6 +272,8 @@ pub fn evaluate_static_rules(
 /// (WO-87/D198): record-field terms in rule predicates resolve through
 /// the loaded records instead of deferring.
 #[must_use]
+// frob:doc docs/modules/regolith-lower.md#rules
+// frob:waive TEST001 reason="internal pass-pipeline helper exercised transitively through the crate's lower()/lower_and_discharge() pipeline tests; no isolated unit test calls it directly"
 pub fn evaluate_static_rules_with_registry(
     files: &[ParsedFile],
     snapshots: &EntitySnapshots,
@@ -411,6 +415,7 @@ mod tests {
     }
 
     #[test]
+    // frob:tests crates/regolith-lower/src/rules.rs::check_rule_packs kind="unit"
     fn no_collision_for_distinct_rule_names() {
         let src = "process sheet_metal:\n    dfm:\n        rule a:\n            demand: true\n        rule b:\n            demand: true\n";
         let files = vec![parsed("a.hema", src)];
@@ -534,6 +539,7 @@ mod eval_tests {
     const PACK: &str = "process sheet_metal:\n    capability:\n        min_bend_ratio: 1.6\n    dfm:\n        rule min_bend_radius:\n            forall b in bends\n            demand: b.radius >= capability.min_bend_ratio * sheet\n            why: \"press pack minimum inside radius\"\n            per: \"press pack table\"\n";
 
     #[test]
+    // frob:tests crates/regolith-lower/src/rules.rs::evaluate_static_rules kind="unit"
     fn violated_attached_rule_is_e0601_with_provenance() {
         let src = format!(
             "{PACK}part p:\n    stage cut: process=laser_cut(sheet=1.5mm)\n    stage formed: process=press_brake(sheet_metal), from=cut\n        flange = Bend(edge=cut.top, angle=90deg, radius=1mm)\n"
@@ -568,6 +574,7 @@ mod eval_tests {
     }
 
     #[test]
+    // frob:tests crates/regolith-lower/src/rule_engine.rs::RuleEvaluation.is_clean_pass kind="unit"
     fn satisfied_attached_rule_is_silent_and_a_clean_pass() {
         let src = format!(
             "{PACK}part p:\n    stage cut: process=laser_cut(sheet=1.5mm)\n    stage formed: process=press_brake(sheet_metal), from=cut\n        flange = Bend(edge=cut.top, angle=90deg, radius=3mm)\n"
@@ -700,6 +707,7 @@ mod eval_tests {
     }
 
     #[test]
+    // frob:tests crates/regolith-lower/src/entities.rs::build_entities_with_realized kind="unit"
     fn traces_domain_defers_until_realized_then_evaluates() {
         // WO-112 Class 5: `traces` is a REALIZED-tier domain. Before a
         // `layout.realized` input exists the rule DEFERS naming the

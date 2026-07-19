@@ -43,6 +43,7 @@ use crate::output::ParsedFile;
 /// A caller-resolved realized-geometry source for one structural ref:
 /// the record bytes (resolved from the WO-30 store, keeping this
 /// module IO-free) and the digest they decoded from.
+// frob:doc docs/modules/regolith-lower.md#harness-lower
 #[derive(Debug, Clone)]
 pub struct ResolvedStructuralGeometry {
     /// The record's serialized bytes (the [`extract_path`] input).
@@ -55,6 +56,7 @@ pub struct ResolvedStructuralGeometry {
 /// (AD-17: the only route to resolved content). Unit tests supply an
 /// in-memory implementation; a real, store-backed implementation
 /// mirrors `flownet_lower::RealizedFlownetInputs`.
+// frob:doc docs/modules/regolith-lower.md#harness-lower
 pub trait HarnessInputs {
     /// Resolve a structural ref (e.g. `"frame.spine_tube"`) named by an
     /// `along` clause to its realized-geometry record; `None` when no
@@ -80,6 +82,7 @@ pub trait HarnessInputs {
 /// answer). Every run elaborates with its structural refs deferred to
 /// an honest [`HarnessLowerError::Extract`] and every endpoint pair
 /// skips the cross-net check.
+// frob:doc docs/modules/regolith-lower.md#harness-lower
 #[derive(Debug, Clone, Copy, Default)]
 pub struct AstHarnessInputs;
 
@@ -98,6 +101,7 @@ impl HarnessInputs for AstHarnessInputs {
 /// `flownet_lower::RealizedFlownetInputs`. `structural_geometry`
 /// resolves a ref against the caller-supplied
 /// [`crate::realized_input::RealizedInputs`] by subject match.
+// frob:doc docs/modules/regolith-lower.md#harness-lower
 pub struct RealizedHarnessInputs<'a> {
     realized: &'a crate::realized_input::RealizedInputs,
 }
@@ -105,6 +109,7 @@ pub struct RealizedHarnessInputs<'a> {
 impl<'a> RealizedHarnessInputs<'a> {
     /// Build the resolver over `realized`, the orchestrator-supplied
     /// realized-geometry inputs for this build.
+    // frob:doc docs/modules/regolith-lower.md#harness-lower
     #[must_use]
     pub fn new(realized: &'a crate::realized_input::RealizedInputs) -> Self {
         Self { realized }
@@ -131,6 +136,7 @@ impl HarnessInputs for RealizedHarnessInputs<'_> {
 }
 
 /// One elaborated harness: its payload, keyed by declaration name.
+// frob:doc docs/modules/regolith-lower.md#harness-lower
 #[derive(Debug, Clone)]
 pub struct ElaboratedHarness {
     /// The harness's declared name.
@@ -141,6 +147,7 @@ pub struct ElaboratedHarness {
 
 /// A failure elaborating a harness -- a value the lowering boundary
 /// renders as a diagnostic. Never a panic; collected and returned.
+// frob:doc docs/modules/regolith-lower.md#harness-lower
 #[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
 pub enum HarnessLowerError {
     /// A run's `from`/`to` header names no non-empty endpoint text on
@@ -192,6 +199,7 @@ pub enum HarnessLowerError {
 }
 
 /// The result of elaborating every harness in a set of parsed files.
+// frob:doc docs/modules/regolith-lower.md#harness-lower
 #[derive(Debug, Clone, Default)]
 pub struct HarnessLowerReport {
     /// The elaborated harnesses, in file/source order.
@@ -212,6 +220,7 @@ pub struct HarnessLowerReport {
 /// [`HarnessPayload`], resolving structural refs through `inputs`.
 /// Pure and IO-free (AD-17); deterministic (AD-6). The WO-34
 /// deliverable-2 entry point.
+// frob:doc docs/modules/regolith-lower.md#harness-lower
 #[must_use]
 pub fn elaborate_harnesses(files: &[ParsedFile], inputs: &dyn HarnessInputs) -> HarnessLowerReport {
     let span = tracing::info_span!("lower.harness");
@@ -658,6 +667,7 @@ mod tests {
             .to_string()
     }
 
+    // frob:tests crates/regolith-lower/src/harness_lower.rs::elaborate_harnesses kind="unit"
     #[test]
     fn two_run_harness_lowers_extracted_lengths() {
         let files = parse(&two_run_harness_src());

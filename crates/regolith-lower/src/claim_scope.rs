@@ -29,6 +29,7 @@ use regolith_syntax::syntax_kind::SyntaxKind;
 /// features). For a direct call `count` is 1 and `pattern_inner` is
 /// `None`.
 #[derive(Debug, Clone, PartialEq, Eq)]
+// frob:doc docs/modules/regolith-lower.md#claim-scope
 pub struct FeatureCall {
     /// The ctor-statement name (the feature's local binding, e.g.
     /// `pilot`), used as the emitted entity's `origin`.
@@ -66,6 +67,8 @@ impl FeatureCall {
     /// The constructor whose kind decides the domain entity: the inner
     /// constructor for a `PatternOf` orbit, else the head itself.
     #[must_use]
+    // frob:doc docs/modules/regolith-lower.md#claim-scope
+    // frob:waive TEST001 reason="internal pass-pipeline helper exercised transitively through the crate's lower()/lower_and_discharge() pipeline tests; no isolated unit test calls it directly"
     pub fn effective_constructor(&self) -> &str {
         self.pattern_inner.as_deref().unwrap_or(&self.head)
     }
@@ -82,6 +85,8 @@ impl FeatureCall {
 /// `EntityKind::from_constructor_word` filter, so widening the scope
 /// admits no false features.
 #[must_use]
+// frob:doc docs/modules/regolith-lower.md#claim-scope
+// frob:waive TEST001 reason="internal pass-pipeline helper exercised transitively through the crate's lower()/lower_and_discharge() pipeline tests; no isolated unit test calls it directly"
 pub fn feature_calls_in_decl(decl: &Decl) -> Vec<FeatureCall> {
     let mut out = Vec::new();
     for node in decl.syntax().descendants() {
@@ -131,6 +136,7 @@ fn is_in_feature_scope(node: &SyntaxNode) -> bool {
 /// `CallExpr`/`InstExpr` -- no new CST production was needed here
 /// either (mirrors D125's finding for `then:` scopes exactly).
 #[derive(Debug, Clone, PartialEq, Eq)]
+// frob:doc docs/modules/regolith-lower.md#claim-scope
 pub struct ConnectCall {
     /// The connect instance's local binding (`mount`, `seat_xp`), used
     /// as the emitted `Mating::name`.
@@ -148,6 +154,8 @@ pub struct ConnectCall {
 /// in source order. A `Field` outside a `ConnectBlock` is not a connect
 /// line and is skipped.
 #[must_use]
+// frob:doc docs/modules/regolith-lower.md#claim-scope
+// frob:waive TEST001 reason="internal pass-pipeline helper exercised transitively through the crate's lower()/lower_and_discharge() pipeline tests; no isolated unit test calls it directly"
 pub fn connect_calls_in_decl(decl: &Decl) -> Vec<ConnectCall> {
     let mut out = Vec::new();
     for node in decl.syntax().descendants() {
@@ -349,6 +357,8 @@ fn extract_count(args_text: &str) -> Option<usize> {
 /// trimmed. Shared by [`extract_count`] and the entity projector's
 /// measure extraction so the two never disagree on argument parsing.
 #[must_use]
+// frob:doc docs/modules/regolith-lower.md#claim-scope
+// frob:waive TEST001 reason="internal pass-pipeline helper exercised transitively through the crate's lower()/lower_and_discharge() pipeline tests; no isolated unit test calls it directly"
 pub fn keyword_value(text: &str, key: &str) -> Option<String> {
     let mut from = 0;
     while let Some(rel) = text[from..].find(key) {
@@ -382,6 +392,8 @@ pub fn keyword_value(text: &str, key: &str) -> Option<String> {
 /// the trailing tolerance class). `None` when the label is absent or is
 /// immediately followed by `=` (a keyword arg, not a positional label).
 #[must_use]
+// frob:doc docs/modules/regolith-lower.md#claim-scope
+// frob:waive TEST001 reason="internal pass-pipeline helper exercised transitively through the crate's lower()/lower_and_discharge() pipeline tests; no isolated unit test calls it directly"
 pub fn positional_value(text: &str, label: &str) -> Option<String> {
     let mut from = 0;
     while let Some(rel) = text[from..].find(label) {

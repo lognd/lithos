@@ -33,6 +33,7 @@ use crate::entities::{decl_is_poisoned, EntitySnapshots};
 use crate::output::ParsedFile;
 
 /// The waiver ledger and any honesty diagnostics from this pass.
+// frob:doc docs/modules/regolith-lower.md#waivers
 #[derive(Debug, Clone, Default)]
 pub struct WaiverReport {
     /// The build's waiver ledger (the INV-12 audit surface).
@@ -43,6 +44,7 @@ pub struct WaiverReport {
 
 /// Build the waiver ledger by matching every `waive ...:` block against
 /// the emitted `obligations`, and collect the honesty diagnostics.
+// frob:doc docs/modules/regolith-lower.md#waivers
 #[must_use]
 pub fn build_ledger(
     files: &[ParsedFile],
@@ -678,6 +680,7 @@ mod tests {
         );
     }
 
+    // frob:tests crates/regolith-lower/src/waivers.rs::build_ledger kind="unit"
     #[test]
     fn an_impl_waiver_matches_a_select_edge_by_interface() {
         // A `by select(...)` binding lowers a `select:<Interface>`
@@ -989,6 +992,7 @@ mod tests {
         );
     }
 
+    // frob:tests crates/regolith-lower/src/claims/mod.rs::build_obligations kind="unit"
     #[test]
     fn a_waiver_never_changes_the_obligation_set() {
         // INV-2 ladder safety: the obligations are byte-identical with

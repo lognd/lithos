@@ -16,7 +16,7 @@ Rust crates:
 - [regolith-lower](regolith-lower.md) -- the pass-pipeline driver
   (AD-17).
 - [regolith-syntax](regolith-syntax.md) -- lexing/parsing and the
-  extension-string registry.
+  extension-string registry (AD-14).
 - [regolith-sem](regolith-sem.md) -- semantic analysis.
 - [regolith-ir](regolith-ir.md) -- the intermediate representations.
 - [regolith-oblig](regolith-oblig.md) -- the obligation engine.

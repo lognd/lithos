@@ -31,6 +31,7 @@ use crate::contracts::ContractGraph;
 
 /// What the statics feed did: diagnostics from the solves plus the
 /// count of envelope entries appended (for the pipeline log).
+// frob:doc docs/modules/regolith-lower.md#solve-pass
 #[derive(Debug, Clone, Default)]
 pub struct StaticsFeedReport {
     /// Determinacy/singularity diagnostics from each system's solve.
@@ -47,6 +48,7 @@ pub struct StaticsFeedReport {
 /// deterministic end to end (AD-6). INV-1 holds by construction --
 /// computed loads are semantic inputs, so obligations fed here hash
 /// differently from their declared-only forms.
+// frob:doc docs/modules/regolith-lower.md#solve-pass
 #[must_use]
 pub fn feed_interface_loads(
     graph: &ContractGraph,
@@ -296,6 +298,7 @@ mod tests {
     /// the interface envelope obligation ends up carrying the computed
     /// reactions (Ax = 0, Ay = -500, By = 1500 within outward
     /// rounding).
+    // frob:tests crates/regolith-lower/src/solve_pass.rs::feed_interface_loads kind="unit"
     #[test]
     fn bracket_reactions_land_in_the_envelope_obligations_given_loads() {
         let mut graph = ContractGraph::default();

@@ -28,6 +28,7 @@ use crate::output::ParsedFile;
 /// Diagnostics from every static check, plus the artifact-level orbit
 /// table (symmetry) computed so far.
 #[derive(Debug, Clone, Default)]
+// frob:doc docs/modules/regolith-lower.md#checks
 pub struct CheckReport {
     /// Diagnostics from ownership/stage/profile/symmetry checks.
     pub diagnostics: Vec<Diagnostic>,
@@ -47,6 +48,7 @@ pub struct CheckReport {
 /// Run the WO-19-available static checks over `files`/`snapshots`.
 /// The no-registry convenience over [`run_checks_with_registry`].
 #[must_use]
+// frob:doc docs/modules/regolith-lower.md#checks
 pub fn run_checks(files: &[ParsedFile], snapshots: &EntitySnapshots) -> CheckReport {
     run_checks_with_registry(files, snapshots, &crate::registry::RegistryRecords::empty())
 }
@@ -54,6 +56,8 @@ pub fn run_checks(files: &[ParsedFile], snapshots: &EntitySnapshots) -> CheckRep
 /// [`run_checks`] plus the registry-records payload (WO-87/D198),
 /// threaded into static rule evaluation's dereference seam.
 #[must_use]
+// frob:doc docs/modules/regolith-lower.md#checks
+// frob:waive TEST001 reason="internal pass-pipeline helper exercised transitively through the crate's lower()/lower_and_discharge() pipeline tests; no isolated unit test calls it directly"
 pub fn run_checks_with_registry(
     files: &[ParsedFile],
     snapshots: &EntitySnapshots,
@@ -405,6 +409,7 @@ mod tests {
     use regolith_diag::codes::{DEAD_GENERIC, GENERIC_ARITY_MISMATCH};
 
     #[test]
+    // frob:tests crates/regolith-lower/src/checks.rs::run_checks kind="unit"
     fn monomorphization_expands_distinct_use_site_instantiations() {
         // INV-11: a generic decl is expanded once per DISTINCT use-site
         // instantiation. Two `Seat<M3>` uses collapse to one expansion.

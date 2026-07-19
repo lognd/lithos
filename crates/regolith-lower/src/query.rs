@@ -47,6 +47,7 @@ use crate::output::ParsedFile;
 /// Resolve every `refer` query against its declaration scope's snapshot
 /// across `files`, returning the collected diagnostics in file-then-
 /// source order (AD-6). Poisoned subjects are skipped (INV-20 gating).
+// frob:doc docs/modules/regolith-lower.md#query
 #[must_use]
 pub fn run_query_resolution(files: &[ParsedFile]) -> Vec<Diagnostic> {
     let span = tracing::info_span!("lower.query");
@@ -193,6 +194,7 @@ mod tests {
         diags.iter().map(|d| d.code).collect()
     }
 
+    // frob:tests crates/regolith-lower/src/query.rs::run_query_resolution kind="unit"
     #[test]
     fn refer_to_a_unique_feature_resolves_cleanly() {
         // INV-18: exactly one match -> a unique interpretation.

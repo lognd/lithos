@@ -166,6 +166,7 @@ fn canonical_gap(
 /// Format `source` into its canonical spelling. On unparseable input the
 /// error-resilient CST still yields a best-effort canonical reprint
 /// (never panics, never drops bytes of meaning).
+// frob:doc docs/modules/regolith-syntax.md#formatter
 #[must_use]
 pub fn format(source: &str, file: &Utf8PathBuf) -> String {
     let parse = crate::parser::parse(source, file);

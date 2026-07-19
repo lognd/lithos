@@ -24,6 +24,8 @@ use super::{
               is one call site's locals; bundling them into a struct would \
               only rename the same nine things"
 )]
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn push_cost_claim_obligation(
     out: &mut Vec<Obligation>,
     diagnostics: &mut Vec<Diagnostic>,
@@ -99,6 +101,8 @@ pub(crate) fn push_cost_claim_obligation(
 /// `(subject, profile)`. The accepted shape (toolchain/27 sec. 1.1) is
 /// exactly `<subject>[, profile=<name>]`; anything else is an `Err`
 /// naming the offending argument (lowered to E0438 by the caller).
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn parse_cost_claim_args(args: &str) -> Result<(String, Option<String>), String> {
     let pieces = split_top_level_args(args);
     let Some(first) = pieces.first() else {
@@ -145,6 +149,8 @@ pub(crate) fn parse_cost_claim_args(args: &str) -> Result<(String, Option<String
 /// subject-scoped quantity basis (`vendor(<key>)` values resolve to
 /// pricing records orchestrator-side). Mirrors `given_for_decl`'s
 /// `loads:` descent for the `parts:` block.
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn cost_bom_lines(decl: &Decl) -> Vec<(String, String)> {
     // A `parts:` block is its own node kind, not a `Field` (the
     // `contracts.rs::part_type_refs` precedent), so find it by kind

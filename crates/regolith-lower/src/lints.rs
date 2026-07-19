@@ -18,6 +18,7 @@ use regolith_syntax::{SyntaxKind, SyntaxNode};
 use crate::output::ParsedFile;
 
 /// Diagnostics from the v1 lint set.
+// frob:doc docs/modules/regolith-lower.md#lints
 #[derive(Debug, Clone, Default)]
 pub struct LintReport {
     /// Lint-family diagnostics, in file-then-source order.
@@ -35,6 +36,7 @@ const RETIRED_NAMES: &[&str] = &["dcad", "deda", "quarry", "lodestone"];
 /// Run the v1 lint set over `files`, returning Warning-severity
 /// diagnostics in the `Lint` family (`regolith-diag::apply_lint_config`
 /// is the caller's job -- this pass never reads `[lints]` itself).
+// frob:doc docs/modules/regolith-lower.md#lints
 #[must_use]
 pub fn run_lints(files: &[ParsedFile]) -> LintReport {
     let span = tracing::info_span!("lower.lints");
@@ -202,6 +204,7 @@ mod tests {
         }])
     }
 
+    // frob:tests crates/regolith-lower/src/lints.rs::run_lints kind="unit"
     #[test]
     fn unused_import_fires_when_name_never_referenced_again() {
         let src = "import std.elec.power (Inductor)\nblock Amp:\n    ports:\n        vdd: supply(in, 3.3V +- 5%, i <= 1mA)\n";

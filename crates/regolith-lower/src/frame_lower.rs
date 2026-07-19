@@ -51,6 +51,7 @@ use crate::output::ParsedFile;
 /// One elaborated frame: the structure's declared name plus its
 /// content-addressable payload.
 #[derive(Debug, Clone)]
+// frob:doc docs/modules/regolith-lower.md#frame-lower
 pub struct ElaboratedFrame {
     /// The structure's declared name.
     pub name: String,
@@ -60,6 +61,7 @@ pub struct ElaboratedFrame {
 
 /// The result of elaborating every `structure` in a set of parsed files.
 #[derive(Debug, Clone, Default)]
+// frob:doc docs/modules/regolith-lower.md#frame-lower
 pub struct FrameLowerReport {
     /// The elaborated frames, in file/source order.
     pub frames: Vec<ElaboratedFrame>,
@@ -69,6 +71,8 @@ pub struct FrameLowerReport {
 /// [`FramePayload`]. Pure and IO-free (AD-17); deterministic (AD-6).
 /// This is the WO-48 deliverable-3 entry point.
 #[must_use]
+// frob:doc docs/modules/regolith-lower.md#frame-lower
+// frob:waive TEST001 reason="internal pass-pipeline helper exercised transitively through the crate's lower()/lower_and_discharge() pipeline tests; no isolated unit test calls it directly"
 pub fn elaborate_frames(files: &[ParsedFile]) -> FrameLowerReport {
     let span = tracing::info_span!("lower.frame");
     let _enter = span.enter();
@@ -560,6 +564,8 @@ fn combo_ref(file: &File) -> RecordRef {
 /// whitespace): `9kN - m` spaced apart is genuine arithmetic, not a
 /// unit spelling, and degrades to `None` here (recorded, never
 /// invented -- AD-3).
+// frob:doc docs/modules/regolith-lower.md#frame-lower
+// frob:waive TEST001 reason="internal pass-pipeline helper exercised transitively through the crate's lower()/lower_and_discharge() pipeline tests; no isolated unit test calls it directly"
 pub(crate) fn load_quantity(value: &SyntaxNode) -> Option<ScalarInterval> {
     if value.kind() == SyntaxKind::QuantityLit {
         return quantity_scalar(value);
@@ -616,6 +622,8 @@ const FORCE_UNITS: &[&str] = &["N", "kN", "MN"];
 /// so the dispatch cannot collide): pressure (`*Pa`) -> area, force/
 /// length (`kN/m`) -> line, force (`kN`) -> point, force-length
 /// (`kN-m`) -> moment. `None` for a unit outside the vocabulary.
+// frob:doc docs/modules/regolith-lower.md#frame-lower
+// frob:waive TEST001 reason="internal pass-pipeline helper exercised transitively through the crate's lower()/lower_and_discharge() pipeline tests; no isolated unit test calls it directly"
 pub(crate) fn load_kind_for_unit(unit: &str) -> Option<LoadKind> {
     if unit.ends_with("Pa") {
         return Some(LoadKind::Distributed);
@@ -749,6 +757,8 @@ fn on_target(text: &str) -> Option<(String, Option<f64>)> {
 /// `on [G1@0.5] by ...` -> `"G1@0.5"`. Shared with `calcite.rs`'s
 /// E0211 check so the diagnostic and the lowering read the SAME
 /// target text (NO DUPLICATION).
+// frob:doc docs/modules/regolith-lower.md#frame-lower
+// frob:waive TEST001 reason="internal pass-pipeline helper exercised transitively through the crate's lower()/lower_and_discharge() pipeline tests; no isolated unit test calls it directly"
 pub(crate) fn on_target_raw(text: &str) -> Option<String> {
     let idx = text.find("on [")?;
     let after = &text[idx + "on [".len()..];

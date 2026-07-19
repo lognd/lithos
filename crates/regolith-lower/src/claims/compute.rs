@@ -9,6 +9,8 @@ use super::{
 /// declared name -> producer-obligation map plus the name -> `over`
 /// text map ([`check_compute_field_cycles`]'s dependency scan), both
 /// keyed for [`push_require_obligations`]'s projection-head resolution.
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn collect_compute_producers(
     decl: &Decl,
     decl_name: &str,
@@ -77,6 +79,8 @@ pub(crate) fn collect_compute_producers(
 /// `liner.zones`) is an enumerated axis with the reference itself as
 /// its one (unexpanded) value -- the actual zone membership is a
 /// semantic fact this text-only pass does not resolve.
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn parse_compute_domain(predicate: &str) -> (String, String, CoverageAxis) {
     let (quantity_kind, over_text) = match predicate.split_once(" over ") {
         Some((q, o)) => (q.trim().to_string(), o.trim().to_string()),
@@ -107,6 +111,8 @@ pub(crate) fn parse_compute_domain(predicate: &str) -> (String, String, Coverage
 /// the match is alphanumeric, `_`, or `.` (so `wall_T` does not match
 /// inside `wall_Total`, and a dotted path is never partially matched).
 /// Shared by the projection-head extraction and the compute-cycle scan.
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn contains_word(haystack: &str, word: &str) -> bool {
     if word.is_empty() {
         return false;
@@ -146,6 +152,8 @@ pub(crate) fn contains_word(haystack: &str, word: &str) -> bool {
 /// genuine bare/dotted `<subject>.<field>` identifier -- a call
 /// expression argument (`v(store.cells.any)`) is a claim form's input,
 /// and slicing into it produced the mangled `v(store.cells.any` E0303.
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn extract_projection_heads(predicate: &str) -> Vec<String> {
     let mut refs = Vec::new();
     for head in ["max(", "min(", "slope("] {
@@ -191,6 +199,8 @@ pub(crate) fn extract_projection_heads(predicate: &str) -> Vec<String> {
 /// pairs, the promise-chain reference), diagnosing any reference to a
 /// field NOT in `compute_producers` as [`codes::UNRESOLVED_FIELD_REFERENCE`]
 /// rather than passing the raw name through silently.
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn with_field_refs(
     given: &Given,
     decl_name: &str,
@@ -230,6 +240,8 @@ pub(crate) fn with_field_refs(
 /// back-edge found, names the full chain in one diagnostic (never a
 /// panic/infinite loop, and never more than one diagnostic per decl --
 /// fixing the first reported cycle is enough to re-run the check).
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn check_compute_field_cycles(
     decl_name: &str,
     over_text: &BTreeMap<String, String>,

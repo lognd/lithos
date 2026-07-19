@@ -12,6 +12,7 @@ use logos::Logos;
 
 /// A raw token as produced directly by the lexer, before the layout
 /// pass. Trivia (whitespace, comments) is retained for CST fidelity.
+// frob:doc docs/modules/regolith-syntax.md#token
 #[derive(Logos, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum RawToken {
     // -- trivia (kept for the lossless CST) --
@@ -126,6 +127,7 @@ pub enum RawToken {
 ///
 /// Never fails: unclassified bytes become [`RawToken::Error`] tokens so
 /// the CST still covers every byte (the fuzz invariant, AD-3).
+// frob:doc docs/modules/regolith-syntax.md#token
 #[must_use]
 pub fn lex(source: &str) -> Vec<(RawToken, std::ops::Range<usize>)> {
     let mut lexer = RawToken::lexer(source);

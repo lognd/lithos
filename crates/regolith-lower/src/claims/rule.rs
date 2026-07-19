@@ -11,6 +11,8 @@ use super::{
 /// through the EXISTING ladder (D-D: zero new override surface).
 /// `advise:` rules never lower (droppable guidance is never
 /// load-bearing, INV-3).
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn push_rule_obligations(
     obligations: &mut Vec<Obligation>,
     outcomes: &[crate::rule_engine::RuleEvaluation],
@@ -107,6 +109,8 @@ pub(crate) fn push_rule_obligations(
 /// `given.loads` (as `name: value` text). Reading the typed `Field`
 /// tree (not a raw text scan) keeps the obligation key sensitive to the
 /// exact declared values while staying deterministic (source order).
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn given_for_decl(decl: &Decl) -> Given {
     let mut materials = Vec::new();
     let mut loads = Vec::new();

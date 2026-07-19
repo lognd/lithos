@@ -33,6 +33,7 @@ use crate::syntax_kind::SyntaxKind;
 
 /// Run every L1 check over `root` (a freshly parsed `File`), producing
 /// spanned diagnostics anchored at `file`.
+// frob:doc docs/modules/regolith-syntax.md#checks
 #[must_use]
 pub fn run(root: &SyntaxNode, file: &Utf8PathBuf) -> Vec<Diagnostic> {
     let mut out = Vec::new();

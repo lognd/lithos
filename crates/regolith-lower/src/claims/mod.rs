@@ -77,6 +77,7 @@ use rule::{given_for_decl, push_rule_obligations};
 
 /// Every obligation this pass produced, the snapshot records for every
 /// committed scope, and any diagnostics.
+// frob:doc docs/modules/regolith-lower.md#claims
 #[derive(Debug, Clone, Default)]
 pub struct ObligationSet {
     /// One obligation per structured claim line.
@@ -180,6 +181,7 @@ fn attach_converter_graph_ref(obligations: &mut [Obligation], decl: &Decl, decl_
 /// Dispatches every obligation family (plan, fluid, frame, require+window,
 /// cost, conformance, rule); to add a new claim family, add a
 /// `push_*_obligations` fn and wire it here.
+// frob:doc docs/modules/regolith-lower.md#claims
 #[must_use]
 pub fn build_obligations(
     files: &[ParsedFile],

@@ -11,6 +11,7 @@
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(u16)]
 #[allow(missing_docs)] // variant names are self-describing terminals/nodes
+                       // frob:doc docs/modules/regolith-syntax.md#syntax-kind
 pub enum SyntaxKind {
     // -- trivia + layout tokens --
     Whitespace,
@@ -793,6 +794,7 @@ impl SyntaxKind {
     /// # Panics
     /// Panics if `raw` names no `SyntaxKind` variant -- that is a
     /// compiler bug (a raw value only ever comes from `kind_to_raw`).
+    // frob:doc docs/modules/regolith-syntax.md#syntax-kind
     #[must_use]
     pub fn from_raw(raw: u16) -> SyntaxKind {
         ALL_KINDS
@@ -803,6 +805,7 @@ impl SyntaxKind {
 
     /// True when this kind is trivia (whitespace or comment): skipped by
     /// the typed AST layer but present in the CST.
+    // frob:doc docs/modules/regolith-syntax.md#syntax-kind
     #[must_use]
     pub fn is_trivia(self) -> bool {
         matches!(self, SyntaxKind::Whitespace | SyntaxKind::Comment)
@@ -813,6 +816,7 @@ impl SyntaxKind {
 /// declaration order. `keyword_kind` and the WO-39 grammar-json export
 /// both read this -- no second copy of the keyword strings anywhere
 /// (ground rule 7 / AD-24).
+// frob:doc docs/modules/regolith-syntax.md#syntax-kind
 pub const KEYWORD_TABLE: &[(&str, SyntaxKind)] = &[
     ("import", SyntaxKind::ImportKw),
     ("namespace", SyntaxKind::NamespaceKw),
@@ -863,6 +867,7 @@ pub const KEYWORD_TABLE: &[(&str, SyntaxKind)] = &[
 
 /// Map an identifier's text to its keyword kind, or `None` if it is a
 /// plain identifier. Reads `KEYWORD_TABLE`, the one keyword table.
+// frob:doc docs/modules/regolith-syntax.md#syntax-kind
 #[must_use]
 pub fn keyword_kind(text: &str) -> Option<SyntaxKind> {
     KEYWORD_TABLE
@@ -874,6 +879,7 @@ pub fn keyword_kind(text: &str) -> Option<SyntaxKind> {
 mod tests {
     use super::{keyword_kind, SyntaxKind};
 
+    // frob:tests crates/regolith-syntax/src/syntax_kind.rs::keyword_kind kind="unit"
     #[test]
     fn keywords_map_and_idents_do_not() {
         assert_eq!(keyword_kind("part"), Some(SyntaxKind::PartKw));
@@ -882,6 +888,7 @@ mod tests {
         assert_eq!(keyword_kind("flange"), None);
     }
 
+    // frob:tests crates/regolith-syntax/src/syntax_kind.rs::SyntaxKind.from_raw kind="unit"
     #[test]
     fn from_raw_round_trips_every_discriminant() {
         for raw in 0..=(SyntaxKind::Tombstone as u16) {
@@ -895,6 +902,7 @@ mod tests {
         let _ = SyntaxKind::from_raw(SyntaxKind::Tombstone as u16 + 1);
     }
 
+    // frob:tests crates/regolith-syntax/src/syntax_kind.rs::SyntaxKind.is_trivia kind="unit"
     #[test]
     fn trivia_is_flagged() {
         assert!(SyntaxKind::Whitespace.is_trivia());

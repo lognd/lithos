@@ -10,6 +10,7 @@ use super::{
 /// statically at L2 with no frame involved, and code-pack `rule`
 /// demands are the WO-28 engine's own obligation shape; neither belongs
 /// here).
+// frob:doc docs/modules/regolith-lower.md#claims
 pub(crate) const FRAME_CLAIM_FORMS: [&str; 6] = [
     "civil.utilization(",
     "mech.deflection(",
@@ -31,6 +32,8 @@ pub(crate) const FRAME_CLAIM_FORMS: [&str; 6] = [
 /// (WO-48 deliverable 3: `LowerOutput.frames`/`BuildPayload.frames`
 /// emission reads this instead of calling `elaborate_frames` a second
 /// time, AD-22's one-producer rule applied within a single crate).
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn push_calcite_frame_obligations(
     out: &mut Vec<Obligation>,
     files: &[ParsedFile],
@@ -113,6 +116,8 @@ pub(crate) fn push_calcite_frame_obligations(
 /// (ambiguous: never guessed, the claim's bound stays symbolic and
 /// defers downstream by name); interval-valued fields (`bearing:
 /// [120kPa, 170kPa]`) are not point quantities and are simply absent.
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn site_quantities(files: &[File]) -> BTreeMap<String, Option<String>> {
     let mut index: BTreeMap<String, Option<String>> = BTreeMap::new();
     for file in files {
@@ -154,6 +159,8 @@ pub(crate) fn site_quantities(files: &[File]) -> BTreeMap<String, Option<String>
 /// twice with DIFFERENT endpoints maps to `None` (ambiguous: never
 /// guessed, the claim's bound stays symbolic and defers downstream by
 /// name); point-quantity fields are handled by [`site_quantities`].
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn site_interval_quantities(
     files: &[File],
 ) -> BTreeMap<String, Option<(String, String)>> {
@@ -196,6 +203,8 @@ pub(crate) fn site_interval_quantities(
 /// 170kPa]"` -> `("120kPa", "170kPa")`), trimmed. `None` when the text
 /// is not a two-endpoint bracket (a `{a, b}` discrete set or a malformed
 /// literal is not a numeric interval this resolver substitutes).
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn interval_endpoints(text: &str) -> Option<(String, String)> {
     let inner = text.trim().strip_prefix('[')?;
     let close = inner.find(']')?;
@@ -224,6 +233,8 @@ pub(crate) fn interval_endpoints(text: &str) -> Option<(String, String)> {
 /// bound is not a dotted reference or the leaf is unknown/ambiguous --
 /// the claim then defers downstream with its symbolic bound intact
 /// (honest, never guessed).
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn resolve_embedment_site_bound(
     predicate: &str,
     site_index: &BTreeMap<String, Option<String>>,
@@ -300,6 +311,8 @@ pub(crate) fn resolve_embedment_site_bound(
 /// wholesale defer and never a fabricated aggregate pass. A
 /// `civil.embedment` bound naming a `site.<datum>` path resolves to
 /// its declared quantity ([`resolve_embedment_site_bound`]).
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn push_frame_obligation(
     out: &mut Vec<Obligation>,
     structure_name: &str,

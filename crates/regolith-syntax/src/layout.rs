@@ -41,6 +41,7 @@ fn placeholder_file() -> Utf8PathBuf {
 
 /// A token after the layout pass: a `SyntaxKind` (raw kinds plus the
 /// synthesized Indent/Dedent/Newline) with its source span.
+// frob:doc docs/modules/regolith-syntax.md#layout
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct LayoutToken {
     /// The post-layout kind.
@@ -65,6 +66,7 @@ struct Layout<'a> {
 /// Run the layout pass over raw tokens, emitting INDENT/DEDENT/NEWLINE
 /// and mapping keyword idents. Tab-indentation errors are returned as
 /// diagnostics alongside a best-effort token stream (batch discipline).
+// frob:doc docs/modules/regolith-syntax.md#layout
 #[must_use]
 pub fn apply_layout(
     raw: &[(RawToken, std::ops::Range<usize>)],
@@ -417,6 +419,8 @@ mod tests {
         assert_eq!(ks.iter().filter(|k| **k == SyntaxKind::Indent).count(), 1);
     }
 
+    // frob:tests crates/regolith-syntax/src/layout.rs::apply_layout kind="unit"
+    // frob:tests crates/regolith-syntax/src/token.rs::lex kind="unit"
     #[test]
     fn tab_indentation_is_an_error() {
         let raw = lex("part a:\n\tx: 1\n");

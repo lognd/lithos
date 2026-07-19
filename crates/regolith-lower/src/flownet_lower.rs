@@ -45,6 +45,7 @@ use crate::output::ParsedFile;
 /// the property-record refs that pin the payload's [`MediumRef`] plus
 /// the bulk-modulus/density [`MediumProps`] the wave-speed field needs.
 #[derive(Debug, Clone)]
+// frob:doc docs/modules/regolith-lower.md#flownet-lower
 pub struct ResolvedMedium {
     /// The hash-pinned property records describing the medium.
     pub records: Vec<RecordRef>,
@@ -57,6 +58,7 @@ pub struct ResolvedMedium {
 /// WO-30 store -- the extraction input that keeps this module IO-free),
 /// and the path/role selector into that record.
 #[derive(Debug, Clone)]
+// frob:doc docs/modules/regolith-lower.md#flownet-lower
 pub struct ResolvedGeometry {
     /// The realized-geometry record ref (digest + name).
     pub record: RecordRef,
@@ -71,6 +73,7 @@ pub struct ResolvedGeometry {
 /// implementation -- not this pass -- does the IO). Unit tests supply
 /// an in-memory implementation; the D4 wiring supplies one backed by
 /// the WO-30 content store.
+// frob:doc docs/modules/regolith-lower.md#flownet-lower
 pub trait FlownetInputs {
     /// Resolve a flownet's `medium=<name>` to its property records and
     /// bulk-modulus/density props; `None` when the medium is unknown.
@@ -105,6 +108,7 @@ pub trait FlownetInputs {
 /// real, read straight off the AST, with an empty digest (a name-only
 /// pin, mirroring the deferred-ref idiom already used above for an
 /// unresolved `from=` edge) until that same store-backed impl lands.
+// frob:doc docs/modules/regolith-lower.md#flownet-lower
 pub struct AstFlownetInputs {
     /// `medium` name -> its `props: registry(<ref>)` ref name,
     /// harvested once from every parsed file's `medium` declarations
@@ -119,6 +123,7 @@ impl AstFlownetInputs {
     /// deliverable-4a entry point callers construct once per build and
     /// pass to [`elaborate_flownets`] alongside `files`.
     #[must_use]
+    // frob:doc docs/modules/regolith-lower.md#flownet-lower
     pub fn new(files: &[ParsedFile]) -> Self {
         let mut media = std::collections::BTreeMap::new();
         for pf in files {
@@ -202,6 +207,7 @@ impl FlownetInputs for AstFlownetInputs {
 /// PURITY (AD-17): `realized` is bytes the ORCHESTRATOR already
 /// resolved from the WO-30 store before calling into `regolith-lower`;
 /// this struct does no IO of its own, only a map lookup.
+// frob:doc docs/modules/regolith-lower.md#flownet-lower
 pub struct RealizedFlownetInputs<'a> {
     ast: AstFlownetInputs,
     realized: &'a crate::realized_input::RealizedInputs,
@@ -212,6 +218,7 @@ impl<'a> RealizedFlownetInputs<'a> {
     /// (medium/record names), `realized` for the caller-resolved
     /// realized-geometry bytes this build was supplied.
     #[must_use]
+    // frob:doc docs/modules/regolith-lower.md#flownet-lower
     pub fn new(files: &[ParsedFile], realized: &'a crate::realized_input::RealizedInputs) -> Self {
         Self {
             ast: AstFlownetInputs::new(files),
@@ -271,6 +278,7 @@ fn registry_ref_name(value: &SyntaxNode) -> Option<String> {
 /// ref, exactly like a dissipation promise. The D4 wiring attaches this
 /// to the imposer obligation's givens; the payload itself is unchanged.
 #[derive(Debug, Clone, PartialEq, Eq)]
+// frob:doc docs/modules/regolith-lower.md#flownet-lower
 pub struct PromiseGiven {
     /// The imposer edge id the promise drives.
     pub edge_id: String,
@@ -284,6 +292,7 @@ pub struct PromiseGiven {
 /// its imposer edges contribute (kept beside the payload because givens
 /// ride the obligation, not the payload -- fluorite/03 sec. 2).
 #[derive(Debug, Clone)]
+// frob:doc docs/modules/regolith-lower.md#flownet-lower
 pub struct ElaboratedFlownet {
     /// The flownet's declared name.
     pub name: String,
@@ -296,6 +305,7 @@ pub struct ElaboratedFlownet {
 /// A failure elaborating a flownet -- a value the lowering boundary
 /// (D5) renders as a diagnostic. Never a panic; collected and returned.
 #[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
+// frob:doc docs/modules/regolith-lower.md#flownet-lower
 pub enum FlownetLowerError {
     /// The flownet's `medium=<name>` did not resolve to a medium.
     #[error("flownet `{flownet}` names unknown medium `{medium}`")]
@@ -330,6 +340,7 @@ pub enum FlownetLowerError {
 
 /// The result of elaborating every flownet in a set of parsed files.
 #[derive(Debug, Clone, Default)]
+// frob:doc docs/modules/regolith-lower.md#flownet-lower
 pub struct FlownetLowerReport {
     /// The elaborated flownets, in file/source order.
     pub flownets: Vec<ElaboratedFlownet>,
@@ -343,6 +354,7 @@ pub struct FlownetLowerReport {
 /// `inputs`. Pure and IO-free (AD-17); deterministic (AD-6). This is
 /// the WO-32 deliverable-3 entry point.
 #[must_use]
+// frob:doc docs/modules/regolith-lower.md#flownet-lower
 pub fn elaborate_flownets(files: &[ParsedFile], inputs: &dyn FlownetInputs) -> FlownetLowerReport {
     let span = tracing::info_span!("lower.flownet");
     let _enter = span.enter();
@@ -655,6 +667,8 @@ fn geometry_compliance(extraction: &GeometryExtraction) -> Option<Compliance> {
 
 /// The flownet header's `medium=<name>` value (`flownet L(medium=Water)`
 /// -> `"Water"`), read from the header tokens before any field/block.
+// frob:doc docs/modules/regolith-lower.md#flownet-lower
+// frob:waive TEST001 reason="internal pass-pipeline helper exercised transitively through the crate's lower()/lower_and_discharge() pipeline tests; no isolated unit test calls it directly"
 pub(crate) fn flownet_medium_name(flownet: &FlownetDecl) -> String {
     let mut toks = flownet
         .syntax()
@@ -824,6 +838,7 @@ fn domain_set_text(node: &SyntaxNode) -> String {
 
 /// A resolved constructor argument: a keyword arg's name and its value
 /// node (a ref path, a bare name, or a quantity literal).
+// frob:doc docs/modules/regolith-lower.md#flownet-lower
 pub(crate) struct Arg {
     key: String,
     value: SyntaxNode,
@@ -832,6 +847,8 @@ pub(crate) struct Arg {
 /// Collect the keyword arguments of a constructor `CallExpr` value node
 /// (`Pipe(from=line.run)` -> `[from = line.run]`). Positional
 /// quantity-literal args are gathered separately by [`scalar_args`].
+// frob:doc docs/modules/regolith-lower.md#flownet-lower
+// frob:waive TEST001 reason="internal pass-pipeline helper exercised transitively through the crate's lower()/lower_and_discharge() pipeline tests; no isolated unit test calls it directly"
 pub(crate) fn collect_args(value: &SyntaxNode) -> Vec<Arg> {
     let Some(arglist) = value.children().find(|c| c.kind() == SyntaxKind::ArgList) else {
         return Vec::new();
@@ -860,6 +877,8 @@ pub(crate) fn collect_args(value: &SyntaxNode) -> Vec<Arg> {
 
 /// The dotted-path value of a named argument (`from` -> `"line.run"`),
 /// if present.
+// frob:doc docs/modules/regolith-lower.md#flownet-lower
+// frob:waive TEST001 reason="internal pass-pipeline helper exercised transitively through the crate's lower()/lower_and_discharge() pipeline tests; no isolated unit test calls it directly"
 pub(crate) fn arg_ref(args: &[Arg], key: &str) -> Option<String> {
     args.iter()
         .find(|a| a.key == key)
@@ -871,6 +890,8 @@ pub(crate) fn arg_ref(args: &[Arg], key: &str) -> Option<String> {
 /// `pub(crate)` (WO-48 slice A): `calcite.rs`'s E0206 check reads
 /// `width=`/`path_length=` off access-opening constructors the same
 /// way this reads flownet edge params.
+// frob:doc docs/modules/regolith-lower.md#flownet-lower
+// frob:waive TEST001 reason="internal pass-pipeline helper exercised transitively through the crate's lower()/lower_and_discharge() pipeline tests; no isolated unit test calls it directly"
 pub(crate) fn arg_quantity(args: &[Arg], key: &str) -> Option<ScalarInterval> {
     args.iter()
         .find(|a| a.key == key)
@@ -904,6 +925,8 @@ fn quantity_literals(value: &SyntaxNode) -> Vec<ScalarInterval> {
 
 /// A quantity literal (`101kPa`) as a point [`ScalarInterval`] in its
 /// own unit (`[101, 101] kPa`); `None` when the number does not parse.
+// frob:doc docs/modules/regolith-lower.md#flownet-lower
+// frob:waive TEST001 reason="internal pass-pipeline helper exercised transitively through the crate's lower()/lower_and_discharge() pipeline tests; no isolated unit test calls it directly"
 pub(crate) fn quantity_scalar(node: &SyntaxNode) -> Option<ScalarInterval> {
     let mut number: Option<f64> = None;
     let mut unit = String::new();
@@ -928,6 +951,8 @@ pub(crate) fn quantity_scalar(node: &SyntaxNode) -> Option<ScalarInterval> {
 /// (WO-48 slice A): `calcite.rs`'s circulation/load-path reachability
 /// walks reuse this exact degradation-tolerant endpoint read instead of
 /// re-deriving it.
+// frob:doc docs/modules/regolith-lower.md#flownet-lower
+// frob:waive TEST001 reason="internal pass-pipeline helper exercised transitively through the crate's lower()/lower_and_discharge() pipeline tests; no isolated unit test calls it directly"
 pub(crate) fn edge_endpoints(edge: &EdgeStmt) -> (NodeId, NodeId) {
     let names = if let Some(sense) = edge.sense() {
         sense.names()
@@ -951,6 +976,8 @@ pub(crate) fn edge_endpoints(edge: &EdgeStmt) -> (NodeId, NodeId) {
 
 /// The leading callee `Ident` of a constructor value node (`Pipe(..)`
 /// -> `"Pipe"`), or `None` for a value with no leading identifier.
+// frob:doc docs/modules/regolith-lower.md#flownet-lower
+// frob:waive TEST001 reason="internal pass-pipeline helper exercised transitively through the crate's lower()/lower_and_discharge() pipeline tests; no isolated unit test calls it directly"
 pub(crate) fn callee_name(value: &SyntaxNode) -> Option<String> {
     value
         .descendants_with_tokens()
@@ -1272,6 +1299,7 @@ mod tests {
     /// end to end, over the same `tube_bytes()` fixture the fake-input
     /// tests use.
     #[test]
+    // frob:tests crates/regolith-lower/src/flownet_lower.rs::elaborate_flownets kind="unit"
     fn realized_flownet_inputs_extracts_when_subject_matches() {
         let mut realized = crate::realized_input::RealizedInputs::new();
         realized.insert(

@@ -60,6 +60,7 @@ const CONTINUOUS_OUTPUT_WORDS: [&str; 2] = ["dac", "pwm"];
 /// in file-then-source order (AD-6). Poisoned subjects are skipped
 /// (INV-20 gating).
 #[must_use]
+// frob:doc docs/modules/regolith-lower.md#converter
 pub fn run_converter_check(files: &[ParsedFile]) -> Vec<Diagnostic> {
     let span = tracing::info_span!("lower.converter");
     let _enter = span.enter();
@@ -116,6 +117,8 @@ fn check_decl(decl: &Decl, scope_name: &str) -> Vec<Diagnostic> {
 /// ([`collect_converter_graphs`]) read the result, so the domain
 /// partition and edge-kind rules live in exactly one place.
 #[must_use]
+// frob:doc docs/modules/regolith-lower.md#converter
+// frob:waive TEST001 reason="internal pass-pipeline helper exercised transitively through the crate's lower()/lower_and_discharge() pipeline tests; no isolated unit test calls it directly"
 pub fn build_decl_graph(decl: &Decl, scope_name: &str) -> Option<ConverterGraph> {
     let spec = named_block(decl, "spec")?;
 
@@ -195,6 +198,7 @@ pub fn build_decl_graph(decl: &Decl, scope_name: &str) -> Option<ConverterGraph>
 /// supplied. Poisoned subjects are skipped (INV-20 gating), matching
 /// [`run_converter_check`].
 #[must_use]
+// frob:doc docs/modules/regolith-lower.md#converter
 pub fn collect_converter_graphs(files: &[ParsedFile]) -> IndexMap<String, ConverterGraph> {
     let span = tracing::info_span!("lower.converter.collect");
     let _enter = span.enter();
@@ -330,6 +334,7 @@ fn collect_assigns(spec: &Field) -> Vec<Assign> {
 /// button.press:` -> `"button"`. Poisoned subjects are skipped
 /// (INV-20 gating), matching `run_converter_check`.
 #[must_use]
+// frob:doc docs/modules/regolith-lower.md#converter
 pub fn collect_on_events(files: &[ParsedFile]) -> Vec<(String, String)> {
     let span = tracing::info_span!("lower.converter.on_events");
     let _enter = span.enter();
@@ -465,6 +470,7 @@ mod tests {
     }
 
     #[test]
+    // frob:tests crates/regolith-lower/src/converter.rs::run_converter_check kind="unit"
     fn comparator_feeds_own_threshold_is_legal() {
         // INV-16 legal fixture: the feedback loop
         // vout -> cmp -> threshold -> drive -> vout passes through two
@@ -485,6 +491,7 @@ mod tests {
     }
 
     #[test]
+    // frob:tests crates/regolith-lower/src/converter.rs::collect_on_events kind="unit"
     fn on_event_names_collected_deduplicated_and_sorted() {
         // WO-37 close-out follow-up: `on <event>:` trigger names come
         // back per-declaration, deduplicated, in sorted order -- not
@@ -521,6 +528,7 @@ mod tests {
     }
 
     #[test]
+    // frob:tests crates/regolith-lower/src/converter.rs::collect_converter_graphs kind="unit"
     fn collect_exposes_the_buck_topology_graph() {
         // WO-88 deliverable 2: a sampled-buck behavioral body's graph
         // rides `collect_converter_graphs`, keyed by declaration name,

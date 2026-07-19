@@ -12,6 +12,7 @@ use crate::syntax_kind::SyntaxKind;
 
 /// A typed view over a CST node of a known kind. Cheap: holds one
 /// `SyntaxNode` (an `Rc`-backed handle).
+// frob:doc docs/modules/regolith-syntax.md#ast
 pub trait AstNode {
     /// True if a node of this `kind` can be viewed as `Self`.
     fn can_cast(kind: SyntaxKind) -> bool
@@ -461,12 +462,16 @@ fn first_number_text(node: &SyntaxNode) -> Option<String> {
 impl OwnershipStmt {
     /// The leading verb (`bind` or `modify`).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST001 reason="thin CST accessor exercised transitively by every parser/lowering test that walks this node kind; no dedicated unit test isolates the accessor itself"
     pub fn verb(&self) -> Option<String> {
         verb_text(&self.syntax)
     }
 
     /// Every identifier on the line (verb first, then the entity name(s)).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST001 reason="thin CST accessor exercised transitively by every parser/lowering test that walks this node kind; no dedicated unit test isolates the accessor itself"
     pub fn idents(&self) -> Vec<String> {
         ident_texts(&self.syntax)
     }
@@ -475,6 +480,8 @@ impl OwnershipStmt {
 impl RegionStmt {
     /// The leading verb (`region`, `keepout`, or `route`).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST001 reason="thin CST accessor exercised transitively by every parser/lowering test that walks this node kind; no dedicated unit test isolates the accessor itself"
     pub fn verb(&self) -> Option<String> {
         verb_text(&self.syntax)
     }
@@ -482,6 +489,8 @@ impl RegionStmt {
     /// Every identifier on the line (verb first, then name / `into` /
     /// `join` / policy word / target region).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST001 reason="thin CST accessor exercised transitively by every parser/lowering test that walks this node kind; no dedicated unit test isolates the accessor itself"
     pub fn idents(&self) -> Vec<String> {
         ident_texts(&self.syntax)
     }
@@ -491,18 +500,23 @@ impl SymmetryStmt {
     /// The leading verb (`pattern`, `break`, `any`, `symmetric`,
     /// `mirror`, `flip`).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST001 reason="thin CST accessor exercised transitively by every parser/lowering test that walks this node kind; no dedicated unit test isolates the accessor itself"
     pub fn verb(&self) -> Option<String> {
         verb_text(&self.syntax)
     }
 
     /// Every identifier on the line (verb first, then name / kind word).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST001 reason="thin CST accessor exercised transitively by every parser/lowering test that walks this node kind; no dedicated unit test isolates the accessor itself"
     pub fn idents(&self) -> Vec<String> {
         ident_texts(&self.syntax)
     }
 
     /// The first numeric argument (`pattern ring circular 4` -> `Some(4)`).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn order(&self) -> Option<u32> {
         first_number_text(&self.syntax).and_then(|t| t.parse().ok())
     }
@@ -512,6 +526,8 @@ impl QueryStmt {
     /// The leading verb (`feature` declares a scope entity; `refer`
     /// resolves a query against the scope snapshot).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST001 reason="thin CST accessor exercised transitively by every parser/lowering test that walks this node kind; no dedicated unit test isolates the accessor itself"
     pub fn verb(&self) -> Option<String> {
         verb_text(&self.syntax)
     }
@@ -519,6 +535,8 @@ impl QueryStmt {
     /// Every identifier on the line (verb first, then the entity/query
     /// name). Lowering reads the target name off index 1.
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST001 reason="thin CST accessor exercised transitively by every parser/lowering test that walks this node kind; no dedicated unit test isolates the accessor itself"
     pub fn idents(&self) -> Vec<String> {
         ident_texts(&self.syntax)
     }
@@ -529,6 +547,7 @@ impl OnBlock {
     /// event on the header line (`on ctrl_clk.rise:` -> `ctrl_clk`). The
     /// first `Ident` after the leading `on` keyword.
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn clock(&self) -> Option<String> {
         self.syntax
             .children_with_tokens()
@@ -542,12 +561,14 @@ impl OnBlock {
 impl RegAssign {
     /// The assignment's target signal name (dotted paths joined with `.`).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn name(&self) -> String {
         name_path_text(&self.syntax)
     }
 
     /// The assignment's right-hand value node (see [`Field::value`]).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn value(&self) -> Option<SyntaxNode> {
         first_value_child(&self.syntax)
     }
@@ -556,6 +577,7 @@ impl RegAssign {
 impl WorkloadsBlock {
     /// Every declared workload in this block, in source order.
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn workloads(&self) -> Vec<WorkloadStmt> {
         self.syntax
             .children()
@@ -568,6 +590,7 @@ impl WorkloadStmt {
     /// The workload's name (dotted paths joined with `.`; in practice a
     /// single identifier, e.g. `control`, `att`).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn name(&self) -> String {
         name_path_text(&self.syntax)
     }
@@ -575,6 +598,7 @@ impl WorkloadStmt {
     /// The workload kind word (`loop`, `stream`, `event`, or `batch`):
     /// the second `Ident` token on the line (the first is the name).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn kind_word(&self) -> Option<String> {
         ident_texts(&self.syntax).into_iter().nth(1)
     }
@@ -582,6 +606,7 @@ impl WorkloadStmt {
     /// The workload's raw, non-decomposed parameter group node, if
     /// present (see [`SyntaxKind::WorkloadParams`]).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn params(&self) -> Option<SyntaxNode> {
         self.syntax
             .children()
@@ -591,6 +616,7 @@ impl WorkloadStmt {
     /// The workload's trailing `realizes <intent>...` clause, if any
     /// (cuprite/05 sec. 1a).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn realizes(&self) -> Option<RealizesStmt> {
         self.syntax.children().find_map(RealizesStmt::cast)
     }
@@ -600,6 +626,7 @@ impl RealizesStmt {
     /// The compute intent names this workload realizes, in source
     /// order (the `realizes` verb itself is excluded).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn intents(&self) -> Vec<String> {
         ident_texts(&self.syntax).into_iter().skip(1).collect()
     }
@@ -609,6 +636,7 @@ impl CapabilityBlock {
     /// The capability table's entries (one `Field` per limit), in
     /// source order.
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn entries(&self) -> Vec<Field> {
         self.syntax.children().filter_map(Field::cast).collect()
     }
@@ -618,12 +646,14 @@ impl RulePackBlock {
     /// The pack family word (`dfm`, `drc`, or `erc`): the block's
     /// leading ident token.
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn family(&self) -> Option<String> {
         verb_text(&self.syntax)
     }
 
     /// The pack's rule declarations, in source order.
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn rules(&self) -> Vec<RuleDecl> {
         self.syntax.children().filter_map(RuleDecl::cast).collect()
     }
@@ -633,48 +663,56 @@ impl RuleDecl {
     /// The rule's citable name (`waive dfm(<pack>.<name>)` cites it):
     /// the header ident after the `rule` word.
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn name(&self) -> Option<String> {
         ident_texts(&self.syntax).into_iter().nth(1)
     }
 
     /// The rule's `forall <var> in <query>` match domain, if declared.
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn forall(&self) -> Option<ForallClause> {
         self.syntax.children().find_map(ForallClause::cast)
     }
 
     /// The rule's `demand:` field (error severity), if present.
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn demand(&self) -> Option<Field> {
         self.named_field("demand")
     }
 
     /// The rule's `advise:` field (warning severity), if present.
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn advise(&self) -> Option<Field> {
         self.named_field("advise")
     }
 
     /// The rule's `per:` citation text (quotes stripped), if present.
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn per(&self) -> Option<String> {
         self.named_field("per").and_then(|f| field_value_text(&f))
     }
 
     /// The rule's `why:` explanation text (quotes stripped), if present.
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn why(&self) -> Option<String> {
         self.named_field("why").and_then(|f| field_value_text(&f))
     }
 
     /// The rule's `resolves: <field> from free` marker, if present.
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn resolves(&self) -> Option<ResolvesClause> {
         self.syntax.children().find_map(ResolvesClause::cast)
     }
 
     /// The rule's `expect:` fixture block, if present.
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn expect(&self) -> Option<ExpectBlock> {
         self.syntax.children().find_map(ExpectBlock::cast)
     }
@@ -694,6 +732,7 @@ impl ForallClause {
     /// The bound variable name (`forall h in holes` -> `h`): the ident
     /// after the `forall` word.
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn var(&self) -> Option<String> {
         self.syntax
             .children_with_tokens()
@@ -707,6 +746,7 @@ impl ForallClause {
     /// trimmed): the engine wave resolves it as a WO-08 query; any
     /// unmodeled filter tail is included (cycle 18 F95).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn query_text(&self) -> String {
         let mut seen_in = false;
         let mut out = String::new();
@@ -739,6 +779,7 @@ impl ForallSweepClaim {
     /// than inventing structure the D105a grammar itself does not
     /// have).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn var(&self) -> Option<String> {
         let full = self.syntax.text().to_string();
         let after_forall = full.trim_start().strip_prefix("forall")?.trim_start();
@@ -755,6 +796,8 @@ impl ForallSweepClaim {
     /// FIRST ` in ` and the header line's closing `:`, trimmed) -- the
     /// same textual-scan approach as [`ForallSweepClaim::var`].
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST001 reason="thin CST accessor exercised transitively by every parser/lowering test that walks this node kind; no dedicated unit test isolates the accessor itself"
     pub fn domain_text(&self) -> String {
         let full = self.syntax.text().to_string();
         let Some(after_forall) = full.trim_start().strip_prefix("forall") else {
@@ -778,6 +821,7 @@ impl ForallSweepClaim {
     /// real structured children now, not text swallowed into an
     /// `OpaqueIsland`.
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn claims(&self) -> Vec<Field> {
         self.syntax.children().filter_map(Field::cast).collect()
     }
@@ -787,6 +831,7 @@ impl ResolvesClause {
     /// The resolved field's name path (`resolves: b.radius from free`
     /// -> `b.radius`): the path tokens after the colon.
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn target(&self) -> String {
         let mut seen_colon = false;
         let mut out = String::new();
@@ -812,6 +857,7 @@ impl ResolvesClause {
     /// True when the clause names `free` as the resolved source (the
     /// only source specced; anything else is the engine wave's E060x).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn from_free(&self) -> bool {
         let toks: Vec<_> = self
             .syntax
@@ -828,6 +874,7 @@ impl ResolvesClause {
 impl ExpectBlock {
     /// The block's fixture cases, in source order.
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn cases(&self) -> Vec<ExpectCase> {
         self.syntax
             .children()
@@ -839,12 +886,14 @@ impl ExpectBlock {
 impl ExpectCase {
     /// The case's verdict word (`pass` or `fail`): the leading ident.
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn verdict(&self) -> Option<String> {
         verb_text(&self.syntax)
     }
 
     /// The case's fixture value node (an entity-sketch `CallExpr`).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn fixture(&self) -> Option<SyntaxNode> {
         first_value_child(&self.syntax)
     }
@@ -856,6 +905,7 @@ impl WaiveBlock {
     /// `dfm(min_web_thickness)` or `Group.claim`). Token texts are
     /// concatenated verbatim (no interior spaces).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn target(&self) -> String {
         self.header_segment(false)
     }
@@ -864,6 +914,7 @@ impl WaiveBlock {
     /// (e.g. `milled.body.relief_wall`). Empty when the waiver is
     /// unscoped.
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn scope(&self) -> Option<String> {
         let s = self.header_segment(true);
         if s.is_empty() {
@@ -877,12 +928,14 @@ impl WaiveBlock {
     /// stripped), if the body declares one. Its absence is an INV-2
     /// overreach diagnostic (an unjustified concession) in lowering.
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn basis(&self) -> Option<String> {
         self.body_field_value("basis")
     }
 
     /// The `expires:` marker text, if any (regolith/12 rule 8).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn expires(&self) -> Option<String> {
         self.body_field_value("expires")
     }
@@ -891,6 +944,7 @@ impl WaiveBlock {
     /// a deviation rather than a bare waiver): any `by` keyword token in
     /// the block subtree.
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn has_evidence(&self) -> bool {
         self.syntax
             .descendants_with_tokens()
@@ -906,6 +960,7 @@ impl WaiveBlock {
     /// checks (D207: `by doc(<memo>)` resolves to an in-project memo);
     /// presence still equals [`WaiveBlock::has_evidence`].
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn evidence(&self) -> Option<String> {
         let mut seen_by = false;
         let mut out = String::new();
@@ -979,6 +1034,8 @@ impl InstExpr {
     /// instantiated (e.g. `PatternOf`), read from the head
     /// `NameRef`/`Path` child node.
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST001 reason="thin CST accessor exercised transitively by every parser/lowering test that walks this node kind; no dedicated unit test isolates the accessor itself"
     pub fn head_name(&self) -> String {
         self.syntax
             .children()
@@ -988,6 +1045,7 @@ impl InstExpr {
 
     /// The instantiation's typed argument list, if present.
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn args(&self) -> Option<GenericArgs> {
         self.syntax.children().find_map(GenericArgs::cast)
     }
@@ -995,6 +1053,7 @@ impl InstExpr {
     /// The number of top-level arguments (`PatternOf<TappedHole<M3>>`
     /// has arity 1; `Decoder<3, 8>` has arity 2).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn arity(&self) -> usize {
         self.args().map_or(0, |a| a.arity())
     }
@@ -1005,6 +1064,7 @@ impl GenericArgs {
     /// depth-1 commas + 1 when any content is present (nested `<...>`
     /// commas do not count).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn arity(&self) -> usize {
         top_level_arity(&self.syntax)
     }
@@ -1014,6 +1074,7 @@ impl GenericParams {
     /// The number of declared parameters (top-level comma count + 1 when
     /// non-empty), the arity a use site must match (INV-11).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn arity(&self) -> usize {
         top_level_arity(&self.syntax)
     }
@@ -1056,6 +1117,7 @@ impl Field {
     /// The field's name token text (the leading identifier; dotted
     /// paths are joined with `.`).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn name(&self) -> String {
         name_path_text(&self.syntax)
     }
@@ -1063,6 +1125,7 @@ impl Field {
     /// The field's value node, skipping the name/colon/tail trivia:
     /// the first non-trivia, non-`OpaqueIsland` child node.
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn value(&self) -> Option<SyntaxNode> {
         first_value_child(&self.syntax)
     }
@@ -1087,6 +1150,8 @@ impl Field {
     /// unambiguous even when the value has its own later colon
     /// (`within 5s after anomaly: op = safe`).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST001 reason="thin CST accessor exercised transitively by every parser/lowering test that walks this node kind; no dedicated unit test isolates the accessor itself"
     pub fn full_value_text(&self) -> String {
         let mut full = String::new();
         for elem in self.syntax.children_with_tokens() {
@@ -1106,6 +1171,7 @@ impl Field {
     /// (WO-80 deliverable 1): the model identifier text, or `None` when
     /// the claim carries no pin.
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn model_pin(&self) -> Option<String> {
         self.syntax
             .children()
@@ -1117,6 +1183,8 @@ impl Field {
 impl ModelPin {
     /// The pinned model identifier's text (`model=<ident>` -> `<ident>`).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST001 reason="thin CST accessor exercised transitively by every parser/lowering test that walks this node kind; no dedicated unit test isolates the accessor itself"
     pub fn model_name(&self) -> Option<String> {
         self.syntax
             .children_with_tokens()
@@ -1130,12 +1198,14 @@ impl ModelPin {
 impl BudgetStmt {
     /// The budget's name token text (dotted paths joined with `.`).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn name(&self) -> String {
         name_path_text(&self.syntax)
     }
 
     /// The budget's limit value node (see [`Field::value`]).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn value(&self) -> Option<SyntaxNode> {
         first_value_child(&self.syntax)
     }
@@ -1144,12 +1214,14 @@ impl BudgetStmt {
 impl CtorStmt {
     /// The statement's name token text (dotted paths joined with `.`).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn name(&self) -> String {
         name_path_text(&self.syntax)
     }
 
     /// The statement's value node (see [`Field::value`]).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn value(&self) -> Option<SyntaxNode> {
         first_value_child(&self.syntax)
     }
@@ -1162,6 +1234,7 @@ impl RequireClaim {
     /// here; see [`RequireClaim::sweeps`] and
     /// [`RequireClaim::all_claims`] (WO-68).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn claims(&self) -> Vec<Field> {
         self.syntax.children().filter_map(Field::cast).collect()
     }
@@ -1169,6 +1242,8 @@ impl RequireClaim {
     /// Each `forall <var> in <domain>:` BLOCK claim directly in this
     /// group's body (WO-68).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST001 reason="thin CST accessor exercised transitively by every parser/lowering test that walks this node kind; no dedicated unit test isolates the accessor itself"
     pub fn sweeps(&self) -> Vec<ForallSweepClaim> {
         self.syntax
             .children()
@@ -1183,6 +1258,8 @@ impl RequireClaim {
     /// position (WO-68: the single accessor the lowering pass uses so
     /// no claim group can silently drop a nested named claim again).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST001 reason="thin CST accessor exercised transitively by every parser/lowering test that walks this node kind; no dedicated unit test isolates the accessor itself"
     pub fn all_claims(&self) -> Vec<(Field, Option<ForallSweepClaim>)> {
         let mut out = Vec::new();
         for child in self.syntax.children() {
@@ -1200,6 +1277,7 @@ impl RequireClaim {
     /// Each `compute <name>: ...` claim line in this group's body
     /// (WO-33 D98).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn compute_claims(&self) -> Vec<ComputeField> {
         self.syntax
             .children()
@@ -1213,6 +1291,7 @@ impl ComputeField {
     /// `.`), skipping the leading `compute` word (whole-node-text +
     /// split approach, mirroring [`ComputeField::predicate_text`]).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn name(&self) -> String {
         let full = self.syntax.text().to_string();
         let after_compute = full
@@ -1230,6 +1309,7 @@ impl ComputeField {
     /// kind>` path; the `over <index domain>` tail rides the same
     /// `OpaqueIsland` sweep as any other unmodeled tail.
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn value(&self) -> Option<SyntaxNode> {
         first_value_child(&self.syntax)
     }
@@ -1241,6 +1321,7 @@ impl ComputeField {
     /// `regolith-lower::claims`, which uses the same whole-node-text +
     /// split-on-`:` approach).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn predicate_text(&self) -> String {
         let full = self.syntax.text().to_string();
         match full.split_once(':') {
@@ -1253,12 +1334,14 @@ impl ComputeField {
 impl BinExpr {
     /// The left operand.
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn lhs(&self) -> Option<SyntaxNode> {
         self.syntax.children().next()
     }
 
     /// The right operand.
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn rhs(&self) -> Option<SyntaxNode> {
         self.syntax.children().nth(1)
     }
@@ -1268,6 +1351,8 @@ impl QuantityLit {
     /// The literal's unit spelling (the `Ident` token immediately
     /// after the number).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST001 reason="thin CST accessor exercised transitively by every parser/lowering test that walks this node kind; no dedicated unit test isolates the accessor itself"
     pub fn unit_text(&self) -> Option<String> {
         self.syntax
             .children_with_tokens()
@@ -1299,6 +1384,7 @@ fn first_value_child(node: &SyntaxNode) -> Option<SyntaxNode> {
 impl Decl {
     /// The declaration keyword (`part`, `interface`, `system`, ...).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn kind_keyword(&self) -> Option<SyntaxKind> {
         self.syntax
             .children_with_tokens()
@@ -1311,6 +1397,7 @@ impl Decl {
     /// header line (before any generic-parameter `<...>` list, which
     /// this WO does not further decompose -- see the report note).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn name(&self) -> Option<String> {
         self.syntax
             .children_with_tokens()
@@ -1325,12 +1412,14 @@ impl Decl {
     /// omitted here (call [`AstNode::syntax`] and filter
     /// `OpaqueIsland` children directly to see everything).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn fields(&self) -> Vec<Field> {
         self.syntax.children().filter_map(Field::cast).collect()
     }
 
     /// The declaration's `require <Group>:` claim groups.
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn claims(&self) -> Vec<RequireClaim> {
         self.syntax
             .children()
@@ -1340,6 +1429,8 @@ impl Decl {
 
     /// The declaration's structured `budget ...:` statements.
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST001 reason="thin CST accessor exercised transitively by every parser/lowering test that walks this node kind; no dedicated unit test isolates the accessor itself"
     pub fn budgets(&self) -> Vec<BudgetStmt> {
         self.syntax
             .children()
@@ -1351,6 +1442,7 @@ impl Decl {
     /// level or nested inside a `then` scope): the rung-7 concessions
     /// this subject declares (regolith/12 sec. 3).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn waivers(&self) -> Vec<WaiveBlock> {
         self.syntax
             .descendants()
@@ -1361,6 +1453,7 @@ impl Decl {
     /// True when this is a `process` module declaration (hematite/04
     /// sec. 2A) -- the leading word is the contextual `process` ident.
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn is_process(&self) -> bool {
         self.syntax
             .children_with_tokens()
@@ -1377,6 +1470,7 @@ impl Decl {
     /// ([`Decl::name`] keeps its first-ident behavior, which lowering
     /// subjects rely on).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn process_name(&self) -> Option<String> {
         if !self.is_process() {
             return None;
@@ -1402,6 +1496,7 @@ impl Decl {
     /// A process decl's `capability:` table, if declared
     /// (hematite/02 sec. 10).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn capability(&self) -> Option<CapabilityBlock> {
         self.syntax.children().find_map(CapabilityBlock::cast)
     }
@@ -1409,6 +1504,7 @@ impl Decl {
     /// A process decl's rule-pack blocks (`dfm:`/`drc:`/`erc:`), in
     /// source order.
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn rule_packs(&self) -> Vec<RulePackBlock> {
         self.syntax
             .children()
@@ -1421,6 +1517,7 @@ impl MediumDecl {
     /// The medium's name: the first `Ident` after the leading contextual
     /// `medium` word (`medium ShopAir: gas` -> `ShopAir`).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn name(&self) -> Option<String> {
         header_ident_after_keyword(&self.syntax)
     }
@@ -1428,6 +1525,7 @@ impl MediumDecl {
     /// The phase word (`liquid`/`gas`): the `Ident` after the header
     /// `:` (fluorite/02 sec. 1).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn phase(&self) -> Option<String> {
         let mut toks = self
             .syntax
@@ -1444,24 +1542,28 @@ impl FlownetDecl {
     /// The flownet's name: the first `Ident` after the leading contextual
     /// `flownet` word (`flownet AirDrop(medium=ShopAir):` -> `AirDrop`).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn name(&self) -> Option<String> {
         header_ident_after_keyword(&self.syntax)
     }
 
     /// The `edges:` block, if declared.
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn edges(&self) -> Option<EdgesBlock> {
         self.syntax.children().find_map(EdgesBlock::cast)
     }
 
     /// The `states:` block, if declared.
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn states(&self) -> Option<StatesBlock> {
         self.syntax.children().find_map(StatesBlock::cast)
     }
 
     /// The flownet's `reference:`/`nodes:` header fields.
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn fields(&self) -> Vec<Field> {
         self.syntax.children().filter_map(Field::cast).collect()
     }
@@ -1474,6 +1576,7 @@ impl RequireDecl {
     /// [`RequireDecl::all_claims`] for claims nested inside a `forall
     /// <var> in <domain>:` block (WO-68).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn claims(&self) -> Vec<Field> {
         self.syntax.children().filter_map(Field::cast).collect()
     }
@@ -1481,6 +1584,8 @@ impl RequireDecl {
     /// Each `forall <var> in <domain>:` BLOCK claim directly in this
     /// group's body (WO-68), matching [`RequireClaim::sweeps`].
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST001 reason="thin CST accessor exercised transitively by every parser/lowering test that walks this node kind; no dedicated unit test isolates the accessor itself"
     pub fn sweeps(&self) -> Vec<ForallSweepClaim> {
         self.syntax
             .children()
@@ -1495,6 +1600,8 @@ impl RequireDecl {
     /// top-level require-group lowering pass (calcite frame claims,
     /// fluid claims, top-level cost claims) uses (WO-68).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST001 reason="thin CST accessor exercised transitively by every parser/lowering test that walks this node kind; no dedicated unit test isolates the accessor itself"
     pub fn all_claims(&self) -> Vec<(Field, Option<ForallSweepClaim>)> {
         let mut out = Vec::new();
         for child in self.syntax.children() {
@@ -1513,6 +1620,7 @@ impl RequireDecl {
 impl EdgesBlock {
     /// Every declared edge in this block, in source order.
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn edges(&self) -> Vec<EdgeStmt> {
         self.syntax.children().filter_map(EdgeStmt::cast).collect()
     }
@@ -1521,6 +1629,7 @@ impl EdgesBlock {
 impl EdgeStmt {
     /// The edge's name (`tank`, `reg`, ...): its leading `Ident` path.
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn name(&self) -> String {
         name_path_text(&self.syntax)
     }
@@ -1528,6 +1637,7 @@ impl EdgeStmt {
     /// The edge's constructor value node (the `CallExpr`), skipping the
     /// trailing [`SensePair`] (see [`Field::value`]).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn value(&self) -> Option<SyntaxNode> {
         first_value_child(&self.syntax)
     }
@@ -1535,6 +1645,7 @@ impl EdgeStmt {
     /// The edge's trailing `(<a> -> <b>)` positive-sense naming pair,
     /// if present (fluorite/02 sec. 4).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn sense(&self) -> Option<SensePair> {
         self.syntax.children().find_map(SensePair::cast)
     }
@@ -1545,6 +1656,7 @@ impl SensePair {
     /// order (`(a -> b)` -> `["a", "b"]`; a malformed/partial pair may
     /// yield fewer than two).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn names(&self) -> Vec<String> {
         self.syntax
             .descendants_with_tokens()
@@ -1556,12 +1668,14 @@ impl SensePair {
 
     /// The "from" (positive-sense source) name, if present.
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn from_name(&self) -> Option<String> {
         self.names().into_iter().next()
     }
 
     /// The "to" (positive-sense sink) name, if present.
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn to_name(&self) -> Option<String> {
         self.names().into_iter().nth(1)
     }
@@ -1574,6 +1688,7 @@ impl DomainSet {
     /// every token other than the delimiting `{`/`}` and the `,`
     /// separators is a label.
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn items(&self) -> Vec<String> {
         self.syntax
             .descendants_with_tokens()
@@ -1590,6 +1705,7 @@ impl DomainSet {
 impl StatesBlock {
     /// Every declared state line in this block, in source order.
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn states(&self) -> Vec<StateStmt> {
         self.syntax.children().filter_map(StateStmt::cast).collect()
     }
@@ -1601,6 +1717,7 @@ impl StateStmt {
     /// `state <name> in {...}`); `None` for an `event` line or any
     /// shape the grammar leaves untyped.
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn domain(&self) -> Option<DomainSet> {
         self.syntax.children().find_map(DomainSet::cast)
     }
@@ -1610,12 +1727,14 @@ impl HarnessDecl {
     /// The harness's name: the first `Ident` after the leading
     /// contextual `harness` word (`harness MainLoom:` -> `MainLoom`).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn name(&self) -> Option<String> {
         header_ident_after_keyword(&self.syntax)
     }
 
     /// Every declared run in this harness, in source order.
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn runs(&self) -> Vec<RunStmt> {
         self.syntax.children().filter_map(RunStmt::cast).collect()
     }
@@ -1623,6 +1742,7 @@ impl HarnessDecl {
     /// Every declared connector environment class in this harness, in
     /// source order.
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn environments(&self) -> Vec<EnvironmentStmt> {
         self.syntax
             .children()
@@ -1635,6 +1755,7 @@ impl RunStmt {
     /// The run's name: the first `Ident` after the leading contextual
     /// `run` word (`run batt_to_kill: ...` -> `batt_to_kill`).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn name(&self) -> Option<String> {
         header_ident_after_keyword(&self.syntax)
     }
@@ -1643,18 +1764,22 @@ impl RunStmt {
     /// elaboration (WO-34 deliverable 2) to re-tokenize the `from
     /// <ep> to <ep>` endpoint pair this grammar records whole.
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST001 reason="thin CST accessor exercised transitively by every parser/lowering test that walks this node kind; no dedicated unit test isolates the accessor itself"
     pub fn header_text(&self) -> String {
         header_line_text(&self.syntax)
     }
 
     /// The run's routed-PATH line, if declared.
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn along(&self) -> Option<AlongClause> {
         self.syntax.children().find_map(AlongClause::cast)
     }
 
     /// The run's `bundle <group>` co-routing line, if declared.
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn bundle(&self) -> Option<BundleClause> {
         self.syntax.children().find_map(BundleClause::cast)
     }
@@ -1665,6 +1790,7 @@ impl AlongClause {
     /// to re-tokenize as either a waypoint ref list or the planner-free
     /// marker (see the [`SyntaxKind::AlongClause`] doc comment).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn text(&self) -> String {
         header_line_text(&self.syntax)
     }
@@ -1672,6 +1798,7 @@ impl AlongClause {
     /// Whether this line's recorded text spells the planner-routed
     /// marker (`route: free`, with or without a leading `along`).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn is_route_free(&self) -> bool {
         let t = self.text();
         let t = t.strip_prefix("along").unwrap_or(&t).trim();
@@ -1684,6 +1811,7 @@ impl AlongClause {
 impl BundleClause {
     /// The bundle group name: the text after the leading `bundle` word.
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn group(&self) -> Option<String> {
         let t = header_line_text(&self.syntax);
         let rest = t.strip_prefix("bundle")?.trim();
@@ -1695,6 +1823,7 @@ impl EnvironmentStmt {
     /// The environment class's name: the first `Ident` after the
     /// leading contextual `environment` word.
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn name(&self) -> Option<String> {
         header_ident_after_keyword(&self.syntax)
     }
@@ -1702,6 +1831,7 @@ impl EnvironmentStmt {
     /// The declared `[lo, hi]` bound, if the value classified as the
     /// existing bracket grammar ([`SyntaxKind::IntervalExpr`]).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn bound(&self) -> Option<SyntaxNode> {
         self.syntax
             .children()
@@ -1712,18 +1842,21 @@ impl EnvironmentStmt {
 impl TestDecl {
     /// The test's name (`test spar_gust_case:` -> `spar_gust_case`).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn name(&self) -> Option<String> {
         header_ident_after_keyword(&self.syntax)
     }
 
     /// The test's `scenario:` block, if declared.
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn scenario(&self) -> Option<ScenarioBlock> {
         self.syntax.children().find_map(ScenarioBlock::cast)
     }
 
     /// The test's `expect:` block, if declared.
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn expect(&self) -> Option<TestExpectBlock> {
         self.syntax.children().find_map(TestExpectBlock::cast)
     }
@@ -1734,6 +1867,7 @@ impl ScenarioBlock {
     /// assertions expressed as ordinary [`Field`]s over the value
     /// grammar -- see `ctors()` for the `=` shape).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn fields(&self) -> Vec<Field> {
         self.syntax.children().filter_map(Field::cast).collect()
     }
@@ -1741,12 +1875,14 @@ impl ScenarioBlock {
     /// The scenario's rung-1 assertion / `seed =` / `budget_evals =`
     /// lines (`path = value`, the [`CtorStmt`] shape).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn ctors(&self) -> Vec<CtorStmt> {
         self.syntax.children().filter_map(CtorStmt::cast).collect()
     }
 
     /// The scenario's rung-2 pin blocks (`locked:` lines).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn locked_blocks(&self) -> Vec<LockedBlock> {
         self.syntax
             .children()
@@ -1758,6 +1894,7 @@ impl ScenarioBlock {
 impl TestExpectBlock {
     /// Every expectation case in this block, in source order.
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn cases(&self) -> Vec<TestExpectCase> {
         self.syntax
             .children()
@@ -1769,6 +1906,7 @@ impl TestExpectBlock {
 impl TestExpectCase {
     /// The line's significant text (comment stripped).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn text(&self) -> String {
         header_line_text(&self.syntax)
     }
@@ -1778,6 +1916,7 @@ impl TestExpectCase {
     /// or `None` for an unrecognized form (the negative-fixture case --
     /// the CST still records the line whole; only elaboration flags it).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn form(&self) -> Option<String> {
         self.text().split_whitespace().next().map(str::to_string)
     }
@@ -1789,6 +1928,7 @@ impl TestExpectCase {
     /// recorded string here (the WO-05 header-rest idiom) since the
     /// five shapes do not unify under one field/ctor production.
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn tail(&self) -> Option<String> {
         let text = self.text();
         let form = self.form()?;
@@ -1805,6 +1945,8 @@ impl TestExpectCase {
 /// significant line without a second copy of this helper (NO
 /// DUPLICATION).
 #[must_use]
+// frob:doc docs/modules/regolith-syntax.md#ast
+// frob:waive TEST001 reason="thin CST accessor exercised transitively by every parser/lowering test that walks this node kind; no dedicated unit test isolates the accessor itself"
 pub fn header_line_text(node: &SyntaxNode) -> String {
     let text = node.text().to_string();
     let first = text.lines().next().unwrap_or("");
@@ -1832,6 +1974,7 @@ fn header_ident_after_keyword(node: &SyntaxNode) -> Option<String> {
 impl File {
     /// The import statements at the head of the file.
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn imports(&self) -> Vec<ImportStmt> {
         self.syntax
             .children()
@@ -1841,12 +1984,14 @@ impl File {
 
     /// The top-level declarations of the file.
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn decls(&self) -> Vec<Decl> {
         self.syntax.children().filter_map(Decl::cast).collect()
     }
 
     /// The top-level `medium` declarations (fluorite/02 sec. 1).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn mediums(&self) -> Vec<MediumDecl> {
         self.syntax
             .children()
@@ -1856,6 +2001,7 @@ impl File {
 
     /// The top-level `flownet` declarations (fluorite/02 sec. 4).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn flownets(&self) -> Vec<FlownetDecl> {
         self.syntax
             .children()
@@ -1866,6 +2012,7 @@ impl File {
     /// The top-level `require` claim groups in a `.fluo` file
     /// (fluorite/02 sec. 6).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn fluid_requires(&self) -> Vec<RequireDecl> {
         self.syntax
             .children()
@@ -1875,6 +2022,8 @@ impl File {
 
     /// The top-level `harness` declarations (D99, WO-34 deliverable 1).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST001 reason="thin CST accessor exercised transitively by every parser/lowering test that walks this node kind; no dedicated unit test isolates the accessor itself"
     pub fn harnesses(&self) -> Vec<HarnessDecl> {
         self.syntax
             .children()
@@ -1884,30 +2033,39 @@ impl File {
 
     /// The top-level `site` declarations (calcite/02 sec. 1).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn sites(&self) -> Vec<SiteDecl> {
         self.syntax.children().filter_map(SiteDecl::cast).collect()
     }
 
     /// The top-level `grid` declarations (calcite/02 sec. 1).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST001 reason="thin CST accessor exercised transitively by every parser/lowering test that walks this node kind; no dedicated unit test isolates the accessor itself"
     pub fn grids(&self) -> Vec<GridDecl> {
         self.syntax.children().filter_map(GridDecl::cast).collect()
     }
 
     /// The top-level `level` declarations (calcite/02 sec. 1).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST001 reason="thin CST accessor exercised transitively by every parser/lowering test that walks this node kind; no dedicated unit test isolates the accessor itself"
     pub fn levels(&self) -> Vec<LevelDecl> {
         self.syntax.children().filter_map(LevelDecl::cast).collect()
     }
 
     /// The top-level `space` declarations (calcite/02 sec. 2).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST001 reason="thin CST accessor exercised transitively by every parser/lowering test that walks this node kind; no dedicated unit test isolates the accessor itself"
     pub fn spaces(&self) -> Vec<SpaceDecl> {
         self.syntax.children().filter_map(SpaceDecl::cast).collect()
     }
 
     /// The top-level `adjacent` declarations (calcite/02 sec. 2).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST001 reason="thin CST accessor exercised transitively by every parser/lowering test that walks this node kind; no dedicated unit test isolates the accessor itself"
     pub fn adjacents(&self) -> Vec<AdjacentDecl> {
         self.syntax
             .children()
@@ -1917,6 +2075,8 @@ impl File {
 
     /// The top-level `access` blocks (calcite/02 sec. 2).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST001 reason="thin CST accessor exercised transitively by every parser/lowering test that walks this node kind; no dedicated unit test isolates the accessor itself"
     pub fn accesses(&self) -> Vec<AccessDecl> {
         self.syntax
             .children()
@@ -1926,6 +2086,8 @@ impl File {
 
     /// The top-level `circulation` declarations (calcite/02 sec. 3).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST001 reason="thin CST accessor exercised transitively by every parser/lowering test that walks this node kind; no dedicated unit test isolates the accessor itself"
     pub fn circulations(&self) -> Vec<CirculationDecl> {
         self.syntax
             .children()
@@ -1935,6 +2097,7 @@ impl File {
 
     /// The top-level `member` declarations (calcite/02 sec. 4).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn members(&self) -> Vec<MemberDecl> {
         self.syntax
             .children()
@@ -1944,6 +2107,8 @@ impl File {
 
     /// The top-level `structure` declarations (calcite/02 sec. 6).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST001 reason="thin CST accessor exercised transitively by every parser/lowering test that walks this node kind; no dedicated unit test isolates the accessor itself"
     pub fn structures(&self) -> Vec<StructureDecl> {
         self.syntax
             .children()
@@ -1953,6 +2118,8 @@ impl File {
 
     /// The top-level `loads` blocks (calcite/02 sec. 7).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST001 reason="thin CST accessor exercised transitively by every parser/lowering test that walks this node kind; no dedicated unit test isolates the accessor itself"
     pub fn loads_blocks(&self) -> Vec<LoadsDecl> {
         self.syntax.children().filter_map(LoadsDecl::cast).collect()
     }
@@ -1960,6 +2127,7 @@ impl File {
     /// The top-level `test` declarations (WO-83; charter 37): every
     /// cross-track design test in this file.
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn tests(&self) -> Vec<TestDecl> {
         self.syntax.children().filter_map(TestDecl::cast).collect()
     }
@@ -1968,6 +2136,7 @@ impl File {
 impl SiteDecl {
     /// The site's name (`site Riverside:` -> `Riverside`).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn name(&self) -> Option<String> {
         header_ident_after_keyword(&self.syntax)
     }
@@ -1976,6 +2145,7 @@ impl SiteDecl {
 impl GridDecl {
     /// The grid's name (`grid cols: A, B, C, D spacing 7.2m` -> `cols`).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn name(&self) -> Option<String> {
         header_ident_after_keyword(&self.syntax)
     }
@@ -1984,6 +2154,7 @@ impl GridDecl {
 impl LevelDecl {
     /// The level's name (`level ground: 0m` -> `ground`).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn name(&self) -> Option<String> {
         header_ident_after_keyword(&self.syntax)
     }
@@ -1992,6 +2163,7 @@ impl LevelDecl {
 impl SpaceDecl {
     /// The space's name (`space Lobby:` -> `Lobby`).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn name(&self) -> Option<String> {
         header_ident_after_keyword(&self.syntax)
     }
@@ -1999,6 +2171,7 @@ impl SpaceDecl {
     /// The space's header/body fields (`area:`, `occupancy:`, `at:`,
     /// `bounded_by`, `offers:`).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn fields(&self) -> Vec<Field> {
         self.syntax.children().filter_map(Field::cast).collect()
     }
@@ -2008,6 +2181,8 @@ impl AccessDecl {
     /// Every declared opening in this `access:` block, in source order
     /// (the same [`EdgeStmt`] shape a flownet `edges:` block types).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
+    // frob:waive TEST001 reason="thin CST accessor exercised transitively by every parser/lowering test that walks this node kind; no dedicated unit test isolates the accessor itself"
     pub fn openings(&self) -> Vec<EdgeStmt> {
         self.syntax.children().filter_map(EdgeStmt::cast).collect()
     }
@@ -2016,6 +2191,7 @@ impl AccessDecl {
 impl CirculationDecl {
     /// The circulation net's name (`circulation Egress:` -> `Egress`).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn name(&self) -> Option<String> {
         header_ident_after_keyword(&self.syntax)
     }
@@ -2024,6 +2200,7 @@ impl CirculationDecl {
     /// plain comma-list fields at this front-end layer, calcite/02
     /// sec. 3).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn fields(&self) -> Vec<Field> {
         self.syntax.children().filter_map(Field::cast).collect()
     }
@@ -2032,6 +2209,7 @@ impl CirculationDecl {
 impl MemberDecl {
     /// The member's name (`member G1: beam` -> `G1`).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn name(&self) -> Option<String> {
         header_ident_after_keyword(&self.syntax)
     }
@@ -2039,6 +2217,7 @@ impl MemberDecl {
     /// The member's `section:`/`material:` fields plus its `from ... to
     /// ...` anchor line, recorded as ordinary generic statements.
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn fields(&self) -> Vec<Field> {
         self.syntax.children().filter_map(Field::cast).collect()
     }
@@ -2047,12 +2226,14 @@ impl MemberDecl {
 impl StructureDecl {
     /// The structure's name (`structure MainFrame:` -> `MainFrame`).
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn name(&self) -> Option<String> {
         header_ident_after_keyword(&self.syntax)
     }
 
     /// The `support:`/`members:` header fields.
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn fields(&self) -> Vec<Field> {
         self.syntax.children().filter_map(Field::cast).collect()
     }
@@ -2061,6 +2242,7 @@ impl StructureDecl {
     /// load-transfer edges, typed identically to a flownet `edges:`
     /// block.
     #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
     pub fn transfers(&self) -> Option<EdgesBlock> {
         self.syntax.children().find_map(EdgesBlock::cast)
     }
@@ -2072,6 +2254,10 @@ mod tests {
     use crate::syntax_kind::SyntaxKind;
 
     #[test]
+    // frob:tests crates/regolith-syntax/src/ast.rs::MediumDecl.phase kind="unit"
+    // frob:tests crates/regolith-syntax/src/ast.rs::File.decls kind="unit"
+    // frob:tests crates/regolith-syntax/src/ast.rs::File.mediums kind="unit"
+    // frob:tests crates/regolith-syntax/src/ast.rs::File.fluid_requires kind="unit"
     fn fluorite_surface_exposes_typed_medium_flownet_and_require() {
         // fluorite/02 sec. 1/4/6: medium + flownet(edges/states) +
         // top-level require, all as typed CST nodes with lossless
@@ -2136,6 +2322,9 @@ mod tests {
     }
 
     #[test]
+    // frob:tests crates/regolith-syntax/src/ast.rs::WaiveBlock.expires kind="unit"
+    // frob:tests crates/regolith-syntax/src/ast.rs::WaiveBlock.has_evidence kind="unit"
+    // frob:tests crates/regolith-syntax/src/ast.rs::Decl.waivers kind="unit"
     fn waive_block_exposes_target_scope_basis_and_evidence() {
         let src = "part p:\n    waive dfm(min_web) on milled.wall:\n        basis: \"qual unit VR-081\"\n        by test(vr081)\n        expires: 2027-01-01\n";
         let file_path = camino::Utf8PathBuf::from("t.hema");
@@ -2166,6 +2355,9 @@ mod tests {
     }
 
     #[test]
+    // frob:tests crates/regolith-syntax/src/ast.rs::SensePair.from_name kind="unit"
+    // frob:tests crates/regolith-syntax/src/ast.rs::SensePair.to_name kind="unit"
+    // frob:tests crates/regolith-syntax/src/ast.rs::DomainSet.items kind="unit"
     fn flownet_edge_sense_and_state_domain_are_readable() {
         let src = "flownet Loop(medium=Water):\n\
                    \x20\x20\x20\x20reference: tank_in\n\
@@ -2201,6 +2393,7 @@ mod tests {
     /// and every single-name field line parse cleanly with no parse
     /// diagnostics.
     #[test]
+    // frob:tests crates/regolith-syntax/src/ast.rs::Decl.kind_keyword kind="unit"
     fn fluid_port_interface_reuses_existing_machinery() {
         let src = "interface FluidPort<m: medium, dia: length>:\n\
                    \x20\x20\x20\x20flow:\n\

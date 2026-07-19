@@ -6,6 +6,7 @@ use super::{codes, ClaimForm, Diagnostic, Field, LabeledSpan, Window};
 
 /// The outcome of scanning a claim predicate for top-level comparators
 /// (WO-26 D103).
+// frob:doc docs/modules/regolith-lower.md#claims
 pub(crate) enum GeneralComparison {
     /// Exactly one top-level comparator with a non-empty left side.
     One {
@@ -27,6 +28,8 @@ pub(crate) enum GeneralComparison {
 /// Scan `predicate` for `<`/`<=`/`>`/`>=` at bracket depth 0. An `->`
 /// arrow's `>` is not a comparator; neither is anything inside
 /// `(...)`/`[...]`/`{...}`.
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn split_general_comparison(predicate: &str) -> GeneralComparison {
     let bytes = predicate.as_bytes();
     let mut depth = 0i32;
@@ -75,6 +78,8 @@ pub(crate) fn split_general_comparison(predicate: &str) -> GeneralComparison {
 /// `comms.pa_out` and `antenna.gain`; the `path_loss(...)` CALL term
 /// and numeric-leading terms are not entity refs). The side's trailing
 /// window/quantifier clause (` during ...`, ` until ...`) is ignored.
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn expression_ref_terms(side: &str) -> Vec<String> {
     // Cut the trailing window clause off at depth 0.
     let mut text = side;
@@ -109,6 +114,8 @@ pub(crate) fn expression_ref_terms(side: &str) -> Vec<String> {
 }
 
 /// The byte index of `needle` in `haystack` at bracket depth 0, if any.
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn find_top_level(haystack: &str, needle: &str) -> Option<usize> {
     let bytes = haystack.as_bytes();
     let mut depth = 0i32;
@@ -127,6 +134,8 @@ pub(crate) fn find_top_level(haystack: &str, needle: &str) -> Option<usize> {
 /// entity-field reference -- the D103 shape; deeper paths like
 /// `boundary.orbit.slant_max` name nested boundary structure this
 /// text-level resolver does not walk, an honest recorded narrowing).
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn is_dotted_ref(term: &str) -> bool {
     let Some((head, field)) = term.split_once('.') else {
         return false;
@@ -143,6 +152,7 @@ pub(crate) fn is_dotted_ref(term: &str) -> bool {
 
 /// The result of attempting to recognize `predicate` as one of the
 /// D102 temporal claim-form calls.
+// frob:doc docs/modules/regolith-lower.md#claims
 pub(crate) enum TemporalOutcome {
     /// Recognized and lowered to a typed `ClaimForm`.
     Form(ClaimForm),
@@ -156,10 +166,13 @@ pub(crate) enum TemporalOutcome {
 
 /// The comparator tokens a REDUCTION form's trailing text may lead
 /// with, longest first (`<=`/`>=` before `<`/`>`).
+// frob:doc docs/modules/regolith-lower.md#claims
 pub(crate) const TEMPORAL_COMPARATORS: [&str; 4] = ["<=", ">=", "<", ">"];
 
 /// Split `after` (the text following a recognized call's closing
 /// paren) into `(op, rhs)` if it leads with a comparator, else `None`.
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn split_trailing_comparator(after: &str) -> Option<(String, String)> {
     let trimmed = after.trim();
     for comp in TEMPORAL_COMPARATORS {
@@ -184,6 +197,8 @@ pub(crate) fn split_trailing_comparator(after: &str) -> Option<(String, String)>
 /// before. `stays_within` types both the un-windowed and windowed
 /// forms (WO-54 rider: the schema's `ClaimForm::StaysWithin` now
 /// carries an optional `window` field).
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn parse_temporal_form(
     subject: &str,
     predicate: &str,
@@ -218,6 +233,8 @@ pub(crate) fn parse_temporal_form(
 /// [`parse_temporal_form`]'s doc comment for the scope this narrows to
 /// (a `peak(x, at=<location>)` spatial tag, or `rms` with no `band=`,
 /// falls through as `NotTemporal`).
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn parse_reduction_form(
     subject: &str,
     name: &str,
@@ -310,6 +327,8 @@ pub(crate) fn parse_reduction_form(
 
 /// D102 CONTAINMENT form `settles(x, to=tol, within d after e)`: self-
 /// contained, NO trailing comparator allowed.
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn parse_settles_form(
     subject: &str,
     args: &str,
@@ -370,6 +389,8 @@ pub(crate) fn parse_settles_form(
 /// `cell_ovp(4.2V, 2)`) is a hash-pinned reference whose text is
 /// never rewritten -- its containment semantics stay the recorded
 /// payload-channel residual.
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn resolve_scalar_mask_units(mask: &str) -> String {
     let trimmed = mask.trim();
     for head in ["floor(", "ceiling("] {
@@ -394,6 +415,8 @@ pub(crate) fn resolve_scalar_mask_units(mask: &str) -> String {
 /// through the schema's `window` field (the dune_buggy/buck_converter
 /// corpus shape); the WO-26 D102 residual recording it as untyped is
 /// closed.
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn parse_stays_within_form(
     subject: &str,
     args: &str,

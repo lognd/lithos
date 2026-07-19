@@ -20,6 +20,8 @@ use super::{
 /// lookup on top of the pure AST-sourced refs (D128: `from=` edges
 /// extract in-pipeline when a matching realized-geometry record was
 /// supplied; otherwise they keep the deferred `GeomExtract` selector).
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn push_fluid_obligations(
     out: &mut Vec<Obligation>,
     diagnostics: &mut Vec<Diagnostic>,
@@ -80,6 +82,8 @@ pub(crate) fn push_fluid_obligations(
 /// flownet as its subject. A non-fluid predicate in the same group
 /// (none exist in v1's grammar, but the check stays honest rather than
 /// assuming) is skipped, not misfiled as a flownet obligation.
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn push_fluid_obligation(
     out: &mut Vec<Obligation>,
     diagnostics: &mut Vec<Diagnostic>,
@@ -242,6 +246,8 @@ pub(crate) fn push_fluid_obligation(
 /// it never fires on a longer identifier (`givenness`), and only the
 /// FIRST occurrence is treated as the suffix start (a given expression
 /// naming `given` again would be pathological and is left to the value).
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn split_claim_suffix_givens(predicate: &str) -> (String, Vec<String>) {
     let mut search_from = 0usize;
     let mut idx = None;
@@ -298,6 +304,8 @@ pub(crate) fn split_claim_suffix_givens(predicate: &str) -> (String, Vec<String>
 /// (the shapes `resolve_givens`/`_parse_interval` accept on the Python
 /// side) rather than a bare regime-selector identifier. Matches a
 /// leading sign/digit/decimal point or an opening interval bracket.
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn value_is_quantity(value: &str) -> bool {
     let trimmed = value.trim_start_matches(['+', '-']).trim_start();
     trimmed

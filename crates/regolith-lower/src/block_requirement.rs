@@ -40,6 +40,7 @@ const PROMISES_ARG: &str = "promises";
 /// order (AD-6). A resource entry without a `promises:` argument (e.g. a
 /// bare peripheral demand vector) contributes nothing -- absence is
 /// absence, never an empty placeholder.
+// frob:doc docs/modules/regolith-lower.md#block-requirement
 #[must_use]
 pub fn build_block_requirements(files: &[ParsedFile]) -> Vec<BlockRequirement> {
     let span = tracing::info_span!("lower.block_requirement");
@@ -267,6 +268,7 @@ mod tests {
         }]
     }
 
+    // frob:tests crates/regolith-lower/src/block_requirement.rs::build_block_requirements kind="unit"
     #[test]
     fn executor_promise_becomes_a_primary_demand() {
         let src = "architecture for FlightCore:\n    resources:\n        cpu0: executor(promises: >= 20Mops f32 sustained)\n";

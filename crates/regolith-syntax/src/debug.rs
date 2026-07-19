@@ -9,6 +9,7 @@ use std::fmt::Write as _;
 use camino::Utf8PathBuf;
 
 /// The pipeline stage to dump.
+// frob:doc docs/modules/regolith-syntax.md#debug
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Stage {
     /// Raw + layout token stream.
@@ -21,6 +22,7 @@ pub enum Stage {
 
 /// Render `stage` of parsing `source` (belonging to `file`) as a stable
 /// plain-text dump.
+// frob:doc docs/modules/regolith-syntax.md#debug
 #[must_use]
 pub fn dump(stage: Stage, source: &str, file: &Utf8PathBuf) -> String {
     match stage {
@@ -80,6 +82,7 @@ mod tests {
     use super::{dump, Stage};
     use camino::Utf8PathBuf;
 
+    // frob:tests crates/regolith-syntax/src/debug.rs::dump kind="unit"
     #[test]
     fn tokens_dump_is_deterministic() {
         let file = Utf8PathBuf::from("t.hema");

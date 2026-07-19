@@ -48,6 +48,7 @@ use crate::output::ParsedFile;
 /// The `lower.programs` pass output: the per-part programs plus the
 /// named projection/cavity diagnostics (values, AD-7).
 #[derive(Debug, Clone, Default)]
+// frob:doc docs/modules/regolith-lower.md#feature-program
 pub struct ProgramsReport {
     /// One program per declaration whose `then:` scopes construct at
     /// least one feature op (absence is absence, never an empty
@@ -62,6 +63,7 @@ pub struct ProgramsReport {
 /// every file, in sorted-file then source-decl order (AD-6), plus the
 /// WO-51 projection diagnostics.
 #[must_use]
+// frob:doc docs/modules/regolith-lower.md#feature-program
 pub fn build_feature_programs(files: &[ParsedFile]) -> ProgramsReport {
     let span = tracing::info_span!("lower.programs");
     let _enter = span.enter();
@@ -200,6 +202,8 @@ fn build_decl_program(
 /// profile name (the promotion's input; consumed once per referenced
 /// profile).
 #[must_use]
+// frob:doc docs/modules/regolith-lower.md#feature-program
+// frob:waive TEST001 reason="internal pass-pipeline helper exercised transitively through the crate's lower()/lower_and_discharge() pipeline tests; no isolated unit test calls it directly"
 pub fn profile_walks(files: &[ParsedFile]) -> IndexMap<String, Walk> {
     let mut out = IndexMap::new();
     for pf in files {
@@ -717,6 +721,7 @@ mod tests {
     }
 
     #[test]
+    // frob:tests crates/regolith-lower/src/feature_program.rs::build_feature_programs kind="unit"
     fn bore_and_bend_become_cause_tagged_feature_ops() {
         let src = "part p:\n    stage s1:\n        then:\n            pilot = Bore(dia 28mm, depth=12mm)\n    stage s2:\n        then:\n            flange = Bend(edge=cut.top, angle=90deg, radius=free)\n";
         let files = parsed(src);

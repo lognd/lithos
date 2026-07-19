@@ -77,6 +77,7 @@ const MALFORMED_IN_BODY: DiagCode = DiagCode::new(Family::Parse, 93);
 /// The result of parsing one source file: a lossless green tree plus
 /// any diagnostics. A parse ALWAYS produces a tree (error-resilient);
 /// diagnostics are data, not failure (AD-7).
+// frob:doc docs/modules/regolith-syntax.md#parser
 #[derive(Debug, Clone)]
 pub struct Parse {
     green: GreenNode,
@@ -85,6 +86,7 @@ pub struct Parse {
 
 impl Parse {
     /// The typed root node of the parse.
+    // frob:doc docs/modules/regolith-syntax.md#parser
     #[must_use]
     pub fn syntax(&self) -> SyntaxNode {
         SyntaxNode::new_root(self.green.clone())
@@ -92,6 +94,7 @@ impl Parse {
 
     /// Diagnostics collected during parsing (may be non-empty even for a
     /// usable tree).
+    // frob:doc docs/modules/regolith-syntax.md#parser
     #[must_use]
     pub fn diagnostics(&self) -> &[Diagnostic] {
         &self.diagnostics
@@ -103,6 +106,7 @@ impl Parse {
 /// Runs lex -> layout -> parse -> L1 static checks (`checks::run`).
 /// The `file` path anchors diagnostic spans. Never panics on any input
 /// (the fuzz invariant, AD-3).
+// frob:doc docs/modules/regolith-syntax.md#parser
 #[must_use]
 pub fn parse(source: &str, file: &Utf8PathBuf) -> Parse {
     let raw = lex(source);
@@ -2904,6 +2908,7 @@ mod tests {
             .to_path_buf()
     }
 
+    // frob:tests crates/regolith-syntax/src/parser.rs::Parse.syntax kind="unit"
     #[test]
     fn empty_file_parses() {
         let file = Utf8PathBuf::from("empty.hema");
@@ -3028,6 +3033,8 @@ mod tests {
         assert!(dump.contains("Field"));
     }
 
+    // frob:tests crates/regolith-syntax/src/ast.rs::RequireClaim.compute_claims kind="unit"
+    // frob:tests crates/regolith-syntax/src/ast.rs::ComputeField.predicate_text kind="unit"
     #[test]
     fn compute_claim_parses_structurally() {
         use crate::ast::AstNode as _;
@@ -3577,6 +3584,9 @@ mod tests {
     /// lines are typed `WorkloadStmt`s, and a trailing `realizes` clause
     /// nests as a typed `RealizesStmt` -- neither degrades to
     /// `OpaqueIsland` (cuprite/05 sec. 1; EOPEN-15).
+    // frob:tests crates/regolith-syntax/src/ast.rs::WorkloadsBlock.workloads kind="unit"
+    // frob:tests crates/regolith-syntax/src/ast.rs::WorkloadStmt.kind_word kind="unit"
+    // frob:tests crates/regolith-syntax/src/ast.rs::WorkloadStmt.params kind="unit"
     #[test]
     fn workloads_block_and_realizes_are_typed() {
         use crate::ast::{AstNode, WorkloadsBlock};
@@ -3644,6 +3654,17 @@ mod tests {
     /// diagnostics -- capability table, dfm block, rules, forall,
     /// resolves-from-free, per/why fields, and expect cases -- and the
     /// AST accessors round-trip every promoted shape.
+    // frob:tests crates/regolith-syntax/src/ast.rs::RuleDecl.advise kind="unit"
+    // frob:tests crates/regolith-syntax/src/ast.rs::RuleDecl.why kind="unit"
+    // frob:tests crates/regolith-syntax/src/ast.rs::ForallClause.var kind="unit"
+    // frob:tests crates/regolith-syntax/src/ast.rs::ForallClause.query_text kind="unit"
+    // frob:tests crates/regolith-syntax/src/ast.rs::ForallSweepClaim.var kind="unit"
+    // frob:tests crates/regolith-syntax/src/ast.rs::ResolvesClause.from_free kind="unit"
+    // frob:tests crates/regolith-syntax/src/ast.rs::ExpectBlock.cases kind="unit"
+    // frob:tests crates/regolith-syntax/src/ast.rs::Decl.is_process kind="unit"
+    // frob:tests crates/regolith-syntax/src/ast.rs::Decl.process_name kind="unit"
+    // frob:tests crates/regolith-syntax/src/ast.rs::Decl.rule_packs kind="unit"
+    // frob:tests crates/regolith-syntax/src/ast.rs::TestExpectBlock.cases kind="unit"
     #[test]
     fn process_pack_parses_typed() {
         use crate::ast::{AstNode, File};
@@ -3886,6 +3907,9 @@ mod tests {
     /// see the `AlongClause` doc comment), a `bundle` line per run, and
     /// a top-level `environment` connector-class line -- parses to the
     /// typed nodes, byte-lossless, with no diagnostics.
+    // frob:tests crates/regolith-syntax/src/ast.rs::HarnessDecl.environments kind="unit"
+    // frob:tests crates/regolith-syntax/src/ast.rs::RunStmt.along kind="unit"
+    // frob:tests crates/regolith-syntax/src/ast.rs::AlongClause.is_route_free kind="unit"
     #[test]
     fn harness_block_is_typed_and_lossless() {
         let file = Utf8PathBuf::from("t.cupr");
@@ -4021,6 +4045,11 @@ mod tests {
     // --- WO-83 deliverable 1: `test <name>:` declarations (charter
     // toolchain/37-design-testing.md, D190) ---
 
+    // frob:tests crates/regolith-syntax/src/ast.rs::TestDecl.scenario kind="unit"
+    // frob:tests crates/regolith-syntax/src/ast.rs::ScenarioBlock.ctors kind="unit"
+    // frob:tests crates/regolith-syntax/src/ast.rs::ScenarioBlock.locked_blocks kind="unit"
+    // frob:tests crates/regolith-syntax/src/ast.rs::TestExpectCase.tail kind="unit"
+    // frob:tests crates/regolith-syntax/src/ast.rs::File.tests kind="unit"
     #[test]
     fn test_decl_is_typed_and_lossless() {
         use crate::ast::{AstNode, File};
@@ -4111,6 +4140,13 @@ mod tests {
     /// Negative fixture: an empty `scenario:` block (header only, no
     /// indented body) parses cleanly with no entries -- the honest
     /// "no scenario overrides declared" case, not an error.
+    // frob:tests crates/regolith-syntax/src/ast.rs::Decl.fields kind="unit"
+    // frob:tests crates/regolith-syntax/src/ast.rs::FlownetDecl.fields kind="unit"
+    // frob:tests crates/regolith-syntax/src/ast.rs::ScenarioBlock.fields kind="unit"
+    // frob:tests crates/regolith-syntax/src/ast.rs::SpaceDecl.fields kind="unit"
+    // frob:tests crates/regolith-syntax/src/ast.rs::CirculationDecl.fields kind="unit"
+    // frob:tests crates/regolith-syntax/src/ast.rs::MemberDecl.fields kind="unit"
+    // frob:tests crates/regolith-syntax/src/ast.rs::StructureDecl.fields kind="unit"
     #[test]
     fn empty_scenario_block_parses_with_no_entries() {
         use crate::ast::{AstNode, File};

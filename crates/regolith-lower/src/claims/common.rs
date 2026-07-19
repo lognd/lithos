@@ -8,6 +8,8 @@ use super::{AstNode, Field, Span, SyntaxKind, Unit, Window};
 /// transient claim over a fluid edge is a documented gap -- see the
 /// WO-32 D5 close-out note -- left for a follow-up rather than guessed
 /// at here).
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn transient_compliance_edges(predicate: &str) -> Vec<String> {
     let Some(call_start) = predicate.find("fluids.volume_consumed(") else {
         return Vec::new();
@@ -28,6 +30,8 @@ pub(crate) fn transient_compliance_edges(predicate: &str) -> Vec<String> {
 }
 
 /// A primary span over a `Field` claim line's full text range.
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn field_span(path: &camino::Utf8Path, line: &Field) -> Span {
     let range = line.syntax().text_range();
     Span::new(path.to_owned(), range.start().into(), range.end().into())
@@ -36,6 +40,8 @@ pub(crate) fn field_span(path: &camino::Utf8Path, line: &Field) -> Span {
 /// Find `name(` at the head of `predicate` (after trimming) and return
 /// the balanced-paren argument text plus whatever trails the closing
 /// paren, or `None` if `predicate` does not start with that exact call.
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn match_call<'a>(predicate: &'a str, name: &str) -> Option<(&'a str, &'a str)> {
     let trimmed = predicate.trim_start();
     let rest = trimmed.strip_prefix(name)?;
@@ -62,6 +68,8 @@ pub(crate) fn match_call<'a>(predicate: &'a str, name: &str) -> Option<(&'a str,
 
 /// Split `args` on top-level commas (depth-0 only -- nested `(...)`/
 /// `[...]` commas, e.g. `band=[10Hz, 1kHz]`, stay inside their piece).
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn split_top_level_args(args: &str) -> Vec<String> {
     let mut out = Vec::new();
     let mut depth = 0i32;
@@ -87,6 +95,8 @@ pub(crate) fn split_top_level_args(args: &str) -> Vec<String> {
 /// Parse a positional `during <event>` or `within <dur> after <event>`
 /// argument into a [`Window`]. Returns `None` for any other shape
 /// (e.g. an `at=<location>` tag, which is not a temporal window).
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn parse_window_arg(arg: &str) -> Option<Window> {
     let arg = arg.trim();
     if let Some(event) = arg.strip_prefix("during ") {
@@ -109,11 +119,15 @@ pub(crate) fn parse_window_arg(arg: &str) -> Option<Window> {
 }
 
 /// Split a `key=value` argument, or `None` if `arg` carries no `=`.
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn split_kwarg(arg: &str) -> Option<(&str, &str)> {
     let (key, value) = arg.split_once('=')?;
     Some((key.trim(), value.trim()))
 }
 
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn full_predicate_text(field: &Field) -> String {
     // WO-80 deliverable 2: a trailing `, model=<ident>` rung-5 pin is now
     // a typed `ModelPin` child (WO-80 deliverable 1) instead of raw text
@@ -143,6 +157,7 @@ pub(crate) fn full_predicate_text(field: &Field) -> String {
 /// full expression parse (WO-05's typed AST is not yet wired to claim
 /// predicates): it finds each `<number><unit-like-suffix>` run and
 /// replaces it in place when the suffix is a unit `regolith-qty` accepts.
+// frob:doc docs/modules/regolith-lower.md#claims
 pub(crate) fn resolve_unit_suffix(text: &str) -> String {
     let bytes = text.as_bytes();
     let mut out = String::with_capacity(text.len());
@@ -238,6 +253,8 @@ pub(crate) fn resolve_unit_suffix(text: &str) -> String {
 
 /// `regolith-qty`'s exact-rational scale/offset as `f64`; the unit table's
 /// factors are small SI-prefix ratios, well within `f64`'s exact range.
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn ratio_f64(r: regolith_qty::Scale) -> f64 {
     regolith_qty::unit::ratio_to_f64(r)
 }
@@ -246,6 +263,8 @@ pub(crate) fn ratio_f64(r: regolith_qty::Scale) -> f64 {
 /// zeros/point), keeping the lowered obligation text byte-stable and
 /// diffable (INV-10 note: the orchestrator hashes this as parsed text, not
 /// this string, so a shorter render never perturbs determinism).
+// frob:doc docs/modules/regolith-lower.md#claims
+// frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
 pub(crate) fn format_si(value: f64) -> String {
     let mut s = format!("{value:.10}");
     if s.contains('.') {
@@ -275,6 +294,7 @@ mod resolve_unit_suffix_tests {
     use super::resolve_unit_suffix;
 
     #[test]
+    // frob:tests crates/regolith-lower/src/claims/common.rs::resolve_unit_suffix kind="unit"
     fn preserves_an_unprefixed_unit_token() {
         assert_eq!(resolve_unit_suffix("45ohm"), "45ohm");
     }

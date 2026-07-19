@@ -23,6 +23,7 @@ use crate::rule_engine::{self, BindingEnv, EvalCtx, PackIndex};
 /// Every committed entity-DB scope (keyed by declaration name, source
 /// order) plus the diagnostics and resolutions pass 2 produced.
 #[derive(Debug, Clone, Default)]
+// frob:doc docs/modules/regolith-lower.md#entities
 pub struct EntitySnapshots {
     /// One committed snapshot per declaration scope, in first-seen
     /// (source) order.
@@ -38,6 +39,7 @@ pub struct EntitySnapshots {
 /// convenience over [`build_entities_with_registry`] (record-classified
 /// board domains stay empty; declared instances/nets still commit).
 #[must_use]
+// frob:doc docs/modules/regolith-lower.md#entities
 pub fn build_entities(files: &[ParsedFile]) -> EntitySnapshots {
     build_entities_with_registry(files, &crate::registry::RegistryRecords::empty())
 }
@@ -46,6 +48,8 @@ pub fn build_entities(files: &[ParsedFile]) -> EntitySnapshots {
 /// the board entity-population pass classifies instances (crystal/
 /// connector/capacitor/...) and reads record facts through `registry`.
 #[must_use]
+// frob:doc docs/modules/regolith-lower.md#entities
+// frob:waive TEST001 reason="internal pass-pipeline helper exercised transitively through the crate's lower()/lower_and_discharge() pipeline tests; no isolated unit test calls it directly"
 pub fn build_entities_with_registry(
     files: &[ParsedFile],
     registry: &crate::registry::RegistryRecords,
@@ -63,6 +67,7 @@ pub fn build_entities_with_registry(
 /// realized_trace_entities`), so DRC rules over routed copper evaluate
 /// at the staged loop's re-lower instead of deferring forever.
 #[must_use]
+// frob:doc docs/modules/regolith-lower.md#entities
 pub fn build_entities_with_realized(
     files: &[ParsedFile],
     registry: &crate::registry::RegistryRecords,
@@ -613,6 +618,8 @@ fn cause_from_keyword(cause_value: &regolith_syntax::cst::SyntaxNode, reference:
 /// pass by per-subject INV-20 gating (AD-17). Shared by every pass so
 /// they agree exactly on which subjects are gated out.
 #[must_use]
+// frob:doc docs/modules/regolith-lower.md#entities
+// frob:waive TEST001 reason="internal pass-pipeline helper exercised transitively through the crate's lower()/lower_and_discharge() pipeline tests; no isolated unit test calls it directly"
 pub fn decl_is_poisoned(decl: &Decl) -> bool {
     decl.syntax()
         .descendants()
@@ -624,6 +631,8 @@ pub fn decl_is_poisoned(decl: &Decl) -> bool {
 /// `checks.rs`/`claims.rs` share one rendering rule rather than each
 /// inventing their own).
 #[must_use]
+// frob:doc docs/modules/regolith-lower.md#entities
+// frob:waive TEST001 reason="internal pass-pipeline helper exercised transitively through the crate's lower()/lower_and_discharge() pipeline tests; no isolated unit test calls it directly"
 pub fn matched_entity_row(scope: &str, entity: &Entity) -> MatchedEntity {
     MatchedEntity {
         origin: format!("{scope} ({})", entity.origin),
@@ -665,6 +674,7 @@ mod tests {
     }
 
     #[test]
+    // frob:tests crates/regolith-lower/src/entities.rs::build_entities kind="unit"
     fn cause_is_derived_structurally_from_the_value_source_kind() {
         // Each value-source form maps to its INV-21 provenance by
         // structure, not a text scan (BE-5).

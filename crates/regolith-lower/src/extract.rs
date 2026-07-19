@@ -125,6 +125,7 @@ impl Iv {
 /// the already-resolved medium property record so this module stays
 /// medium-IO-free: the wall geometry alone cannot fix a Korteweg wave
 /// speed, which folds in the fluid's compressibility.
+// frob:doc docs/modules/regolith-lower.md#extract
 #[derive(Debug, Clone, Copy)]
 pub struct MediumProps {
     /// Fluid bulk modulus interval, Pa.
@@ -136,6 +137,7 @@ pub struct MediumProps {
 /// A wall extraction: compliance, distensibility, and (when medium
 /// props were supplied) the Korteweg wave speed -- all cited to the
 /// segment's snapshot hash via the enclosing [`GeometryExtraction`].
+// frob:doc docs/modules/regolith-lower.md#extract
 #[derive(Debug, Clone, PartialEq)]
 pub struct WallExtraction {
     /// Wall compliance `dV/dp = L * pi * D^3 / (4 E t)`, m^3/Pa.
@@ -150,6 +152,7 @@ pub struct WallExtraction {
 
 /// A resolved roughness: the process-capability class and its absolute
 /// roughness height interval.
+// frob:doc docs/modules/regolith-lower.md#extract
 #[derive(Debug, Clone, PartialEq)]
 pub struct RoughnessExtraction {
     /// The process-capability class label carried on the record.
@@ -159,6 +162,7 @@ pub struct RoughnessExtraction {
 }
 
 /// A bend extraction: turn angle and centreline radius.
+// frob:doc docs/modules/regolith-lower.md#extract
 #[derive(Debug, Clone, PartialEq)]
 pub struct BendExtraction {
     /// Turn angle, rad.
@@ -168,6 +172,7 @@ pub struct BendExtraction {
 }
 
 /// The typed extraction of one routed segment.
+// frob:doc docs/modules/regolith-lower.md#extract
 #[derive(Debug, Clone, PartialEq)]
 pub struct SegmentExtraction {
     /// Per-segment environment slot (shared with WO-34 wire runs).
@@ -188,6 +193,7 @@ pub struct SegmentExtraction {
 
 /// The typed extraction of a whole routed path (a fluid edge is a
 /// single-segment run; a WO-34 wire run is the multi-segment case).
+// frob:doc docs/modules/regolith-lower.md#extract
 #[derive(Debug, Clone, PartialEq)]
 pub struct GeometryExtraction {
     /// The realized-geometry payload's content digest every field is
@@ -203,6 +209,7 @@ pub struct GeometryExtraction {
 
 /// A failure extracting from a realized-geometry record -- a value the
 /// lowering boundary (deliverable 3) renders as a diagnostic.
+// frob:doc docs/modules/regolith-lower.md#extract
 #[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
 pub enum ExtractError {
     /// The record bytes did not decode into a realized-geometry record.
@@ -239,6 +246,7 @@ pub enum ExtractError {
 /// The extract seam's single roughness table (fluorite/03 sec. 1);
 /// `pub(crate)` so `lower.programs`' process->class derivation is
 /// cross-checked against it (one vocabulary, no duplication).
+// frob:doc docs/modules/regolith-lower.md#extract
 pub(crate) const ROUGHNESS_TABLE: &[(&str, [f64; 2])] = &[
     ("drawn_tube", [1.0e-6, 2.0e-6]),
     ("machined", [1.5e-6, 6.3e-6]),
@@ -333,6 +341,7 @@ fn extract_segment(
 /// [`ExtractError`] when the bytes do not decode, the selector is
 /// absent, the path is empty, or a segment names an unknown roughness
 /// class.
+// frob:doc docs/modules/regolith-lower.md#extract
 pub fn extract_path(
     bytes: &[u8],
     selector: &str,
@@ -449,6 +458,7 @@ mod tests {
         .into_bytes()
     }
 
+    // frob:tests crates/regolith-lower/src/extract.rs::extract_path kind="unit"
     #[test]
     fn extracts_area_length_and_two_bends() {
         let out = extract_path(&tube_record(), "coolant.wetted", "blake3:snap-tube", None).unwrap();

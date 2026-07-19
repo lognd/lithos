@@ -19,6 +19,7 @@ use regolith_syntax::Parse;
 
 /// One source file's path and raw text, as read by `Session` (IO stays
 /// there; this crate is pure).
+// frob:doc docs/modules/regolith-lower.md#output
 #[derive(Debug, Clone)]
 pub struct SourceFile {
     /// The file's path (used for diagnostics and stable ordering).
@@ -29,6 +30,7 @@ pub struct SourceFile {
 
 /// A parsed source file: its path and the resulting CST + parse
 /// diagnostics.
+// frob:doc docs/modules/regolith-lower.md#output
 #[derive(Debug, Clone)]
 pub struct ParsedFile {
     /// The file's path.
@@ -40,6 +42,7 @@ pub struct ParsedFile {
 /// The pipeline's total output: every diagnostic, resolution,
 /// obligation, snapshot record, and (compile only) evidence produced
 /// across all six passes, in deterministic order (AD-6).
+// frob:doc docs/modules/regolith-lower.md#output
 #[derive(Debug, Clone, Default)]
 pub struct LowerOutput {
     /// Diagnostics from every pass, in pass order then source order.

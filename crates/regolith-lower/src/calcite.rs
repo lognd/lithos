@@ -66,6 +66,7 @@ use crate::output::ParsedFile;
 
 /// The diagnostics from the calcite net disciplines over every file.
 #[derive(Debug, Clone, Default)]
+// frob:doc docs/modules/regolith-lower.md#calcite
 pub struct CalciteReport {
     /// Diagnostics from the circulation and load-path checks (E02xx
     /// family, calcite's E0204/E0208/E0209 offsets).
@@ -75,6 +76,7 @@ pub struct CalciteReport {
 /// Run the calcite net disciplines over `files`, in caller (sorted)
 /// order.
 #[must_use]
+// frob:doc docs/modules/regolith-lower.md#calcite
 pub fn run_calcite_checks(files: &[ParsedFile]) -> CalciteReport {
     let span = tracing::info_span!("lower.calcite");
     let _enter = span.enter();
@@ -434,6 +436,8 @@ fn check_structure(
 /// not a coincidence -- calcite's `nodes:`/`edges:`/`support:`/
 /// `members:` fields are ordinary comma-list fields exactly like
 /// fluorite's `nodes:`/`reference:`).
+// frob:doc docs/modules/regolith-lower.md#calcite
+// frob:waive TEST001 reason="internal pass-pipeline helper exercised transitively through the crate's lower()/lower_and_discharge() pipeline tests; no isolated unit test calls it directly"
 pub(crate) fn field_idents<N: HasFields>(decl: &N, field_name: &str) -> Vec<String> {
     let Some(field) = decl.fields().into_iter().find(|f| f.name() == field_name) else {
         return Vec::new();
@@ -454,6 +458,7 @@ pub(crate) fn field_idents<N: HasFields>(decl: &N, field_name: &str) -> Vec<Stri
 /// A decl that exposes its header/body `Field`s (calcite's
 /// `CirculationDecl`/`StructureDecl` both do; a tiny local trait so
 /// `field_idents` stays generic over both without duplicating it).
+// frob:doc docs/modules/regolith-lower.md#calcite
 pub(crate) trait HasFields {
     fn fields(&self) -> Vec<regolith_syntax::ast::Field>;
 }
@@ -815,6 +820,7 @@ loads:\n\
     }
 
     #[test]
+    // frob:tests crates/regolith-lower/src/calcite.rs::run_calcite_checks kind="unit"
     fn point_load_on_bare_member_flags_e0211() {
         let src = one_beam_with_loads("\x20   hoist: 2kN on [G1] by catalog(y)\n");
         assert!(

@@ -1386,6 +1386,7 @@ fn bare_plural_forall_domain_is_e0450() {
     );
 }
 
+// frob:tests crates/regolith-lower/src/claims/require.rs::is_undeclared_bare_plural_domain kind="unit"
 #[test]
 fn declared_forall_domains_are_not_e0450() {
     // WO-90 deliverable 2 / acceptance: every DECLARED domain form

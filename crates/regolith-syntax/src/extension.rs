@@ -12,6 +12,7 @@
 //! string.
 
 /// A source language of the toolchain.
+// frob:doc docs/modules/regolith-syntax.md#extension
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Language {
     /// Mechanical language: `hematite` (iron ore -> steel/structure),
@@ -31,6 +32,7 @@ pub enum Language {
 
 impl Language {
     /// The canonical file extension (without the dot) for this language.
+    // frob:doc docs/modules/regolith-syntax.md#extension
     #[must_use]
     pub fn extension(self) -> &'static str {
         match self {
@@ -47,6 +49,7 @@ impl Language {
 /// you add a language track, also update the non-registry references:
 /// `regolith-syntax/benches/parse.rs` and `regolith-ls/src/server.rs`
 /// tests.
+// frob:doc docs/modules/regolith-syntax.md#extension
 pub const EXTENSIONS: &[(&str, Language)] = &[
     ("hema", Language::Hematite),
     ("cupr", Language::Cuprite),
@@ -56,6 +59,7 @@ pub const EXTENSIONS: &[(&str, Language)] = &[
 
 /// Resolve a bare extension (no leading dot, case-sensitive) to its
 /// language, or `None` if it is not a regolith source file.
+// frob:doc docs/modules/regolith-syntax.md#extension
 #[must_use]
 pub fn language_for_extension(ext: &str) -> Option<Language> {
     EXTENSIONS
@@ -70,6 +74,7 @@ pub fn language_for_extension(ext: &str) -> Option<Language> {
 /// spelled ONCE, here, beside the extension registry it composes with
 /// -- nothing else (including tests) may hard-code the string `"test"`
 /// for this purpose.
+// frob:doc docs/modules/regolith-syntax.md#extension
 pub const TEST_FILE_INFIX: &str = "test";
 
 /// Whether `file_name` (a bare file name, not a full path -- callers
@@ -86,6 +91,7 @@ pub const TEST_FILE_INFIX: &str = "test";
 /// infix and is therefore an ordinary hematite source file named
 /// `test`, not a test file -- the infix marks a SUFFIX on a name, not
 /// the whole stem).
+// frob:doc docs/modules/regolith-syntax.md#extension
 #[must_use]
 pub fn test_file_language(file_name: &str) -> Option<Language> {
     let (base, ext) = file_name.rsplit_once('.')?;
@@ -98,6 +104,7 @@ pub fn test_file_language(file_name: &str) -> Option<Language> {
 mod tests {
     use super::{language_for_extension, test_file_language, Language};
 
+    // frob:tests crates/regolith-syntax/src/extension.rs::language_for_extension kind="unit"
     #[test]
     fn recognizes_settled_extensions() {
         assert_eq!(language_for_extension("hema"), Some(Language::Hematite));
@@ -115,6 +122,7 @@ mod tests {
         assert_eq!(language_for_extension("txt"), None);
     }
 
+    // frob:tests crates/regolith-syntax/src/extension.rs::test_file_language kind="unit"
     #[test]
     fn recognizes_test_files_per_track() {
         assert_eq!(

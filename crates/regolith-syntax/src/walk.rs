@@ -13,6 +13,7 @@ use crate::syntax_kind::SyntaxKind;
 
 /// A direction word annotating a segment (a uniqueness hint, validated
 /// at solve time, recorded here).
+// frob:doc docs/modules/regolith-syntax.md#walk
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Direction {
     /// Turn/curve to the left.
@@ -30,6 +31,7 @@ pub enum Direction {
 }
 
 /// One segment of the walk.
+// frob:doc docs/modules/regolith-syntax.md#walk
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Segment {
     /// A straight `line` with an optional direction word.
@@ -46,6 +48,7 @@ pub enum Segment {
 /// One walk step's segment with its optional leading name label
 /// (`a: line right`, D150): the syntax-level binding `constraints:`
 /// items reference (`a.length = 80mm`). Unlabeled steps stay legal.
+// frob:doc docs/modules/regolith-syntax.md#walk
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct WalkSegment {
     /// The D150 name label, when the step spells one (`a:`).
@@ -55,6 +58,7 @@ pub struct WalkSegment {
 }
 
 /// A named hole nested one level inside the walk (`hole <name>:`).
+// frob:doc docs/modules/regolith-syntax.md#walk
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Hole {
     /// Hole name.
@@ -64,6 +68,7 @@ pub struct Hole {
 }
 
 /// A parsed walk body.
+// frob:doc docs/modules/regolith-syntax.md#walk
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Walk {
     /// The `from <datum>` anchor name.
@@ -108,6 +113,7 @@ pub struct Walk {
 /// direction words) reads that one node's own text, since WO-11's grammar
 /// records the step as one typed leaf and defers word-level semantics to
 /// this ledger half (hematite/07 OPEN-5, D65).
+// frob:doc docs/modules/regolith-syntax.md#walk
 #[must_use]
 pub fn parse_walk(node: &SyntaxNode) -> Option<Walk> {
     let walk_body = if node.kind() == SyntaxKind::WalkBody {
@@ -345,6 +351,7 @@ mod tests {
     /// are SIBLING typed blocks in the profile body (not nested inside the
     /// walk). `parse_walk` consumes the typed nodes structurally, so the
     /// role of each line is decided by its containing block's node kind.
+    // frob:tests crates/regolith-syntax/src/walk.rs::parse_walk kind="unit"
     #[test]
     fn parse_walk_consumes_typed_sibling_blocks() {
         let src = "profile p:\n\

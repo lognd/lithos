@@ -36,6 +36,7 @@ use crate::output::ParsedFile;
 /// declaration across `files`, returning the collected diagnostics in
 /// file-then-source order (AD-6). The final artifact orbit table is not
 /// returned (it is per-scope); callers that need it recompute per decl.
+// frob:doc docs/modules/regolith-lower.md#ownership
 #[must_use]
 pub fn run_ownership_and_symmetry(files: &[ParsedFile]) -> Vec<Diagnostic> {
     let span = tracing::info_span!("lower.ownership");
@@ -372,6 +373,7 @@ mod tests {
         diags.iter().map(|d| d.code).collect()
     }
 
+    // frob:tests crates/regolith-lower/src/ownership.rs::run_ownership_and_symmetry kind="unit"
     #[test]
     fn modify_of_a_bound_entity_is_a_borrow_conflict() {
         // INV-5: a role binding is a permanent borrow; a later modify of

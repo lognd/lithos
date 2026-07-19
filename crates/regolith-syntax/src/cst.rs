@@ -5,6 +5,7 @@
 use crate::syntax_kind::SyntaxKind;
 
 /// The regolith language marker for rowan's generic trees.
+// frob:doc docs/modules/regolith-syntax.md#cst
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum RegolithLanguage {}
 
@@ -21,8 +22,11 @@ impl rowan::Language for RegolithLanguage {
 }
 
 /// A node in the concrete syntax tree.
+// frob:doc docs/modules/regolith-syntax.md#cst
 pub type SyntaxNode = rowan::SyntaxNode<RegolithLanguage>;
 /// A token in the concrete syntax tree.
+// frob:doc docs/modules/regolith-syntax.md#cst
 pub type SyntaxToken = rowan::SyntaxToken<RegolithLanguage>;
 /// Either a node or a token.
+// frob:doc docs/modules/regolith-syntax.md#cst
 pub type SyntaxElement = rowan::SyntaxElement<RegolithLanguage>;
