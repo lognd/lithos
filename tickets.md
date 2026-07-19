@@ -1417,7 +1417,7 @@ See docs/workflow/work-orders/WO-165-perfboard-program.md. D268 item 3, smallest
 ```yaml
 id: T-0046
 title: 'WO-166: wire-EDM die-set production program'
-state: queued
+state: in-progress
 kind: feature
 origin: human
 created: '2026-07-19'
@@ -1678,7 +1678,7 @@ threat: null
 ```yaml
 id: T-0057
 title: 'chore: post-close test-binding fixups (T-0015/T-0038 gaps)'
-state: in-progress
+state: done
 kind: docs
 origin: agent
 created: '2026-07-19'
@@ -1686,8 +1686,13 @@ blocked_by: []
 parent: null
 scope:
 - tests/**
-evidence: []
+evidence:
+- cmd:bash -c 'frob check --only gates 2>&1 | grep -q "0 errors, 0 warnings"' exit=0
+  sha256=e3b0c44298fc
 attachments: []
 acceptance: []
 threat: null
 ```
+## Done report
+
+Four bindings written (cb11a110); gates back to 0/0.
