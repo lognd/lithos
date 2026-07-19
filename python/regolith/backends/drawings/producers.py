@@ -36,6 +36,8 @@ address later uses that canonical address verbatim (no tag) instead.
 
 from __future__ import annotations
 
+import math
+
 import blake3
 from pydantic import BaseModel, ConfigDict
 
@@ -86,6 +88,12 @@ from regolith._schema.models import (
     Provenance2 as RecordProvenance,
 )
 from regolith.backends.drawings.layout import layered_positions, standoff_ladder
+
+# NO DUPLICATION (WO-143): the laminar/Haaland closed forms this
+# producer plots are WO-139's own model formulas, reused verbatim
+# rather than re-derived here -- "never an inline fitted curve this
+# producer invents" (WO-143 deliverable 1).
+from regolith.harness.models.friction_factor import _haaland, _laminar
 from regolith.logging_setup import get_logger
 from regolith.realizer.elec.board_assignment import RealizedBoardAssignment
 
@@ -1039,5 +1047,286 @@ def perfboard_wiring_map(
         subject,
         len(assignment.components),
         len(assignment.wires),
+    )
+    return DrawingModel(subject=subject, sheets=[sheet])
+
+
+# WO-143 (charter 41 rule 6/AD-39): the Moody calc-sheet figure --
+# log-log f-vs-Re curves for a pinned eps/D family, the laminar line,
+# the honestly-shaded transition band (D97/D258 ruling 3), and the
+# discharging obligation's own operating point marked on the chart.
+#
+# Coordinate frame: a fixed 180mm x 120mm plot box (ANSI A sheet body),
+# log10-mapped on both axes over the fixed decade ranges below -- WIDE
+# enough to cover every fixture this repo's fluid claims exercise
+# (laminar down to Re=100 through fully rough turbulent up to Re=1e8).
+# Re/f are dimensionless (charter 41 rule 6's "unit-labeled titles"
+# requirement is satisfied by an EXPLICIT "[-]" unit marker, the same
+# UNIT_UNREACHABLE-adjacent honesty the calc sheet's `_quantity_cell`
+# gives a dimensionless value elsewhere in this package).
+_MOODY_RE_MIN = 1.0e2
+_MOODY_RE_MAX = 1.0e8
+_MOODY_F_MIN = 6.0e-3
+_MOODY_F_MAX = 1.0e0
+_MOODY_PLOT_W_MM = 180.0
+_MOODY_PLOT_H_MM = 120.0
+_MOODY_RE_LAMINAR_CEILING = 2300.0
+_MOODY_RE_TURBULENT_FLOOR = 4000.0
+
+
+def _moody_x(re: float) -> float:
+    """Map a Reynolds number to plot-box x (mm), log10 scale."""
+    lo, hi = math.log10(_MOODY_RE_MIN), math.log10(_MOODY_RE_MAX)
+    return _MOODY_PLOT_W_MM * (math.log10(re) - lo) / (hi - lo)
+
+
+def _moody_y(f: float) -> float:
+    """Map a friction factor to plot-box y (mm), log10 scale."""
+    lo, hi = math.log10(_MOODY_F_MIN), math.log10(_MOODY_F_MAX)
+    return _MOODY_PLOT_H_MM * (math.log10(f) - lo) / (hi - lo)
+
+
+def _moody_axis_box_and_ticks() -> tuple[list[SegmentEntity], list[Annotation]]:
+    """The plot border + decade tick marks/labels on both axes (charter
+    41 rule 6: "axes with ticks and unit-labeled titles ... a bare
+    polyline is not a chart")."""
+    entities: list[SegmentEntity] = [
+        SegmentEntity(
+            kind=Kind.segment, **{"from": [0.0, 0.0]}, to=[_MOODY_PLOT_W_MM, 0.0]
+        ),
+        SegmentEntity(
+            kind=Kind.segment,
+            **{"from": [_MOODY_PLOT_W_MM, 0.0]},
+            to=[_MOODY_PLOT_W_MM, _MOODY_PLOT_H_MM],
+        ),
+        SegmentEntity(
+            kind=Kind.segment,
+            **{"from": [_MOODY_PLOT_W_MM, _MOODY_PLOT_H_MM]},
+            to=[0.0, _MOODY_PLOT_H_MM],
+        ),
+        SegmentEntity(
+            kind=Kind.segment, **{"from": [0.0, _MOODY_PLOT_H_MM]}, to=[0.0, 0.0]
+        ),
+    ]
+    annotations: list[Annotation] = [
+        Annotation(
+            text="Reynolds number Re [-] (log scale)",
+            anchor=[_MOODY_PLOT_W_MM / 2.0, -24.0],
+            text_height_mm=3.0,
+            datum_refs=[],
+            per=None,
+        ),
+        Annotation(
+            text="Darcy friction factor f [-] (log scale)",
+            anchor=[-40.0, _MOODY_PLOT_H_MM + 10.0],
+            text_height_mm=3.0,
+            datum_refs=[],
+            per=None,
+        ),
+    ]
+    re_decade = int(math.log10(_MOODY_RE_MIN))
+    while 10.0**re_decade <= _MOODY_RE_MAX:
+        re = 10.0**re_decade
+        x = _moody_x(re)
+        entities.append(
+            SegmentEntity(kind=Kind.segment, **{"from": [x, 0.0]}, to=[x, -2.0])
+        )
+        annotations.append(
+            Annotation(
+                text=f"1e{re_decade}",
+                anchor=[x, -6.0],
+                text_height_mm=2.5,
+                datum_refs=[],
+                per=None,
+            )
+        )
+        re_decade += 1
+    f_decade = int(math.log10(_MOODY_F_MIN))
+    while 10.0**f_decade <= _MOODY_F_MAX:
+        f = 10.0**f_decade
+        y = _moody_y(f)
+        entities.append(
+            SegmentEntity(kind=Kind.segment, **{"from": [0.0, y]}, to=[-2.0, y])
+        )
+        annotations.append(
+            Annotation(
+                text=f"{f:g}",
+                anchor=[-8.0, y],
+                text_height_mm=2.5,
+                datum_refs=[],
+                per=None,
+            )
+        )
+        f_decade += 1
+    return entities, annotations
+
+
+def _moody_curve_polyline(points: list[tuple[float, float]]) -> Entity3:
+    """One log-log (Re, f) polyline, plot-box mapped."""
+    return Entity3(
+        kind=Kind2.polyline,
+        points=[Point([_moody_x(re), _moody_y(f)]) for re, f in points],
+    )
+
+
+# frob:doc docs/modules/py-backends.md#drawings-producers
+def diagram_moody(
+    subject: str,
+    *,
+    eps_d_family: tuple[float, ...],
+    operating_re: float,
+    operating_f: float,
+    obligation_id: str,
+    samples_per_decade: int = 12,
+) -> DrawingModel:
+    """The `diagram.moody` calc-sheet figure (WO-143/charter 41 rule 6).
+
+    Renders from CALLER-SUPPLIED `eps_d_family`/operating point only
+    (D224: every plotted number traces to a real payload/record) --
+    this producer never resolves a roughness record itself (`std.fluid`
+    roughness data is presently withdrawn pending counsel review, D266;
+    a caller with no real eps/D family to supply names that gap rather
+    than calling this producer with a fabricated one -- see
+    `backends/calc.py`'s wiring comment for the exact refusal path).
+
+    - the laminar line (`f = 64/Re`, `Re < 2300`, WO-139's own closed
+      form, `_laminar`).
+    - one curve per `eps_d_family` member (`Re` in
+      `[4000, 1e8]`), via WO-139's own Haaland closed form (`_haaland`)
+      -- never a fitted curve this producer invents.
+    - the transition band (`2300 <= Re <= 4000`) hatched (a dense set
+      of vertical polylines -- the schema carries no filled-region
+      entity, so a hatch IS this producer's "shaded" primitive) and
+      labeled INDETERMINATE (D97/D258 ruling 3: never interpolated).
+    - the discharging obligation's operating point, marked with a
+      cross-hair symbol pair and labeled with its `obligation_id`
+      verbatim (the winner-mark precedent, `opt_trace`'s own
+      `producers.py:795` convention).
+    - a legend table (AD-27: schedules are tables, not a second
+      mechanism) when more than one eps/D curve is drawn.
+    """
+    entities: list[_Entity] = []
+    annotations: list[Annotation] = []
+
+    axis_entities, axis_annotations = _moody_axis_box_and_ticks()
+    entities.extend(axis_entities)
+    annotations.extend(axis_annotations)
+
+    # Laminar line.
+    laminar_points = []
+    re = _MOODY_RE_MIN
+    step = 10.0 ** (1.0 / samples_per_decade)
+    while re <= _MOODY_RE_LAMINAR_CEILING:
+        laminar_points.append((re, _laminar(re)))
+        re *= step
+    laminar_points.append(
+        (_MOODY_RE_LAMINAR_CEILING, _laminar(_MOODY_RE_LAMINAR_CEILING))
+    )
+    entities.append(_moody_curve_polyline(laminar_points))
+    annotations.append(
+        Annotation(
+            text="laminar (f = 64/Re)",
+            anchor=[
+                _moody_x(laminar_points[0][0]),
+                _moody_y(laminar_points[0][1]) + 4.0,
+            ],
+            text_height_mm=2.5,
+            datum_refs=[],
+            per=None,
+        )
+    )
+
+    # Transition band: hatched, labeled indeterminate -- never
+    # interpolated across (D97/D258 ruling 3).
+    x_lo = _moody_x(_MOODY_RE_LAMINAR_CEILING)
+    x_hi = _moody_x(_MOODY_RE_TURBULENT_FLOOR)
+    n_hatch = 6
+    for i in range(n_hatch + 1):
+        x = x_lo + (x_hi - x_lo) * i / n_hatch
+        entities.append(
+            SegmentEntity(
+                kind=Kind.segment, **{"from": [x, 0.0]}, to=[x, _MOODY_PLOT_H_MM]
+            )
+        )
+    annotations.append(
+        Annotation(
+            text="transition (Re 2300-4000, INDETERMINATE)",
+            anchor=[(x_lo + x_hi) / 2.0, _MOODY_PLOT_H_MM * 0.9],
+            text_height_mm=2.5,
+            datum_refs=[],
+            per=None,
+        )
+    )
+
+    # One turbulent Haaland curve per eps/D family member.
+    legend_rows: list[TableRow] = []
+    for eps_d in eps_d_family:
+        points = []
+        re = _MOODY_RE_TURBULENT_FLOOR
+        while re <= _MOODY_RE_MAX:
+            points.append((re, _haaland(re, eps_d)))
+            re *= step
+        points.append((_MOODY_RE_MAX, _haaland(_MOODY_RE_MAX, eps_d)))
+        entities.append(_moody_curve_polyline(points))
+        legend_rows.append(TableRow(cells=[f"eps/D = {eps_d:.2e}"]))
+
+    # Operating point: cross-hair + obligation-id label (winner-mark
+    # precedent, `opt_trace` producer).
+    ox, oy = _moody_x(operating_re), _moody_y(operating_f)
+    entities.append(
+        SegmentEntity(kind=Kind.segment, **{"from": [ox - 3.0, oy]}, to=[ox + 3.0, oy])
+    )
+    entities.append(
+        SegmentEntity(kind=Kind.segment, **{"from": [ox, oy - 3.0]}, to=[ox, oy + 3.0])
+    )
+    annotations.append(
+        Annotation(
+            text=obligation_id,
+            anchor=[ox + 4.0, oy + 4.0],
+            text_height_mm=3.0,
+            datum_refs=[],
+            per=None,
+        )
+    )
+
+    entity_indices = [EntityIndice(i) for i in range(len(entities))]
+    tables = (
+        [Table(title="eps/D family", columns=["series"], rows=legend_rows)]
+        if len(eps_d_family) > 1
+        else []
+    )
+    view = View(
+        name="moody",
+        plane="schematic",
+        scale=1.0,
+        source=ViewSource(
+            source_digest=_digest_of(
+                f"{subject}|{eps_d_family}|{operating_re}|{operating_f}|"
+                f"{obligation_id}".encode()
+            ),
+            source_kind="diagram_moody",
+        ),
+        entity_indices=entity_indices,
+    )
+    sheet = Sheet(
+        size=SheetSize2.ansi_b,
+        title_block=TitleBlock(
+            title=f"{subject} Moody diagram",
+            drawing_number=f"MOODY-{subject}",
+            revision="A",
+            scale_label="NTS",
+            subject=subject,
+        ),
+        views=[view],
+        entities=entities,
+        dimensions=[],
+        annotations=annotations,
+        tables=tables,
+    )
+    _log.info(
+        "diagram.moody producer: %s -> %d eps/D curve(s), operating point %s",
+        subject,
+        len(eps_d_family),
+        obligation_id,
     )
     return DrawingModel(subject=subject, sheets=[sheet])

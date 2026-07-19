@@ -1,0 +1,77 @@
+# std.fluid minor-loss (fitting/component) K-factor records (WO-140/
+# D258.2/F158). Companion to `roughness.toml`'s posture history: on
+# 2026-07-16 the owner withdrew every bulk EXTERNALLY-TRANSCRIBED
+# record table committed that day (`roughness.toml`, `water_
+# saturation.toml`, `gas_cp_glenn.toml`, the ti.mcu MSP430FR5 set)
+# pending counsel review of transcription/licensing posture (D266).
+#
+# WO-140's own text (D258 ruling 2) says Hooper 2-K (Hooper, Chem.
+# Eng., 1981-08-24) and Darby 3-K (Darby, Chem. Eng., 1999 / Darby,
+# Chemical Engineering Fluid Mechanics, 2nd ed., 2001, Table 7-3) are
+# licensed to PROCEED, unlike Crane TP-410/Idelchik (D258 ruling 2,
+# BLOCKED). But both Hooper and Darby's per-fitting-type numeric
+# constants (K1/K_inf per elbow/tee/valve GEOMETRY) are the exact same
+# SHAPE of content D266 pulled hours before this WO was authored: a
+# bulk table of per-item numeric constants transcribed wholesale from
+# a copyrighted trade-journal article, not a single textbook-restated
+# physical law. D266's own manifest names "std.fluid roughness ... and
+# their generator input tables" as withdrawn for this reason, and
+# roughness.toml is the DIRECT sibling table this WO's own doc asks to
+# consume via the same std.fluid record-search convention.
+#
+# Per the dispatch instruction covering exactly this situation: a WO
+# needing DATA of the same class as an owner-withdrawn table does not
+# relitigate the counsel hold by transcribing an equivalent table
+# under a new filename. So this file carries ONLY the textbook
+# GEOMETRY closed-form family WO-140 itself separates out as distinct
+# from Hooper/Darby (White, Fluid Mechanics, 8th ed., Table 6.5 / sec.
+# 6.9): these are single-law physical statements (Borda-Carnot, sharp
+# entrance/exit), the same "cite the law, not a vendor table" posture
+# `fluid_pressure_drop.py`'s own Darcy-Weisbach citation already takes
+# -- not a bulk per-item numeric catalog.
+#
+# Hooper 2-K and Darby 3-K bulk constants are NOT transcribed here.
+# This is an explicit, named absence (never a silent omission): the
+# per-fitting K1/K_inf table is escalated to the coordinator as
+# needing the SAME counsel-review clearance D266 opened, not a fresh
+# one this dispatch can grant itself. `fluid_pressure_drop.py`'s
+# minor-loss chain (this WO's deliverable 2) is written to CONSUME a
+# `[[fitting]]` row of `method = "hooper_2k"` or `method = "darby_3k"`
+# the moment such a row is cleared and lands here -- the code path is
+# real and tested against a synthetic row (`tests/harness/
+# test_fluid_minor_loss.py`), only the real vendor-journal constants
+# are withheld.
+
+[[fitting]]
+key = "sudden_expansion_borda_carnot"
+kind = "sudden_expansion"
+method = "borda_carnot_area_ratio"
+# K = (1 - A1/A2)^2, applied to the upstream (smaller-area) velocity
+# head; A1 = upstream area, A2 = downstream area (A1 < A2).
+formula = "k = (1 - a1_over_a2) ** 2"
+evidence = { method = "textbook", trust_tier = "community", reference = "White, Fluid Mechanics, 8th ed., sec. 6.9 (Borda-Carnot sudden expansion loss), Table 6.5 lineage" }
+
+[[fitting]]
+key = "sudden_contraction_sharp"
+kind = "sudden_contraction"
+method = "contraction_area_ratio"
+# Sharp-edged sudden contraction, applied to the downstream (smaller-
+# area) velocity head; the commonly cited engineering-approximation
+# closed form for a sharp (non-rounded) edge, not a fitted curve this
+# repo invents.
+formula = "k = 0.5 * (1 - a2_over_a1)"
+evidence = { method = "textbook", trust_tier = "community", reference = "White, Fluid Mechanics, 8th ed., sec. 6.9 / Table 6.5, sharp-edged sudden contraction approximation" }
+
+[[fitting]]
+key = "entrance_sharp"
+kind = "entrance"
+method = "fixed"
+k = 0.5
+evidence = { method = "textbook", trust_tier = "community", reference = "White, Fluid Mechanics, 8th ed., Table 6.5: flush, sharp-edged pipe entrance, K ~= 0.5" }
+
+[[fitting]]
+key = "exit_to_reservoir"
+kind = "exit"
+method = "fixed"
+k = 1.0
+evidence = { method = "textbook", trust_tier = "community", reference = "White, Fluid Mechanics, 8th ed., Table 6.5: pipe exit into a large reservoir, K = 1.0 (full kinetic-energy dissipation)" }
