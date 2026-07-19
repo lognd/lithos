@@ -51,6 +51,10 @@ models = [
     "buck_efficiency",
     "buck_transient",
     "lumped_thermal",
+    # WO-135 (T-0009, AD-42): the lithos closed-form power model
+    # module -- 7 Model classes registered by one module, named once
+    # per the group-module precedent above.
+    "power",
     "cost_estimators",
     "cam",
     "hdl",

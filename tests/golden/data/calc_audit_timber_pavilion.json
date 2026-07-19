@@ -3,73 +3,73 @@
   "rows":[
     {
       "claim_name":"bearing",
-      "content_hash":"fe7b92215fd70f94a2237afd7b8b859f338b77711f0c8ba8298054619428d037",
+      "content_hash":"0c5092ef46d3d52b861349631ceea46923fb6b8082db2f935fc5f7fd2f2cd1ce",
       "detail":"waiver bearing by doc(memos/release-residuals.md) memo=blake3:2f32189789e28f0088479e890998248dff6ad60081d7600de6b47470e0089b22",
       "disposition":"accepted_deviation",
-      "subject_anchor":"afc15fc09a7f"
+      "subject_anchor":"2bbb92744889"
     },
     {
       "claim_name":"construction",
-      "content_hash":"b49951b61ab79cf3debb8113884fb5653ce23fb1484e0610aa3ca0c898b51703",
+      "content_hash":"f23a96ec5ad99fcb122a2985d576c1c5cd0cfd1131f9a6a42ba77b0471b92abe",
       "detail":"construction::",
       "disposition":"calc_sheet",
       "subject_anchor":""
     },
     {
       "claim_name":"deflect",
-      "content_hash":"c02c7276e99447cb34f28bec429399b39fefdbb43b72e8b061f5469fb54b8b2f",
-      "detail":"deflect::afc15fc09a7f",
+      "content_hash":"4aff3744615af23eac1e831955162cdef328f6f50331157c7c724881872fce21",
+      "detail":"deflect::2bbb92744889",
       "disposition":"calc_sheet",
-      "subject_anchor":"afc15fc09a7f"
+      "subject_anchor":"2bbb92744889"
     },
     {
       "claim_name":"import:std.civil",
-      "content_hash":"ead667e9a11ae76416bbe22f3d931c6823f050424db2b90539efae28cadc0c35",
+      "content_hash":"81077eacfefc19492432a09c780d53d9c75df1ff52df2ef0cbfe8c21090f6afb",
       "detail":"waiver import(std.civil) by doc(memos/release-residuals.md) memo=blake3:2f32189789e28f0088479e890998248dff6ad60081d7600de6b47470e0089b22",
       "disposition":"accepted_deviation",
-      "subject_anchor":"2f5a6b49526e"
+      "subject_anchor":"2e29a43e2745"
     },
     {
       "claim_name":"import:std.civil",
-      "content_hash":"ead667e9a11ae76416bbe22f3d931c6823f050424db2b90539efae28cadc0c35",
+      "content_hash":"81077eacfefc19492432a09c780d53d9c75df1ff52df2ef0cbfe8c21090f6afb",
       "detail":"waiver import(std.civil) by doc(memos/release-residuals.md) memo=blake3:2f32189789e28f0088479e890998248dff6ad60081d7600de6b47470e0089b22",
       "disposition":"accepted_deviation",
-      "subject_anchor":"2f5a6b49526e"
+      "subject_anchor":"2e29a43e2745"
     },
     {
       "claim_name":"strength[G1]",
-      "content_hash":"e56b5dcd9f09f7fbd58d3b74126ad25df93be51875d87f0da6573d0629e9460c",
-      "detail":"strength[G1]::afc15fc09a7f",
+      "content_hash":"7583fba775c8b6c432c8f17fa0ff3b0571173a6757e246bf64ed82834aa2938e",
+      "detail":"strength[G1]::2bbb92744889",
       "disposition":"calc_sheet",
-      "subject_anchor":"afc15fc09a7f"
+      "subject_anchor":"2bbb92744889"
     },
     {
       "claim_name":"strength[G2]",
-      "content_hash":"ca121f9853a37c25c4efa7fbb0b00571dac1f9bc3aa7a87829c1cdb962ee3fab",
-      "detail":"strength[G2]::afc15fc09a7f",
+      "content_hash":"d55de7e41b22ddcd5456a1406127849ddfc024bee00eb51ca036ca0f62b60c3d",
+      "detail":"strength[G2]::2bbb92744889",
       "disposition":"calc_sheet",
-      "subject_anchor":"afc15fc09a7f"
+      "subject_anchor":"2bbb92744889"
     },
     {
       "claim_name":"strength[P_A]",
-      "content_hash":"9a96de9129e6e99d5ccaead1e4b044805246355e16ae6d810a760ef06409e041",
-      "detail":"strength[P_A]::afc15fc09a7f",
+      "content_hash":"d1572094daab4cb805170cab57c0327b4bc9225da7a43e9bb9a5665736d2fffa",
+      "detail":"strength[P_A]::2bbb92744889",
       "disposition":"calc_sheet",
-      "subject_anchor":"afc15fc09a7f"
+      "subject_anchor":"2bbb92744889"
     },
     {
       "claim_name":"strength[P_B]",
-      "content_hash":"165da4b574ff7a6800c4cdcaa3c67dd673fd12039ac2da17ec74b67938f6198a",
-      "detail":"strength[P_B]::afc15fc09a7f",
+      "content_hash":"86e3625efb29b8f4d0d82dd71712ca8b0593447cb735f69464ce34d3f4c379f0",
+      "detail":"strength[P_B]::2bbb92744889",
       "disposition":"calc_sheet",
-      "subject_anchor":"afc15fc09a7f"
+      "subject_anchor":"2bbb92744889"
     },
     {
       "claim_name":"strength[Purlin]",
-      "content_hash":"0e929836dab7695ace513f7372595e4d0a779f7b282764bc7bb708fc988781e1",
+      "content_hash":"b76bad5ca2b1fb499d9d510f4bd0d1b32c840123701ce0658b5b79e10bb8e522",
       "detail":"waiver strength[Purlin] by doc(memos/release-residuals.md) memo=blake3:2f32189789e28f0088479e890998248dff6ad60081d7600de6b47470e0089b22",
       "disposition":"accepted_deviation",
-      "subject_anchor":"afc15fc09a7f"
+      "subject_anchor":"2bbb92744889"
     }
   ],
   "summary":{
