@@ -16,6 +16,7 @@ from regolith.backends.drawings.audit import assert_ship_ready, run_drafting_rul
 from regolith.backends.drawings.producers import diagram_moody
 
 
+# frob:tests python/regolith/backends/drawings/producers.py::diagram_moody kind="unit"
 def test_axes_carry_ticks_and_unit_labeled_titles():
     model = diagram_moody(
         "test_dp_claim",

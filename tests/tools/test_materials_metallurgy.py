@@ -46,6 +46,8 @@ def _load():
 # --- lithos-side schema validity --------------------------------------------
 
 
+# frob:tests tools/stdlib/materials_schema.py::load_metallurgy_records kind="unit"
+# frob:tests tools/stdlib/materials_schema.py kind="integration"
 def test_metallurgy_file_loads_all_first_slice_keys() -> None:
     """The D268 die-set first slice (D2/A2 tool steel + 1018/A36 mild
     steel) loads with exactly the keys the ticket's acceptance names."""
@@ -61,6 +63,7 @@ def _refusal_of(notes: tuple[ProvenanceNote, ...]) -> ProvenanceNote:
 
 
 @pytest.mark.parametrize("key", sorted(_EXPECTED_KEYS))
+# frob:tests tools/stdlib/materials_schema.py::CompositionRange.to_feldspar_mass_fractions kind="unit"
 def test_metallurgy_record_provenance_is_named(key: str) -> None:
     """Every record carries three non-empty provenance-note TUPLES
     (composition/crystal/cost), each note with a real posture marker --

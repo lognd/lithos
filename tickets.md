@@ -1673,3 +1673,21 @@ attachments: []
 acceptance: []
 threat: null
 ```
+
+<!-- ticket:T-0057 -->
+```yaml
+id: T-0057
+title: 'chore: post-close test-binding fixups (T-0015/T-0038 gaps)'
+state: in-progress
+kind: docs
+origin: agent
+created: '2026-07-19'
+blocked_by: []
+parent: null
+scope:
+- tests/**
+evidence: []
+attachments: []
+acceptance: []
+threat: null
+```
