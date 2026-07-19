@@ -175,7 +175,7 @@ function with evidence below.
 ```yaml
 id: T-0004
 title: 'WO-111: feldspar model growth (WO-24 remainder + Class C solver half)'
-state: queued
+state: in-progress
 kind: feature
 origin: agent
 created: '2026-07-18'
@@ -768,7 +768,7 @@ threat: null
 ```yaml
 id: T-0026
 title: 'WO-156: timing closure v1 -- grounding budget kind=timing'
-state: queued
+state: in-progress
 kind: feature
 origin: agent
 created: '2026-07-18'
@@ -1784,7 +1784,7 @@ Four bindings written (cb11a110); gates back to 0/0.
 ```yaml
 id: T-0058
 title: mint E1104 bringup_expectation_authored_posture DiagCode (WO-151 escalation)
-state: queued
+state: in-progress
 kind: feature
 origin: agent
 created: '2026-07-19'
@@ -1801,7 +1801,7 @@ threat: null
 ```yaml
 id: T-0059
 title: resolve geom_extract edge params into flownet payloads (feldspar T-0025 counterpart)
-state: queued
+state: in-progress
 kind: feature
 origin: agent
 created: '2026-07-19'
@@ -1825,7 +1825,7 @@ threat: null
 ```yaml
 id: T-0060
 title: small_office coil k_factor params (post feldspar hx_segment support)
-state: queued
+state: in-progress
 kind: feature
 origin: agent
 created: '2026-07-19'
