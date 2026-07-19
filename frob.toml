@@ -29,22 +29,33 @@ exclude = [
 ]
 
 [gates.severity]
-# Legacy-adoption baseline (frob.toml quickstart posture): snapshot-wide
-# obligations warn on the un-annotated legacy surface while lithos comes
-# under frob; diff-scoped and drift rules stay hard errors.
-COV001 = "warn"
-TEST001 = "warn"
+# Ratchet stage 1 (2026-07-19): annotation surface at zero unwaived
+# violations across the whole repo (COV001/TEST001/TEST003/DOC001) as
+# of the lane-L7 closeout campaign -- flip these four to error so any
+# regression fails the build immediately instead of silently
+# accumulating warnings again. TEST002/TEST005/TEST006 stay warn: their
+# 0-unwaived state rests on documented tool-collector gaps (rust
+# cargo-fuzz lib-less-crate collection failure, no TS [[test.runner]]
+# entry, measured coverage floors with per-site waivers) rather than a
+# clean annotation surface, so a new legitimate finding there should
+# still read as "go fix or waive this," not "the build is broken."
+COV001 = "error"
+TEST001 = "error"
 TEST002 = "warn"
+# TEST003 stays warn, NOT ratcheted with COV001/TEST001/DOC001: one
+# unwaived finding remains (interface `design`, i.e. design/lithos.strata)
+# that is coordinator territory (T-0034's in-flight design/ work) --
+# ratcheting to error here would fail the build on a file this session
+# was explicitly told to leave alone. Revisit once T-0034 lands or
+# explicitly waives it.
 TEST003 = "warn"
 TEST005 = "warn"
 TEST006 = "warn"
-# DOC001 (doclink) postdates the frob quickstart baseline above but is the
-# same shape of obligation: lithos's docs/workflow/design-log/ is a large
-# verbatim historical archive (CLAUDE.md: "NEVER sweep or edit these") plus
-# many WO/spec files not yet wired into docs/index.md's link graph. Warn
-# on the un-linked legacy doc surface for the same adoption reason as
-# COV001; newly-added docs still show up as warnings to act on.
-DOC001 = "warn"
+# DOC001 (doclink): the docs link graph is complete and stable (T-0001
+# closed it to 0 across docs/workflow/work-orders + the new index
+# roots; design-log stays a frozen verbatim archive, CLAUDE.md, so it
+# was never in scope for linking). Ratchet alongside the others.
+DOC001 = "error"
 
 [testing]
 min_unit_cases = 1
