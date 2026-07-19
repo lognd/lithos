@@ -131,6 +131,7 @@ def _golden_path(name: str) -> Path:
     return _DATA_DIR / f"deferral_{name}.json"
 
 
+# frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
 def _deferral_snapshot(paths: tuple[str, ...]) -> list[dict[str, object]]:
     """One entry per obligation: its claim name/op and the translate verdict.
 

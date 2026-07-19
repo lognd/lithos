@@ -43,6 +43,7 @@ def _report():
     return result.danger_ok
 
 
+# frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
 def test_section_search_pins_both_girders_with_optimize_cause() -> None:
     report = _report()
     rows = {r.slot: r for r in report.final.frame_lock_rows}

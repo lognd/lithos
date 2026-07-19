@@ -132,6 +132,7 @@ def _corpus_files() -> list[Path]:
     return files
 
 
+# frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
 def test_corpus_std_imports_are_not_phantom() -> None:
     """Every `import std.<sub> (Name, ...)` in examples/ (excluding the
     out-of-scope namespaces named in the module docstring) resolves to a
@@ -163,6 +164,7 @@ def test_corpus_std_imports_are_not_phantom() -> None:
     assert not missing, "phantom std references:\n" + "\n".join(sorted(set(missing)))
 
 
+# frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
 def test_corpus_bare_materials_resolve_against_std_materials() -> None:
     """Every `material: <Name>` bare reference in examples/*.hema resolves
     to a std.materials or std.contact record, EXCEPT `vendor(...)`

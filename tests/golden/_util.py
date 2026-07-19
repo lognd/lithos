@@ -44,6 +44,7 @@ def snapshot_hashes(payload: dict[str, Any]) -> list[str]:
     return sorted(record["hash"] for record in payload["snapshots"])
 
 
+# frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
 def diagnostic_multiset(payload: dict[str, Any]) -> list[list[Any]]:
     """Sorted `[code, severity, count]` triples -- the diagnostic-code
     multiset. Spans/messages carry file paths and are excluded (would

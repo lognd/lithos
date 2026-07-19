@@ -226,6 +226,7 @@ def _census_from_report(
     return census, bool(final["release_ok"]), stale, tuple(unclassified)
 
 
+# frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
 def _ship_families(ship_dir: Path) -> tuple[str, ...]:
     """The backend families present in a ship package (manifest-derived)."""
     manifest = ship_dir / "manifest.json"

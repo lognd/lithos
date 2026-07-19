@@ -74,6 +74,7 @@ def _half_obligation(suffix: str, op: str, rhs: str, w_m: float) -> Obligation:
     )
 
 
+# frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
 def _make_evaluator(registry, si_context, ledger: list[tuple[float, str, bool]]):
     """Feasibility = BOTH window halves discharge through the REAL
     translate() -> registry.discharge() path; objective = the width

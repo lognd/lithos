@@ -849,6 +849,7 @@ class TestSvgRenderer:
         assert render_svg(m1) == render_svg(m2)
 
     # frob:tests python/regolith/backends/drawings/renderer.py::dimension_placement kind="unit"
+    # frob:waive PERF002 reason="one-shot index/count over a small per-call set"
     def test_every_dimension_text_present_exactly_once(self):
         # WO-123 D238.3 defect 6: the printed dimension text is the
         # human value ("80.00 mm"), not the payload-path `role` prefix
@@ -1042,6 +1043,7 @@ class TestRendererFurnitureConsistency:
         b"TBFX-SUBJ",
     )
 
+    # frob:waive PERF002 reason="one-shot index/count over a small per-call set"
     def test_svg_has_frame_and_each_field_exactly_once(self):
         svg = render_svg(_distinct_title_block_model())
         assert svg.count(b'class="frame"') == 1
@@ -1050,6 +1052,7 @@ class TestRendererFurnitureConsistency:
             assert svg.count(text) == 1, text
 
     # frob:tests python/regolith/backends/drawings/renderer.py::ChartGeometry.scale kind="unit"
+    # frob:waive PERF002 reason="one-shot index/count over a small per-call set"
     def test_dxf_has_frame_and_each_field_exactly_once(self):
         dxf = render_dxf(_distinct_title_block_model())
         # 2 rects (frame + title block) x 4 edges on the SHEET layer.
@@ -1060,6 +1063,7 @@ class TestRendererFurnitureConsistency:
         for text in self._FIELD_TEXTS:
             assert dxf.count(b"\n" + text + b"\n") == 1, text
 
+    # frob:waive PERF002 reason="one-shot index/count over a small per-call set"
     def test_pdf_has_frame_and_each_field_exactly_once(self):
         pdf = render_pdf(_distinct_title_block_model())
         # 3 stroked `re` rectangles: frame + title-block box + the mech

@@ -32,6 +32,7 @@ def _class_suffix(cls: str) -> str:
     return cls.replace(".", "_")
 
 
+# frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
 def _socket_head_cap_screws(data: dict) -> list[dict]:
     rows = []
     for entry in data["iso_4762"]:
@@ -70,6 +71,7 @@ def _socket_head_cap_screws(data: dict) -> list[dict]:
     return sorted(rows, key=lambda r: r["key"])
 
 
+# frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
 def _hex_bolts(data: dict) -> list[dict]:
     rows = []
     for entry in data["iso_4014"]:
@@ -107,6 +109,7 @@ def _hex_bolts(data: dict) -> list[dict]:
     return sorted(rows, key=lambda r: r["key"])
 
 
+# frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
 def _hex_nuts(data: dict) -> list[dict]:
     rows = []
     for entry in data["iso_4032"]:
@@ -143,6 +146,7 @@ def _hex_nuts(data: dict) -> list[dict]:
     return sorted(rows, key=lambda r: r["key"])
 
 
+# frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
 def _plain_washers(data: dict) -> list[dict]:
     rows = []
     for entry in data["iso_7089"]:
@@ -220,6 +224,7 @@ def generate() -> dict[str, str]:
 # frob:doc docs/modules/tools.md#stdlib-gen-fasteners
 # frob:waive TEST001 reason="CLI entry point; see tests/tools/test_stdlib_gen_drift.py"
 # frob:waive TEST005 reason="measured 16.7% branch on 2026-07-19; backfill T-0036"
+# frob:waive PERF002 reason="one-shot index/count over a small per-call set"
 def main() -> None:
     for path_str, content in generate().items():
         path = Path(path_str)

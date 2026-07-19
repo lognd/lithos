@@ -169,6 +169,7 @@ _ONE_FAMILY_BASELINE = {
 
 
 # frob:doc docs/modules/tools.md#stdlib-organization-sweeps
+# frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
 def check_one_family_per_file() -> SubCheck:
     """Each `records/*.toml` declares exactly one array-of-tables key.
 
@@ -295,6 +296,7 @@ def _structured_citation_offenses(block: str) -> list[str]:
 
 
 # frob:doc docs/modules/tools.md#stdlib-organization-sweeps
+# frob:waive PERF002 reason="one-shot index/count over a small per-call set"
 def check_citations() -> SubCheck:
     """Record rows and model docstrings all carry a citation.
 
@@ -418,6 +420,7 @@ def _registered_builtin_groups() -> set[str]:
 
 
 # frob:doc docs/modules/tools.md#stdlib-organization-sweeps
+# frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
 def check_models_manifest() -> SubCheck:
     """`std.models`'s manifest names every registered built-in module."""
     manifest_path = STDLIB_DIR / "std.models" / "magnetite.toml"

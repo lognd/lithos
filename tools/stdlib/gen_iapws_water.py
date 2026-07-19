@@ -111,6 +111,7 @@ def generate() -> dict[str, str]:
 # frob:doc docs/modules/tools.md#stdlib-gen-iapws-water
 # frob:waive TEST001 reason="CLI entry point; see tests/tools/test_stdlib_gen_drift.py"
 # frob:waive TEST005 reason="measured 16.7% branch on 2026-07-19; backfill T-0036"
+# frob:waive PERF002 reason="one-shot index/count over a small per-call set"
 def main() -> None:
     for path_str, content in generate().items():
         path = Path(path_str)

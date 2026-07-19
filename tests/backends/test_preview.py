@@ -48,6 +48,7 @@ def _report_with_contract_graph(*, clean: bool) -> StagedBuildReport:
     return StagedBuildReport(final=final, iterations=1)
 
 
+# frob:waive PERF001 reason="one-shot membership test over a small per-call set"
 def test_stamp_model_adds_a_visible_annotation_on_every_sheet() -> None:
     graph = _contract_graph()
     inputs = BackendInputs(

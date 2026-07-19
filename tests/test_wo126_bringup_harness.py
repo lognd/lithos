@@ -125,6 +125,7 @@ class TestMainboardHarnessFamily:
             "no calc-sheet-backed expectation on the board flagship"
         )
 
+    # frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
     def test_bringup_orders_rails_before_clocks_and_buses(
         self, mainboard_debug
     ) -> None:

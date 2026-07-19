@@ -26,6 +26,7 @@ _IEC_REF = (
 )
 
 
+# frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
 def _resistor_families(data: dict) -> list[dict]:
     rows = []
     for entry in data["resistor_family"]:
@@ -51,6 +52,7 @@ def _resistor_families(data: dict) -> list[dict]:
     return sorted(rows, key=lambda r: r["key"])
 
 
+# frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
 def _capacitor_families(data: dict) -> list[dict]:
     rows = []
     for entry in data["capacitor_family"]:
@@ -107,6 +109,7 @@ def generate() -> dict[str, str]:
 # frob:doc docs/modules/tools.md#stdlib-gen-eseries
 # frob:waive TEST001 reason="CLI entry point; see tests/tools/test_stdlib_gen_drift.py"
 # frob:waive TEST005 reason="measured 16.7% branch on 2026-07-19; backfill T-0036"
+# frob:waive PERF002 reason="one-shot index/count over a small per-call set"
 def main() -> None:
     for path_str, content in generate().items():
         path = Path(path_str)

@@ -69,6 +69,7 @@ def _cli(*args: str, env: dict[str, str] | None = None, cwd: str | None = None) 
 
 
 # frob:doc docs/modules/demos.md#demo-proof-pack-shape
+# frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
 def run() -> bool:
     """Emit the doctor/config proof pack; return True (live)."""
     writer = DemoWriter(DEMO, SURFACE)
