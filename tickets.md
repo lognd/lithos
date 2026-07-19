@@ -293,7 +293,7 @@ route targets must exist before routing can be honest.
 ```yaml
 id: T-0009
 title: 'WO-135: power models -- closed-form built-ins + certified solvers'
-state: in-progress
+state: done
 kind: feature
 origin: agent
 created: '2026-07-18'
@@ -302,12 +302,19 @@ parent: null
 scope:
 - python/regolith/stdlib/**
 - docs/spec/toolchain/**
-evidence: []
+evidence:
+- tests/harness/test_power_models.py::test_certified_tier_claims_have_no_lithos_built_in
 attachments: []
 acceptance:
 - see docs/workflow/work-orders/WO-135-power-models.md
 threat: null
 ```
+## Done report
+
+WO-135 lithos half landed (29b590c8): 7 cited closed-form models w/
+D250.3 named-absence refusals + D250.4 certified-tier boundary proof.
+322 harness tests green. Feldspar certified half = its own repo's
+scope per AD-37.
 
 <!-- ticket:T-0010 -->
 ```yaml
