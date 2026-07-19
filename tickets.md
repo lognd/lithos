@@ -1510,17 +1510,11 @@ See docs/workflow/work-orders/WO-166-wire-edm-die-set-program.md. D268 item 1 + 
 ```yaml
 id: T-0047
 title: 'WO-167: dwelling/house wiring program'
-state: planned
+state: in-progress
 kind: feature
 origin: human
 created: '2026-07-19'
-blocked_by:
-- T-0007
-- T-0008
-- T-0009
-- T-0010
-- T-0011
-- T-0044
+blocked_by: []
 parent: null
 scope:
 - docs/spec/cuprite/**
