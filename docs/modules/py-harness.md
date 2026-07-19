@@ -192,6 +192,26 @@ pipeline (`orchestrator/dfm_staging.py` is the consumer).
 `harness/models/dfm/__init__.py` re-exports the dfm model surface
 for registration; no logic lives here.
 
+<a id="models-dfm-process"></a>
+### `harness/models/dfm/process_records.py` + `process_seeds.py`
+
+The `std.process` record schema + DFM check-set CONTRACT (WO-168,
+`docs/spec/toolchain/45-process-record-schema.md`): `ProcessRecord`
+(materials, `DimensionedValue`-carrying size limits/tolerance grades/
+surface finish/min features, cost drivers, lead class, a REQUIRED
+non-empty `provenance` tuple of `ProvenanceNote` -- the D269 amendment
+owner-visible posture marker, one of `pd_gov`/`gek`/`named_refusal`)
+and `DfmCheckSet` (a non-empty tuple of `DfmCheckEntry`, each its own
+module-qualified `check_id` plus its own `ProvenanceNote`), both
+schema-and-contract only -- no process DATA population and no check
+IMPLEMENTATIONS here (that is WO-169/170/171). `process_seeds.py`
+carries two seed records (wire EDM, quench+temper) exercising every
+schema branch end to end, including a `named_refusal` entry each,
+transcribed from the process-research recon dossiers with provenance
+preserved. Both wire into `regolith.backends.capabilities.
+RealizerCapability.process_records`/`.dfm_checks` (WO-164) as plain
+string cross-links.
+
 ## harness/models/hdl
 
 <a id="models-hdl"></a>
