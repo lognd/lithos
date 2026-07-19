@@ -1032,7 +1032,9 @@ scope:
 - tests/test_design_strata_audit.py
 - frob.toml
 - tickets.md
-evidence: []
+evidence:
+- cmd:bash -c 'frob check --only gates 2>&1 | grep -q "0 errors, 0 warnings"' exit=0
+  sha256=e3b0c44298fc
 attachments: []
 acceptance: []
 threat: null

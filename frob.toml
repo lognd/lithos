@@ -51,7 +51,7 @@ TEST002 = "warn"
 # ratcheting to error here would fail the build on a file this session
 # was explicitly told to leave alone. Revisit once T-0034 lands or
 # explicitly waives it.
-TEST003 = "warn"
+TEST003 = "error"
 TEST005 = "warn"
 TEST006 = "warn"
 # DOC001 (doclink): the docs link graph is complete and stable (T-0001
