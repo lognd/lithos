@@ -370,12 +370,17 @@ acceptance:
 - see docs/workflow/work-orders/WO-136-power-calcite-tandem.md
 threat: null
 ```
+## Done report
+
+WO-136 landed (see the tandem commit): working_clearance model +
+routing + calcite-space entity-ref fallback + xdomain fixture; all
+six acceptance items green; heat rejection stays a named absence.
 
 <!-- ticket:T-0011 -->
 ```yaml
 id: T-0011
 title: 'WO-137: the factory flagship -- power + building together'
-state: queued
+state: planned
 kind: feature
 origin: agent
 created: '2026-07-18'
