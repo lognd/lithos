@@ -1242,3 +1242,41 @@ lethally-wrong answer; and arc flash reaches release trust ONLY
 through a certified solver (INV-14's tier machinery enforces it) --
 a closed-form screening estimate may never present itself as a
 study.
+
+## 43. AD-43: The six-layer boundary charter
+
+Lithos is six one-way layers (SOURCE, LOWER, ORCHESTRATE, REALIZE,
+EMIT, SURFACE) with named, type-shaped seams; every crossing is a
+schema or a registration, never a convention. Normative body:
+`44-boundary-charter.md` sec. 1-2 (adopted cycle 38, D267).
+
+## 44. AD-44: regolith.surface is the one UI read facade
+
+External UIs (graphite first) import `regolith.surface` and nothing
+else from `regolith` -- the AD-4 one-door pattern applied to the
+read side, enforced by forbidden-import policy in the consumer and a
+strata flow claim here. D259's contact list is amended accordingly.
+Body: `44-boundary-charter.md` sec. 4.
+
+## 45. AD-45: Artifacts carry provenance tier in the index row
+
+`ArtifactRow.provenance` records `real_tool | deterministic` plus
+tool identity; the producing registration supplies it; no consumer
+infers tier from relpath or build-time toolenv state. Body:
+`44-boundary-charter.md` sec. 3.
+
+## 46. AD-46: Artifact classification derives from the registration
+
+`classify()`'s relpath patterns live in
+`ArtifactFamilyRegistration`; the index consults the registry; the
+independent hand-written dispatcher is deleted. Body:
+`44-boundary-charter.md` sec. 3.
+
+## 47. AD-47: Capabilities enter through the realizer capability registry
+
+A generation capability is ONE registration naming its program kind,
+realized kind, artifact families, tiered tool adapters, process
+records, DFM checks, and claim kinds -- a capability missing any
+field is refused. First consumers: the D268 programs (wire-EDM die
+sets, perf-board routing, dwelling wiring; PCB retrofit). Body:
+`44-boundary-charter.md` sec. 5.

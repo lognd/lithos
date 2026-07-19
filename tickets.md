@@ -1016,3 +1016,24 @@ T-0036"`. This ticket tracks writing real branch tests for those sites
 (concentrated in demos/*.py run() entrypoints, tools/, and a long tail
 of orchestrator/backends error branches) to retire the waivers and, once
 retired, raise unit_branch_cov back toward the original 90 default.
+
+<!-- ticket:T-0037 -->
+```yaml
+id: T-0037
+title: 'docs: boundary charter adoption (D267-D270) + strata audit binding'
+state: in-progress
+kind: docs
+origin: agent
+created: '2026-07-19'
+blocked_by: []
+parent: null
+scope:
+- docs/**
+- tests/test_design_strata_audit.py
+- frob.toml
+- tickets.md
+evidence: []
+attachments: []
+acceptance: []
+threat: null
+```

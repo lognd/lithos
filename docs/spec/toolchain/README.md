@@ -33,3 +33,4 @@ root.
 | 41-artifact-presentation | [41-artifact-presentation.md](41-artifact-presentation.md) |
 | 42-injection-and-artifact-surface | [42-injection-and-artifact-surface.md](42-injection-and-artifact-surface.md) |
 | 43-power-distribution | [43-power-distribution.md](43-power-distribution.md) |
+| 44-boundary-charter | [44-boundary-charter.md](44-boundary-charter.md) |

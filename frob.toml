@@ -13,7 +13,10 @@ exclude = [
     # test-evidence collection for the whole workspace. Fuzz targets are
     # not public API surface; fuzz obligations have their own [fuzz]
     # gate family. Upstream ask: collector should skip lib-less crates
-    # gracefully (FROBLEMS 2026-07-18).
+    # gracefully (FROBLEMS 2026-07-18). Both spellings: "fuzz/**" covers
+    # the tree's files; bare "fuzz" covers the directory node itself,
+    # which is what crate discovery walks.
+    "fuzz",
     "fuzz/**",
     "python/regolith/_schema/**",
     "python/regolith/_codes/**",
