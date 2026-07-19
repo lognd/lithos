@@ -1700,7 +1700,7 @@ threat: null
 ```yaml
 id: T-0053
 title: wire capability registry into a consistency check (families/dfm ids must resolve)
-state: queued
+state: in-progress
 kind: feature
 origin: agent
 created: '2026-07-19'
@@ -1930,7 +1930,7 @@ threat: null
 ```yaml
 id: T-0064
 title: power_oneline drawing producer for PowerNetPayload (F-WO137-1)
-state: queued
+state: in-progress
 kind: feature
 origin: agent
 created: '2026-07-19'
@@ -1947,7 +1947,7 @@ threat: null
 ```yaml
 id: T-0065
 title: 'cuprite: bare require groups after a power net attach no obligations (F-WO137-2)'
-state: queued
+state: in-progress
 kind: bug
 origin: agent
 created: '2026-07-19'
