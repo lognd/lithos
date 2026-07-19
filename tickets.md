@@ -595,7 +595,7 @@ threat: null
 ```yaml
 id: T-0021
 title: 'WO-151: waveform/mask record class + authored-posture refusal'
-state: queued
+state: in-progress
 kind: feature
 origin: agent
 created: '2026-07-18'
