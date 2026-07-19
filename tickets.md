@@ -427,11 +427,12 @@ threat: null
 ```yaml
 id: T-0014
 title: 'WO-142: heat-transfer correlation growth'
-state: in-progress
+state: planned
 kind: feature
 origin: agent
 created: '2026-07-18'
-blocked_by: []
+blocked_by:
+- T-0016
 parent: null
 scope:
 - python/regolith/stdlib/**
@@ -442,6 +443,16 @@ acceptance:
 - see docs/workflow/work-orders/WO-142-heat-transfer-correlation-growth.md
 threat: null
 ```
+
+### Progress (2026-07-19)
+
+Feldspar half DONE (feldspar T-0020, commit 299ae80 there: Gnielinski,
+Dittus-Boelter cooling, laminar constants, Churchill-Chu, NTU family,
+13 registered directions, calibrated + cited). The remaining lithos
+deliverable (thermo.htc pad-check model) is CONDITIONAL on WO-144's
+demo needing pack-free discharge -- blocked_by T-0016 records that
+gate honestly.
+
 
 <!-- ticket:T-0015 -->
 ```yaml
