@@ -1071,12 +1071,143 @@ def check_conduit_bend_radius(
     )
 
 
+# frob:doc docs/modules/py-harness.md#models-dfm-process
+def check_value_window(
+    value_mm: float, min_mm: float, max_mm: float, quantity_name: str = "value"
+) -> CamOutcome:
+    """The GENERIC declared-value-within-a-declared-window containment
+    predicate (WO-171 wave 3): reused across every family whose own DFM
+    rule is "this dimension must sit inside a declared [min, max] band"
+    rather than a family-specific arithmetic shape (casting/molding/
+    powder wall thickness, joining joint-gap/bond-line-thickness
+    windows, and any other family sharing this SAME shape) -- the same
+    NO-DUPLICATION reasoning `check_punch_die_clearance`/
+    `check_grinding_stock_allowance` already apply to their own narrower
+    cases, generalized here so wave-3's many new families do not each
+    duplicate the worst-side-excess arithmetic. `quantity_name` is
+    caller-declared only for the note text, never a hidden default
+    threshold."""
+    low_excess = min_mm - value_mm
+    high_excess = value_mm - max_mm
+    excess = max(low_excess, high_excess)
+    _log.debug(
+        "%s window: declared=%.4f min=%.4f max=%.4f excess=%.4f",
+        quantity_name,
+        value_mm,
+        min_mm,
+        max_mm,
+        excess,
+    )
+    if excess > 0.0:
+        side = "below minimum" if low_excess > high_excess else "above maximum"
+        return CamOutcome(
+            excess=excess,
+            note=(
+                f"{quantity_name} {value_mm:.4f}mm is {side} of the declared "
+                f"[{min_mm:.4f}, {max_mm:.4f}]mm window"
+            ),
+        )
+    return CamOutcome(
+        excess=excess,
+        note=(
+            f"{quantity_name} {value_mm:.4f}mm is within the declared "
+            f"[{min_mm:.4f}, {max_mm:.4f}]mm window (margin {-excess:.4f}mm)"
+        ),
+    )
+
+
+# frob:doc docs/modules/py-harness.md#models-dfm-process
+def check_draft_angle_min(draft_deg: float, min_draft_deg: float) -> CamOutcome:
+    """The GENERIC die/mold-release draft-angle floor (WO-171 wave 3):
+    every casting/molding/forging family whose DFM rule is "declared
+    draft angle must meet or exceed a process-class minimum" reuses
+    this ONE callable (die casting, permanent mold, injection molding,
+    compression/transfer molding, closed-die forging) rather than each
+    duplicating the same single-sided containment arithmetic."""
+    excess = min_draft_deg - draft_deg
+    _log.debug(
+        "draft angle: declared=%.4f min=%.4f excess=%.4f", draft_deg, min_draft_deg, excess
+    )
+    if excess > 0.0:
+        return CamOutcome(
+            excess=excess,
+            note=(
+                f"draft angle {draft_deg:.4f}deg is below the declared "
+                f"minimum {min_draft_deg:.4f}deg for die/mold release"
+            ),
+        )
+    return CamOutcome(
+        excess=excess,
+        note=(
+            f"draft angle {draft_deg:.4f}deg meets the declared minimum "
+            f"{min_draft_deg:.4f}deg (margin {-excess:.4f}deg)"
+        ),
+    )
+
+
+# frob:doc docs/modules/py-harness.md#models-dfm-process
+def check_ratio_max(
+    numerator_mm: float,
+    denominator_mm: float,
+    max_ratio: float,
+    ratio_name: str = "ratio",
+) -> CamOutcome:
+    """The GENERIC declared-ratio-must-not-exceed-a-process-limit
+    predicate (WO-171 wave 3): reused for every family whose DFM rule
+    is a dimensionless containment on two declared lengths (injection
+    molding's rib/nominal-wall sink-mark ratio, thermoforming's draw-
+    depth/opening ratio, cold heading's upset ratio per station, wire/
+    bar-drawing-class per-pass diameter-reduction limits) -- the SAME
+    single-sided containment shape as `check_draft_angle_min`, over a
+    ratio instead of an angle."""
+    if denominator_mm <= 0.0:
+        return CamOutcome(
+            indeterminate=True, note=f"declared denominator for {ratio_name} is non-positive"
+        )
+    ratio = numerator_mm / denominator_mm
+    excess = ratio - max_ratio
+    _log.debug("%s: ratio=%.4f max=%.4f excess=%.4f", ratio_name, ratio, max_ratio, excess)
+    if excess > 0.0:
+        return CamOutcome(
+            excess=excess,
+            note=(
+                f"{ratio_name} {ratio:.4f} exceeds the declared maximum "
+                f"{max_ratio:.4f}"
+            ),
+        )
+    return CamOutcome(
+        excess=excess,
+        note=(
+            f"{ratio_name} {ratio:.4f} is within the declared maximum "
+            f"{max_ratio:.4f} (margin {-excess:.4f})"
+        ),
+    )
+
+
+# frob:doc docs/modules/py-harness.md#models-dfm-process
+def check_boolean_gate(condition_ok: bool, note: str) -> CamOutcome:
+    """The GENERIC hard boolean design-rule gate (WO-171 wave 3): reused
+    for every family whose DFM rule is a plain yes/no geometric/process
+    predicate rather than a numeric containment (PM's uniaxial press-
+    and-eject-without-undercuts gate, centrifugal casting's axisymmetric-
+    hollow-only gate, rotational molding's no-fine-detail gate, cold
+    heading's no-undercut-perpendicular-to-upset-axis gate). `excess` is
+    1.0 (violated) or 0.0 (satisfied); `note` is ALWAYS caller-supplied
+    (never a hidden default message) so the specific predicate that
+    failed/passed is always named."""
+    if condition_ok:
+        return CamOutcome(excess=0.0, note=note)
+    return CamOutcome(excess=1.0, note=note)
+
+
 __all__ = [
     "check_ampacity_containment",
     "check_annular_ring",
+    "check_boolean_gate",
     "check_conduit_bend_radius",
     "check_conduit_fill",
     "check_copper_edge_clearance",
+    "check_draft_angle_min",
     "check_grinding_stock_allowance",
     "check_hole_lead_clearance",
     "check_masked_area_declared",
@@ -1088,11 +1219,13 @@ __all__ = [
     "check_process_sequencing",
     "check_punch_die_clearance",
     "check_quench_section_uniformity",
+    "check_ratio_max",
     "check_reflow_thermal_compat",
     "check_shot_peen_recast_remediation",
     "check_sinker_edm_corner_radius",
     "check_stock_fit",
     "check_tool_fit",
+    "check_value_window",
     "check_via_drill_range",
     "check_voltage_drop_limit",
     "check_wire_edm_corner_radius",

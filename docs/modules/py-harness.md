@@ -233,6 +233,27 @@ preserved. Both wire into `regolith.backends.capabilities.
 RealizerCapability.process_records`/`.dfm_checks` (WO-164) as plain
 string cross-links.
 
+WO-169/170/171 population waves add per-family seed modules
+(`process_seeds_wave1_*.py`, `process_seeds_wave2_pcb_elec.py`,
+`process_seeds_wave3_casting.py`/`_molding.py`/`_powder.py`/
+`_additive.py`/`_joining.py`/`_bulk_forming.py`), each a
+`ProcessRecord`+`DfmCheckSet` pair per procres/*.md dossier entry.
+Wave 3 (the long tail, ~D269 sec.4 tier 3) adds the entirely-new
+casting/molding/powder/additive/joining/bulk-forming families (44
+records) plus four GENERIC `checks.py` callables reused across many
+families rather than duplicated per family (NO-DUPLICATION):
+`check_value_window` (declared value within a declared [min,max] band
+-- wall thickness, joint gap, bond-line thickness), `check_draft_angle_
+min` (die/mold-release draft-angle floor), `check_ratio_max` (declared
+ratio must not exceed a process limit -- rib/wall ratio, draw-depth/
+opening ratio, upset ratio, per-pass diameter reduction), and
+`check_boolean_gate` (a plain yes/no geometric/process predicate --
+axisymmetric-only, no-undercut, single-axis release). The subtractive/
+sheet/surface family REMAINDERS (procres/subtractive.md,
+procres/sheet.md, procres/surface.md, beyond each family's wave-1
+entries) are NOT yet populated -- named as remaining work for a future
+wave, not silently dropped.
+
 <a id="models-material-state"></a>
 ### `harness/models/material_state.py`
 
