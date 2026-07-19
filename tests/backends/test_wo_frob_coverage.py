@@ -99,7 +99,7 @@ def _calc_book():
     )
     ob = Obligation(
         claim=claim,
-        given=Given(materials=[], loads=[], backing=[], refs=[]),
+        given=Given(materials=[], loads=["stress: 1.0 MPa"], backing=[], refs=[]),
         hints=[],
         subject_ref="s1",
     )
@@ -147,11 +147,69 @@ def test_calc_sheet_drawing_projects_the_four_sections() -> None:
 # frob:tests python/regolith/backends/calc.py::calc_package_files kind="unit"
 def test_calc_package_files_emits_book_index_and_one_pdf_per_sheet() -> None:
     book = _calc_book()
-    files = calc_package_files(book)
+    result = calc_package_files(book)
+    assert result.is_ok
+    files = result.danger_ok
     relpaths = {f.relpath for f in files}
     assert "calc/calc_book.json" in relpaths
     assert "calc/audit_index.json" in relpaths
     assert sum(1 for p in relpaths if p.endswith(".pdf")) == len(book.sheets)
+
+
+# frob:tests python/regolith/backends/calc.py::calc_package_files kind="unit"
+def test_calc_package_files_refuses_a_sheet_that_fails_the_drafting_audit() -> None:
+    """WO-123 F141 (landed): a calc sheet that fails the gating drafting
+    audit (here, an empty Inputs ruled table -- `no-empty-ruled-table`)
+    makes `calc_package_files` return `Err(BackendError)`, exactly like
+    `DrawingsBackend.produce` refuses every other sheet family; it must
+    never ship a defective PDF silently behind a log line."""
+    from regolith._codes import DRAFTING_AUDIT_REFUSED
+    from regolith.backends.calc import (
+        AuditIndex,
+        AuditSummary,
+        CalcBook,
+        CalcSheet,
+        EvidenceChain,
+    )
+
+    sheet = CalcSheet(
+        sheet_id="bad-sheet",
+        claim_name="stress_ok",
+        claim_text="stress < limit",
+        subject_anchor="s1",
+        subject_ref="s1",
+        model_id="mech.deflection@2",
+        model_version="2",
+        citation="",
+        solver="mech.deflection",
+        tier="release",
+        attestation="unsigned",
+        inputs=(),
+        value="1.0",
+        margin="2.0",
+        verdict="pass",
+        chain=EvidenceChain(
+            sheet_digest="local-blake3:d",
+            evidence_hash="d",
+            subject_ref="s1",
+        ),
+    )
+    index = AuditIndex(
+        project="p",
+        summary=AuditSummary(
+            obligations=1,
+            discharged=1,
+            accepted_deviation=0,
+            accepted_rows=0,
+            deferred=0,
+            violated=0,
+        ),
+        rows=(),
+    )
+    book = CalcBook(sheets=(sheet,), index=index)
+    result = calc_package_files(book)
+    assert result.is_err
+    assert result.danger_err.kind == DRAFTING_AUDIT_REFUSED
 
 
 # frob:tests python/regolith/backends/package.py::acceptance_ledger_placeholder kind="unit"

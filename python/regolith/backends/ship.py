@@ -384,17 +384,18 @@ def _build_calc_book(report: StagedBuildReport, project_root: str):  # noqa: ANN
 
 def _calc_package_files(
     report: StagedBuildReport, project_root: str
-) -> tuple[OutputFile, ...]:
+) -> Result[tuple[OutputFile, ...], BackendError]:
     """Build the calc package (WO-114, D221) from a release report.
 
     Returns the ``calc/`` `OutputFile`s (empty when the calc book itself
-    could not be built -- see :func:`_build_calc_book`).
+    could not be built -- see :func:`_build_calc_book`) or `Err` when the
+    WO-123 F141 drafting-audit gate refuses a calc sheet.
     """
     from regolith.backends.calc import calc_package_files
 
     book = _build_calc_book(report, project_root)
     if book is None:
-        return ()
+        return Ok(())
     return calc_package_files(book)
 
 
@@ -1014,7 +1015,14 @@ def ship(
     # the report's own obligations/results/acceptance -- ship's layer is
     # allowed to read the report (it already does for the ledgers below).
     project = Path(project_root).name or "package"
-    calc_files = _calc_package_files(report, project_root)
+    calc_files_result = _calc_package_files(report, project_root)
+    if calc_files_result.is_err:
+        _log.error(
+            "ship: calc package failed the drafting audit: %s",
+            calc_files_result.danger_err.message,
+        )
+        return Err(calc_files_result.danger_err)
+    calc_files = calc_files_result.danger_ok
     for calc_file in calc_files:
         calc_file.write_under(out_path)
     all_files.extend(calc_files)

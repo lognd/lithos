@@ -51,9 +51,11 @@ from typing import Literal
 
 import blake3
 from pydantic import BaseModel, ConfigDict
+from typani.result import Err, Ok, Result
 
 from regolith._schema.models import Claim, Given, Obligation
 from regolith.backends.framework import OutputFile
+from regolith.errors import BackendError
 from regolith.harness.quantity import bits_to_f64
 from regolith.logging_setup import get_logger
 from regolith.orchestrator.acceptance import AcceptanceOutcome, Deviation
@@ -923,13 +925,18 @@ def calc_sheet_drawing(sheet: CalcSheet):  # noqa: ANN201 -- DrawingModel (avoid
 
 
 # frob:doc docs/modules/py-backends.md#backends-calc
-def calc_package_files(book: CalcBook) -> tuple[OutputFile, ...]:
+def calc_package_files(book: CalcBook) -> Result[tuple[OutputFile, ...], BackendError]:
     """Every ``calc/`` file for a release package (WO-114 deliverable 3).
 
     The canonical ``calc/calc_book.json`` + ``calc/audit_index.json``,
     plus one ``calc/<sheet>.pdf`` per discharged obligation rendered
     through the existing `DrawingModel` PDF renderer. Deterministic:
     sheets already sorted by id, PDF via the fixed-parameter renderer.
+
+    WO-123 F141 (landed): the drafting audit gates calc sheets exactly
+    like every other sheet family (`DrawingsBackend.produce`'s
+    `assert_ship_ready` refusal) -- the FIRST sheet that fails returns
+    `Err(BackendError)` instead of shipping a defective PDF silently.
     """
     from regolith.backends.drawings.audit import assert_ship_ready
     from regolith.backends.drawings.renderer_pdf import render_pdf
@@ -942,23 +949,15 @@ def calc_package_files(book: CalcBook) -> tuple[OutputFile, ...]:
     ]
     for sheet in book.sheets:
         drawing = calc_sheet_drawing(sheet)
-        # WO-123 F141 (escalated, not landed): `calc_package_files`
-        # returns a bare tuple (no `Result`), so a drafting-audit
-        # failure here can only be a loud warning, not the hard
-        # `assert_ship_ready` refusal `DrawingsBackend.produce` gives
-        # mech/fluid/civil/opt-trace drawings. Making calc sheets
-        # equally gating needs this function's signature to grow a
-        # `Result[..., BackendError]` (a caller-visible change to every
-        # `calc_package_files` call site) -- out of this WO's landed
-        # scope; ledgered here rather than silently left non-gating.
         gate_error = assert_ship_ready(drawing, sheet.sheet_id, style)
         if gate_error is not None:
-            _log.warning(
-                "calc sheet %s failed the drafting audit (non-gating, F141): %s",
+            _log.error(
+                "calc sheet %s failed the drafting audit (gating, F141): %s",
                 sheet.sheet_id,
                 gate_error.message,
             )
+            return Err(gate_error)
         pdf = render_pdf(drawing, style)
         files.append(OutputFile.of(f"calc/{_safe_name(sheet.sheet_id)}.pdf", pdf))
     _log.info("calc package: %d file(s)", len(files))
-    return tuple(files)
+    return Ok(tuple(files))
