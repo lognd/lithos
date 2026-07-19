@@ -77,7 +77,11 @@ def test_registers_a_complete_capability() -> None:
 )
 def test_refuses_capability_missing_a_tuple_field(
     field: Literal[
-        "artifact_families", "tool_adapters", "process_records", "dfm_checks", "claim_kinds"
+        "artifact_families",
+        "tool_adapters",
+        "process_records",
+        "dfm_checks",
+        "claim_kinds",
     ],
 ) -> None:
     kwargs = _complete_kwargs()

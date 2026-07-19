@@ -10,7 +10,7 @@
       "bytes": 10732,
       "deterministic": true,
       "path": "dist/artifact_index.json",
-      "sha256": "sha256:72e5360307a41e31fcc28083f99e942d1e4b52ff85e38e906e4d375a84640f54"
+      "sha256": "sha256:a667a865d46b157e9a351b237a17a53979e79dc58480c0da1ec69770137ef3c4"
     },
     {
       "bytes": 8655,
@@ -157,16 +157,16 @@
       "sha256": "sha256:b9e5cf143ea623f49d73e617e86de503c1b1157f4fe620f6cb5e0abcf3997089"
     },
     {
-      "bytes": 3569,
+      "bytes": 3661,
       "deterministic": true,
       "path": "dist/index.md",
-      "sha256": "sha256:7db149b982eae352d92d69f028fb8c178eae73c7e71f6df40203903f2ee34d03"
+      "sha256": "sha256:5439ea7d795a575704c3c4d32e47dfd6431a73720ef767a07bac3edde21af1a6"
     },
     {
       "bytes": 6975,
       "deterministic": true,
       "path": "dist/manifest.json",
-      "sha256": "sha256:afa6cfca64aed7fd88379a722184da4b68aa19057407a7f915105dd0a9c7a8f3"
+      "sha256": "sha256:d0611da7f327616d7731c5ca50f41a56a7d1cc089456c7bfbbf7c71d0545050e"
     },
     {
       "bytes": 28939,
