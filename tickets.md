@@ -1302,7 +1302,7 @@ See docs/workflow/work-orders/WO-164-realizer-capability-registry.md. AD-47. Ret
 ```yaml
 id: T-0045
 title: 'WO-165: perf-board routing capability program'
-state: in-progress
+state: done
 kind: feature
 origin: human
 created: '2026-07-19'
@@ -1315,12 +1315,22 @@ scope:
 - python/regolith/backends/**
 - stdlib/std.process/**
 - demos/**
-evidence: []
+evidence:
+- tests/realizer/elec/test_perfboard.py::test_every_net_is_assigned_exactly_once
+- tests/realizer/elec/test_perfboard.py::test_hole_out_of_bounds_refuses
 attachments: []
 acceptance:
 - see docs/workflow/work-orders/WO-165-perfboard-program.md
 threat: null
 ```
+## Done report
+
+WO-165 landed (f10b2e47): perfboard capability end to end (substrate,
+Manhattan assignment w/ refusals, realized-kind reuse, wiring_map +
+cutlist families w/ deterministic provenance, capability
+registration, DFM check, demo18 byte-identical proof). .cupr grammar
++ staged-build wiring = T-0054 per the WO escalation clause.
+
 See docs/workflow/work-orders/WO-165-perfboard-program.md. D268 item 3, smallest board-shaped win (D268 sequencing). Consumes WO-163's realized_kind seam and WO-164's capability registry.
 
 <!-- ticket:T-0046 -->
@@ -1512,6 +1522,24 @@ threat: null
 ```yaml
 id: T-0053
 title: wire capability registry into a consistency check (families/dfm ids must resolve)
+state: queued
+kind: feature
+origin: agent
+created: '2026-07-19'
+blocked_by: []
+parent: null
+scope: []
+evidence: []
+attachments: []
+acceptance: []
+threat: null
+```
+
+<!-- ticket:T-0054 -->
+```yaml
+id: T-0054
+title: cuprite substrate:perfboard grammar + staged-build wiring for the perfboard
+  capability
 state: queued
 kind: feature
 origin: agent
