@@ -93,7 +93,8 @@ _INPUTS = INPUTS
 
 # frob:doc docs/modules/py-harness.md#models
 class FatigueDamageModel(Model):
-    """Single-block Miner damage from a Marin-corrected Goodman/Basquin stress-life estimate."""
+    """Single-block Miner damage from a Marin-corrected Goodman/Basquin
+    stress-life estimate."""
 
     @property
     # frob:doc docs/modules/py-harness.md#models
@@ -129,6 +130,7 @@ class FatigueDamageModel(Model):
         )
 
     # frob:doc docs/modules/py-harness.md#models
+    # frob:waive PERF004 reason="one-shot corner-axis sorts during request assembly (one sorted() per <=4-corner interval in a comprehension); nothing re-sorts the same collection per iteration"
     def estimate(self, request: DischargeRequest) -> Result[Prediction, HarnessError]:
         """Evaluate worst-corner Miner damage over the interval-boxed inputs."""
         keys = _INPUTS
@@ -145,7 +147,9 @@ class FatigueDamageModel(Model):
             return Err(
                 DomainError(
                     model_id=self.model_id,
-                    message=f"Se' must be strictly positive: lo={vals['se_prime_pa'].lo}",
+                    message=(
+                        f"Se' must be strictly positive: lo={vals['se_prime_pa'].lo}"
+                    ),
                 )
             )
         for marin_key in (
@@ -181,14 +185,19 @@ class FatigueDamageModel(Model):
             return Err(
                 DomainError(
                     model_id=self.model_id,
-                    message=f"kf_notch must be strictly positive: lo={vals['kf_notch'].lo}",
+                    message=(
+                        f"kf_notch must be strictly positive: lo={vals['kf_notch'].lo}"
+                    ),
                 )
             )
         if vals["sigma_a_pa"].lo < 0.0 or vals["cycles_applied"].lo <= 0.0:
             return Err(
                 DomainError(
                     model_id=self.model_id,
-                    message="sigma_a_pa must be non-negative and cycles_applied strictly positive",
+                    message=(
+                        "sigma_a_pa must be non-negative and "
+                        "cycles_applied strictly positive"
+                    ),
                 )
             )
         if vals["sigma_m_pa"].hi >= vals["sut_pa"].lo:
@@ -203,7 +212,10 @@ class FatigueDamageModel(Model):
                 )
             )
 
-        axes = [np.array(sorted(set(iv.corners())), dtype=np.float64) for iv in vals.values()]
+        axes = [
+            np.array(sorted(set(iv.corners())), dtype=np.float64)
+            for iv in vals.values()
+        ]
         worst = -math.inf
         for corner in itertools.product(*axes):
             point = dict(zip(keys, corner, strict=True))

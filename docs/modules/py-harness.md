@@ -285,6 +285,18 @@ give cuprite digital designs simulation-backed evidence per
 `harness/models/hdl/__init__.py` re-exports the hdl model surface
 for registration; no logic lives here.
 
+## harness/models/timing.py
+
+<a id="models-timing"></a>
+std.timing grounding models (WO-156, timing closure v1):
+`TimingContribution` enforces exactly-one grounding source at
+construction (cited datasheet interval XOR extracted route length +
+cited stackup Dk, `v_p = c/sqrt(Dk)`); `close_timing_budget` sums
+pessimal-corner contributions against the budget limit reusing E0432;
+`TimingBudgetModel` discharges `elec.timing_budget` payload-carried
+claims; `timing_closure_given_loads` renders citations through the
+generic calc-book path. Fleet `.cupr` wiring is WO-157's scope.
+
 ## numeric
 
 <a id="numeric"></a>

@@ -2667,9 +2667,7 @@ _BOUND_DETACHED_UNIT = re.compile(rf"\s*({_BOUND_UNIT_TOKEN})\s*$")
 # this route's own dipole golden regression before landing). This
 # regex requires the WHOLE bound text to be `<number>N*m` (optional
 # space), so it can never mis-fire on any other unit spelling.
-_TORQUE_BOUND_RE = re.compile(
-    r"\s*([+-]?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)\s*N\*m\s*$"
-)
+_TORQUE_BOUND_RE = re.compile(r"\s*([+-]?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)\s*N\*m\s*$")
 
 
 def _split_bound_term(term: str) -> tuple[float, str | None] | None:

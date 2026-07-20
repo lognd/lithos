@@ -44,6 +44,8 @@ models = [
     # `models_manifest` sweep, which fails `make health` on any future
     # drift in either direction (phantom or missing).
     "bearing_life",
+    "drive_torque",
+    "fatigue_damage",
     "beam_utilization",
     "beam_service_deflection",
     "post_embedment",

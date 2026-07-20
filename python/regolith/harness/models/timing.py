@@ -71,6 +71,7 @@ LIGHT_SPEED_MM_PER_NS = 299.792458
 
 
 # frob:doc docs/modules/py-harness.md#models-timing
+# frob:tests tests/harness/test_std_timing.py::test_v_p_matches_hand_computed_tem_relation
 def stackup_v_p_mm_per_ns(dk: float) -> float:
     """Propagation velocity from a stackup's dielectric constant.
 
@@ -85,6 +86,7 @@ def stackup_v_p_mm_per_ns(dk: float) -> float:
 
 
 # frob:doc docs/modules/py-harness.md#models-timing
+# frob:tests tests/harness/test_std_timing.py::test_route_contribution_pessimal_ns_matches_hand_computed_delay
 def route_delay_ns(length_mm: float, dk: float) -> float:
     """A route's propagation delay: extracted length over Dk-derived `v_p`.
 
@@ -165,6 +167,7 @@ class TimingContribution(BaseModel):
         return route_delay_ns(self.route_length_mm, self.route_dk.value)
 
     # frob:doc docs/modules/py-harness.md#models-timing
+    # frob:tests tests/harness/test_std_timing.py::test_timing_table_renders_with_citations_visible
     def citation_summary(self) -> str:
         """A human-readable citation string for calc-book rendering.
 
@@ -409,6 +412,7 @@ class TimingBudgetModel(Model):
 
     @property
     # frob:doc docs/modules/py-harness.md#models-timing
+    # frob:tests tests/harness/test_std_timing.py::test_timing_budget_model_estimate_matches_close_timing_budget
     def output_unit(self) -> str | None:
         """Timing closure sums/limits are always nanoseconds (v1 posture)."""
         return "ns"
@@ -438,6 +442,7 @@ class TimingBudgetModel(Model):
 
 
 # frob:doc docs/modules/py-harness.md#models-timing
+# frob:tests tests/harness/test_std_timing.py::test_timing_table_renders_with_citations_visible
 def timing_closure_given_loads(closure: TimingBudgetClosure) -> tuple[str, ...]:
     """Render a closed/violated `TimingBudgetClosure` as `Given.loads`
     entries carrying each contribution's citation inline -- the exact

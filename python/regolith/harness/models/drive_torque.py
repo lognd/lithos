@@ -79,7 +79,8 @@ _ZERO_INTERVAL = Interval(lo=0.0, hi=0.0)
 
 # frob:doc docs/modules/py-harness.md#models
 class DriveTorqueModel(Model):
-    """Reflected motor torque to drive a ballscrew/leadscrew nut against a thrust load."""
+    """Reflected motor torque to drive a ballscrew/leadscrew nut against
+    a thrust load."""
 
     @property
     # frob:doc docs/modules/py-harness.md#models
@@ -147,7 +148,9 @@ class DriveTorqueModel(Model):
             return Err(
                 DomainError(
                     model_id=self.model_id,
-                    message=f"preload_drag_torque_nm must be non-negative: lo={drag.lo}",
+                    message=(
+                        f"preload_drag_torque_nm must be non-negative: lo={drag.lo}"
+                    ),
                 )
             )
 

@@ -59,7 +59,8 @@ def test_violated_when_demand_below_torque() -> None:
 
 
 def test_corner_conservatism_takes_worst_corner() -> None:
-    """Widening force/lead upward and efficiency downward never lowers torque (INV-9)."""
+    """Widening force/lead upward and efficiency downward never lowers
+    torque (INV-9)."""
     point = DriveTorqueModel().estimate(_point_request()).danger_ok.value
     boxed = DischargeRequest(
         claim_kind=CLAIM_KIND,

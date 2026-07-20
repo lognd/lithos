@@ -33,7 +33,9 @@ def _record(
     """A `WaveformMaskRecord` fixture, one per posture (mirrors WO-151's
     own `tests/magnetite/test_waveform.py` fixture shapes)."""
     segments = tuple(Segment(t=t, v=v) for t, v in values)
-    evidence = WaveformEvidence(method="analysis", trust_tier="community", reference="ref")
+    evidence = WaveformEvidence(
+        method="analysis", trust_tier="community", reference="ref"
+    )
     axes = Axes(t="s", value="V")
     if posture == "authored":
         return WaveformMaskRecord.construct_authored(
@@ -184,9 +186,7 @@ class TestBringupWaveformView:
         )
         signal = _record(key="signal", values=((0.0, 0.0), (1.0, 1.0)))
         mask = _record(key="ovp_mask", values=((0.0, 1.2), (1.0, 1.2)))
-        model = bringup_waveform_view(
-            tap, "1.0", "V", signal, overlay=mask
-        )
+        model = bringup_waveform_view(tap, "1.0", "V", signal, overlay=mask)
         assert len(model.sheets) == 1
         sheet = model.sheets[0]
         assert any(t.title == "Tap 3" for t in sheet.tables)

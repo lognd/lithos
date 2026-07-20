@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import hashlib
 import math
+from collections.abc import Sequence
 from xml.sax.saxutils import escape
 
 from regolith._schema import SCHEMA_VERSION
@@ -987,7 +988,7 @@ _CHART_SOURCE_KINDS = ("optimize.trace", "waveform.record")
 
 # frob:doc docs/modules/py-backends.md#drawings-renderer
 def _chart_polylines(
-    entities: list[object],
+    entities: Sequence[object],
 ) -> list[list[tuple[float, float]]]:
     """Split a view's `SegmentEntity` list into one or more disjoint
     polylines (WO-152 deliverable 3, the mask-overlay chart): a
@@ -1113,9 +1114,7 @@ def _render_sheet(
             chart_geometry = ChartGeometry(
                 points, cells.get(view.name, bounds), style, y_label, x_label
             )
-            lines.extend(
-                _render_chart_svg(chart_geometry, polylines, view.name, style)
-            )
+            lines.extend(_render_chart_svg(chart_geometry, polylines, view.name, style))
         else:
             lines.append(
                 f'<g class="view" data-view="{_text(view.name)}" '
