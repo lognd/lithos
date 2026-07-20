@@ -684,7 +684,7 @@ cycle-38 log.
 ```yaml
 id: T-0022
 title: 'WO-152: waveform/mask records on sheets -- rendering + AUTHORED badge'
-state: queued
+state: in-progress
 kind: feature
 origin: agent
 created: '2026-07-18'
@@ -797,7 +797,7 @@ follow-up ticket; impl-scope binding named in sim.rs as a follow-on.
 ```yaml
 id: T-0026
 title: 'WO-156: timing closure v1 -- grounding budget kind=timing'
-state: planned
+state: in-progress
 kind: feature
 origin: agent
 created: '2026-07-18'
@@ -2052,9 +2052,19 @@ origin: agent
 created: '2026-07-19'
 blocked_by: []
 parent: null
-scope: []
+scope:
+- python/regolith/backends/**
+- python/regolith/harness/models/hdl/**
+- python/regolith/orchestrator/**
+- tests/**
 evidence: []
 attachments: []
-acceptance: []
+acceptance:
+- 'sim discharge runs emit a sim/<subject>/ artifact family: trace.vcd (verilator
+  --trace passthrough) + sim_report.json (vectors run/passed, mismatch table, tool
+  version, content address)'
+- artifact index rows carry AD-45 provenance tier model_derived with the stimulus
+  ref cited; cache hits re-link the cached family, never re-run
+- goldens/tests cover report shape + index registration; no schema bump
 threat: null
 ```
