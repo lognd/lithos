@@ -294,9 +294,7 @@ class TestConsistencySweepFixtures:
         class _FakeProc:
             stdout = " M tests/golden/foo.txt\n"
 
-        monkeypatch.setattr(
-            consistency.subprocess, "run", lambda *a, **k: _FakeProc()
-        )
+        monkeypatch.setattr(consistency.subprocess, "run", lambda *a, **k: _FakeProc())
         result = consistency._check_goldens()
         assert result.ok is False
         assert result.note == "1 dirty file(s)"
@@ -306,9 +304,7 @@ class TestConsistencySweepFixtures:
         class _FakeProc:
             stdout = ""
 
-        monkeypatch.setattr(
-            consistency.subprocess, "run", lambda *a, **k: _FakeProc()
-        )
+        monkeypatch.setattr(consistency.subprocess, "run", lambda *a, **k: _FakeProc())
         assert consistency._check_goldens().ok is True
 
     # frob:ticket T-0036

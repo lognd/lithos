@@ -2459,7 +2459,7 @@ threat: null
 id: T-0068
 title: 'sim/ artifact family: trace.vcd + sim_report.json emission (WO-155 deliverable
   7)'
-state: done
+state: in-progress
 kind: feature
 origin: agent
 created: '2026-07-19'

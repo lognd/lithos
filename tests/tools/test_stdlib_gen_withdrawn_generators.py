@@ -67,7 +67,7 @@ def test_nasa_glenn_generate_writes_rendered_content_via_synthetic_fixture(
     data_file = tmp_path / "in.toml"
     data_file.write_text(
         "[n2]\n"
-        'molar_mass_kg_mol = 0.028\n'
+        "molar_mass_kg_mol = 0.028\n"
         "t_min_k = 200.0\n"
         "t_max_k = 1000.0\n"
         "a1 = 1.0\na2 = 2.0\na3 = 3.0\na4 = 4.0\na5 = 5.0\na6 = 6.0\na7 = 7.0\n"
@@ -280,7 +280,7 @@ def test_processors_generate_writes_five_files_via_synthetic_fixture(
         "[package]\n"
         "page = 1\n"
         'table = "T1"\n'
-        'pins = 64\n'
+        "pins = 64\n"
         "\n"
         "[abs_max]\n"
         "page = 2\n"

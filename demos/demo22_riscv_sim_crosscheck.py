@@ -351,12 +351,23 @@ def run() -> bool:
         if stale.exists():
             shutil.rmtree(stale)
     _cli(
-        "build", "--release", str(PROJECT), "--spec", str(_SHIP_SPEC),
-        "--out", str(build_dir),
+        "build",
+        "--release",
+        str(PROJECT),
+        "--spec",
+        str(_SHIP_SPEC),
+        "--out",
+        str(build_dir),
     )
     _cli(
-        "ship", str(PROJECT), "--build", str(build_dir), "--spec", str(_SHIP_SPEC),
-        "--out", str(dist_dir),
+        "ship",
+        str(PROJECT),
+        "--build",
+        str(build_dir),
+        "--spec",
+        str(_SHIP_SPEC),
+        "--out",
+        str(dist_dir),
     )
     for path in sorted(dist_dir.rglob("*")):
         if path.is_file():
@@ -372,8 +383,16 @@ def run() -> bool:
     if debug_dist.exists():
         shutil.rmtree(debug_dist)
     _cli(
-        "ship", str(PROJECT), "--build", str(build_dir), "--spec", str(_SHIP_SPEC),
-        "--out", str(debug_dist), "--emit-profile", "debug",
+        "ship",
+        str(PROJECT),
+        "--build",
+        str(build_dir),
+        "--spec",
+        str(_SHIP_SPEC),
+        "--out",
+        str(debug_dist),
+        "--emit-profile",
+        "debug",
     )
     expected_path = debug_dist / "harness" / "expected_signals.json"
     if not expected_path.is_file():
@@ -431,9 +450,7 @@ def run() -> bool:
             note="demo fixture -- not a shipped fleet artifact",
         ),
     )
-    ok_mismatched = (
-        frozenset({"y"}) if mux_ok_family.report.mismatches else frozenset()
-    )
+    ok_mismatched = frozenset({"y"}) if mux_ok_family.report.mismatches else frozenset()
     broken_mismatched = (
         frozenset({"y"}) if mux_broken_family.report.mismatches else frozenset()
     )
@@ -452,9 +469,7 @@ def run() -> bool:
 
     crosscheck_doc = {
         "fleet": [row.model_dump(mode="json") for row in fleet_rows],
-        "fixture_agreement": [
-            row.model_dump(mode="json") for row in fixture_ok_rows
-        ],
+        "fixture_agreement": [row.model_dump(mode="json") for row in fixture_ok_rows],
         "fixture_disagreement": [
             row.model_dump(mode="json") for row in fixture_broken_rows
         ],
@@ -517,8 +532,7 @@ def run() -> bool:
             "disagree about on the real shipped artifact. Named, not "
             "silently dropped.",
             "",
-            "## Fixture cross-checks (mechanism proof, NEVER shipped fleet "
-            "artifacts)",
+            "## Fixture cross-checks (mechanism proof, NEVER shipped fleet artifacts)",
             "",
             "To prove the cross-check itself actually distinguishes "
             "agreement from disagreement (not just report the one "
@@ -547,7 +561,7 @@ def run() -> bool:
             "`regolith ship` (release or debug profile) does not yet "
             "thread a `sim=` `SimProducts` map into `BackendInputs` the "
             "way `hdl=`/`firmware=` already are (`backends/ship.py::ship`, "
-            "`cli/app.py` have no `sim=`/`\"sim\"` spec-block channel) -- "
+            '`cli/app.py` have no `sim=`/`"sim"` spec-block channel) -- '
             "so a real `regolith ship` run today never emits "
             "`sim/uarch/{trace.vcd,sim_report.json}` even though "
             "`SimBackend` (WO-155 deliverable 7) is fully implemented and "

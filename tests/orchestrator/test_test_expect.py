@@ -88,9 +88,7 @@ def test_eval_verdict_discharged_matches() -> None:
     result = ObligationResult(
         key="k", subject_ref="blake3:aaa", evidence=_evidence(Status1.discharged)
     )
-    outcome = eval_verdict(
-        "Group.rail_stress = discharged", [("rail_stress", result)]
-    )
+    outcome = eval_verdict("Group.rail_stress = discharged", [("rail_stress", result)])
     assert outcome.ok is True
     assert "actual = discharged" in outcome.detail
 
@@ -102,9 +100,7 @@ def test_eval_verdict_violated_actual_mismatches_expected_discharged() -> None:
     result = ObligationResult(
         key="k", subject_ref="blake3:bbb", evidence=_evidence(Status2.violated)
     )
-    outcome = eval_verdict(
-        "Group.rail_stress = discharged", [("rail_stress", result)]
-    )
+    outcome = eval_verdict("Group.rail_stress = discharged", [("rail_stress", result)])
     assert outcome.ok is False
     assert "actual = violated" in outcome.detail
 
@@ -134,7 +130,9 @@ def test_eval_value_unparseable_tail_fails() -> None:
 # frob:ticket T-0036
 def test_eval_value_no_resolution_in_range_fails_naming_the_ad22_wall() -> None:
     """No resolution's magnitude falls in range -> fail, naming AD-22."""
-    resolutions = [{"value": {"magnitude": 99.0}, "cause": {"ref": "x", "cause": "y"}}]
+    resolutions: list[dict[str, object]] = [
+        {"value": {"magnitude": 99.0}, "cause": {"ref": "x", "cause": "y"}}
+    ]
     outcome = eval_value("mount.dia within [1, 5]", resolutions)
     assert outcome.ok is False
     assert "AD-22 wall" in outcome.detail
@@ -143,7 +141,7 @@ def test_eval_value_no_resolution_in_range_fails_naming_the_ad22_wall() -> None:
 # frob:ticket T-0036
 def test_eval_value_non_numeric_magnitude_is_skipped() -> None:
     """A resolution whose magnitude is not int/float is skipped, not crashed on."""
-    resolutions = [
+    resolutions: list[dict[str, object]] = [
         {"value": {"magnitude": "not-a-number"}},
         {"value": {"magnitude": 3.0}, "cause": {"ref": "backing", "cause": "load"}},
     ]
@@ -156,7 +154,7 @@ def test_eval_value_non_numeric_magnitude_is_skipped() -> None:
 def test_eval_value_in_range_with_matching_cause_class_passes() -> None:
     """An in-range magnitude whose cause text contains the requested
     class token passes; the cause_class filter is a substring match."""
-    resolutions = [
+    resolutions: list[dict[str, object]] = [
         {"value": {"magnitude": 2.5}, "cause": {"ref": "backing_ref", "cause": "load"}}
     ]
     outcome = eval_value("mount.dia within [1, 5] cause backing", resolutions)
@@ -167,7 +165,7 @@ def test_eval_value_in_range_with_matching_cause_class_passes() -> None:
 def test_eval_value_in_range_but_wrong_cause_class_is_skipped() -> None:
     """An in-range magnitude whose cause text does NOT contain the
     requested class token is skipped (continue branch), not a false pass."""
-    resolutions = [
+    resolutions: list[dict[str, object]] = [
         {"value": {"magnitude": 2.5}, "cause": {"ref": "unrelated", "cause": "other"}}
     ]
     outcome = eval_value("mount.dia within [1, 5] cause backing", resolutions)
@@ -190,7 +188,7 @@ def test_eval_count_matches_prefix_in_subject_ref_and_name() -> None:
     """Obligations whose `subject_ref` or claim `name` mentions the
     path's leading segment are counted; a non-list `obligations` value
     and a non-dict obligation row are both silently skipped."""
-    payload = {
+    payload: dict[str, object] = {
         "obligations": [
             {"subject_ref": "mount.dia:blake3:x", "claim": {"name": "other"}},
             {"subject_ref": "blake3:y", "claim": {"name": "mount_check"}},

@@ -350,8 +350,14 @@ def test_config_set_requires_exactly_one_scope(tmp_path: Path) -> None:
     both = runner.invoke(
         app,
         [
-            "config", "set", "ui.port", "9000",
-            "--global", "--local", "--project", str(tmp_path),
+            "config",
+            "set",
+            "ui.port",
+            "9000",
+            "--global",
+            "--local",
+            "--project",
+            str(tmp_path),
         ],
     )
     assert both.exit_code == EXIT_INTERNAL_ERROR
@@ -386,8 +392,13 @@ def test_config_set_bad_value_for_int_key_is_diagnostics(tmp_path: Path) -> None
     result = runner.invoke(
         app,
         [
-            "config", "set", "ui.port", "not-an-int",
-            "--local", "--project", str(tmp_path),
+            "config",
+            "set",
+            "ui.port",
+            "not-an-int",
+            "--local",
+            "--project",
+            str(tmp_path),
         ],
     )
     assert result.exit_code == EXIT_DIAGNOSTICS
