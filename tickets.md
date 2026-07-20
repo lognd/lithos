@@ -962,13 +962,13 @@ parent: null
 scope:
 - examples/**
 - python/regolith/**
-evidence: []
+evidence:
+- tests/orchestrator/test_translate_timing.py::test_translate_timing_budget_discharges_end_to_end_against_the_real_model
 attachments: []
 acceptance:
 - see docs/workflow/work-orders/WO-157-sim-fleet-adoption.md
 threat: null
 ```
-
 ## Progress note (2026-07-20, sim-half slice)
 
 Landed: `riscv_hart_rv1`'s `PcIncrement` decl declares a directed-vector
@@ -2281,7 +2281,9 @@ scope:
 - python/regolith/harness/models/hdl/**
 - python/regolith/orchestrator/**
 - tests/**
-evidence: []
+evidence:
+- tests/harness/test_hdl_sim_artifacts.py::test_sim_artifact_cache_key_is_deterministic_and_domain_separated
+- tests/backends/test_sim.py::test_sim_backend_ships_trace_and_report_with_model_derived_tier
 attachments: []
 acceptance:
 - 'sim discharge runs emit a sim/<subject>/ artifact family: trace.vcd (verilator
@@ -2325,7 +2327,9 @@ parent: null
 scope:
 - python/regolith/backends/harness_pack.py
 - demos/**
-evidence: []
+evidence:
+- tests/backends/test_harness_pack.py::test_harness_files_emits_a_waveform_sheet_for_a_record_backed_tap
+- tests/backends/test_harness_pack.py::test_harness_files_emits_no_waveform_sheet_without_a_record_ref
 attachments: []
 acceptance: []
 threat: null
