@@ -192,6 +192,14 @@ acceptance:
 threat: null
 ```
 
+### Progress (2026-07-19)
+
+Verified: feldspar-side families (weld groups, fatigue, leadscrew,
+thermal transient) all landed; lithos-side pack wiring exists only
+for bearing_life. Remainder = claim-survey + harness wiring for the
+four families (WO-111 deliverable 8 step 0 first).
+
+
 <!-- ticket:T-0005 -->
 ```yaml
 id: T-0005
@@ -776,11 +784,12 @@ threat: null
 ```yaml
 id: T-0026
 title: 'WO-156: timing closure v1 -- grounding budget kind=timing'
-state: in-progress
+state: planned
 kind: feature
 origin: agent
 created: '2026-07-18'
-blocked_by: []
+blocked_by:
+- T-0025
 parent: null
 scope:
 - python/regolith/**
@@ -791,6 +800,14 @@ acceptance:
 - see docs/workflow/work-orders/WO-156-timing-closure-v1.md
 threat: null
 ```
+
+### Blocked note (2026-07-19)
+
+Serialized behind T-0025/WO-155 per D264 ruling 7 (shared E11xx
+space + the ONE INV-35 entry); ti.mcu carrier withdrawn under D266 --
+the synthetic-fixture path (WO-138 precedent) is the sanctioned
+grounding when this unblocks.
+
 
 <!-- ticket:T-0027 -->
 ```yaml
