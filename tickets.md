@@ -896,6 +896,17 @@ acceptance:
 - see docs/workflow/work-orders/WO-156-timing-closure-v1.md
 threat: null
 ```
+## Done report
+
+WO-156 timing closure v1 landed (std.timing commit): TimingContribution
+enforces exactly-one grounding source at construction (datasheet
+interval XOR route length + cited Dk, v_p = c/sqrt(Dk));
+close_timing_budget reuses E0432 (no new code); TimingBudgetModel
+mirrors the signal_table payload pattern; citations render through
+the existing calc-book path; 13 tests. Fleet .cupr wiring + totality
+sweep = WO-157 (T-0027) by the WO's own boundary; INV-35 partial
+recorded without flipping.
+
 ### Blocked note (2026-07-19)
 
 Serialized behind T-0025/WO-155 per D264 ruling 7 (shared E11xx
@@ -2149,5 +2160,62 @@ acceptance:
 - artifact index rows carry AD-45 provenance tier model_derived with the stimulus
   ref cited; cache hits re-link the cached family, never re-run
 - goldens/tests cover report shape + index registration; no schema bump
+threat: null
+```
+
+<!-- ticket:T-0069 -->
+```yaml
+id: T-0069
+title: weld-family grounding blocked on D103 entity-derived-bound lowering (WO-111
+  survey)
+state: queued
+kind: feature
+origin: agent
+created: '2026-07-19'
+blocked_by: []
+parent: null
+scope: []
+evidence: []
+attachments: []
+acceptance: []
+threat: null
+```
+
+<!-- ticket:T-0070 -->
+```yaml
+id: T-0070
+title: wire bringup_waveform_view into harness_files + regenerate demo17 (WO-152 deliverable
+  5 residual)
+state: queued
+kind: feature
+origin: human
+created: '2026-07-19'
+blocked_by: []
+parent: null
+scope:
+- python/regolith/backends/harness_pack.py
+- demos/**
+evidence: []
+attachments: []
+acceptance: []
+threat: null
+```
+WO-152/T-0022 landed bringup_waveform_view (chart+tap table on one sheet, tested) but did not wire it into harness_files's per-tap emission loop or regenerate demos/out/demo17_physical_bringup_pack/ to show it -- see cycle-38 design log WO-152 close-out.
+
+<!-- ticket:T-0071 -->
+```yaml
+id: T-0071
+title: buffered log handler emits after stream close during pytest shutdown (ValueError
+  noise)
+state: queued
+kind: bug
+origin: agent
+created: '2026-07-19'
+blocked_by: []
+parent: null
+scope: []
+evidence: []
+attachments: []
+acceptance: []
 threat: null
 ```
