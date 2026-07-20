@@ -175,7 +175,7 @@ function with evidence below.
 ```yaml
 id: T-0004
 title: 'WO-111: feldspar model growth (WO-24 remainder + Class C solver half)'
-state: in-progress
+state: done
 kind: feature
 origin: agent
 created: '2026-07-18'
@@ -193,6 +193,21 @@ acceptance:
 - see docs/workflow/work-orders/WO-111-feldspar-model-growth.md
 threat: null
 ```
+## Done report
+
+WO-111 closed on the honest route: feldspar never landed these
+families (survey corrected the prior progress note), so
+fatigue_damage + drive_torque landed as thin in-tree closed-form
+models (bearing_life precedent), wired through translate at both
+dispatch sites, proven end-to-end by the WO-72-style fixture
+(evidence ids). Fleet ruling: zero flips -- every corpus fatigue
+claim lacks a citable kf_notch (no declared fillet geometry, no
+Peterson tables in stdlib); each waiver now names that datum
+(D250.3). reserve reclassified D103 (T-0069); weld family blocked
+upstream on D103 lowering (T-0069); thermal transient not needed
+(steady-state covered; regen starts is Coffin-Manson, out of
+family).
+
 ### Progress (2026-07-19)
 
 Verified: feldspar-side families (weld groups, fatigue, leadscrew,
