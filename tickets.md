@@ -185,7 +185,9 @@ scope:
 - crates/regolith-lower/**
 - python/regolith/**
 - docs/spec/toolchain/**
-evidence: []
+evidence:
+- tests/orchestrator/test_wo111_fatigue_drive_torque_routing.py::test_fatigue_damage_claim_discharges_end_to_end
+- tests/orchestrator/test_wo111_fatigue_drive_torque_routing.py::test_drive_torque_claim_discharges_end_to_end
 attachments: []
 acceptance:
 - see docs/workflow/work-orders/WO-111-feldspar-model-growth.md
@@ -896,7 +898,7 @@ follow-up ticket; impl-scope binding named in sim.rs as a follow-on.
 ```yaml
 id: T-0026
 title: 'WO-156: timing closure v1 -- grounding budget kind=timing'
-state: in-progress
+state: done
 kind: feature
 origin: agent
 created: '2026-07-18'
@@ -906,7 +908,8 @@ parent: null
 scope:
 - python/regolith/**
 - docs/spec/cuprite/**
-evidence: []
+evidence:
+- tests/harness/test_std_timing.py::test_v_p_matches_hand_computed_tem_relation
 attachments: []
 acceptance:
 - see docs/workflow/work-orders/WO-156-timing-closure-v1.md
