@@ -769,7 +769,7 @@ RESERVED text pending WO-155/156/157.
 ```yaml
 id: T-0025
 title: 'WO-155: cuprite functional simulation gate -- hdl.sim_assert'
-state: in-progress
+state: done
 kind: feature
 origin: agent
 created: '2026-07-18'
@@ -779,12 +779,19 @@ parent: null
 scope:
 - python/regolith/**
 - crates/regolith-lower/**
-evidence: []
+evidence:
+- tests/orchestrator/test_hdl_sim_gate_cache.py::test_second_identical_sim_assert_discharge_is_a_cache_hit_no_reverilate
 attachments: []
 acceptance:
 - see docs/workflow/work-orders/WO-155-cuprite-sim-gate.md
 threat: null
 ```
+## Done report
+
+WO-155 landed (see the sim feat commit): emission + generic model +
+procio verilator + cache proof + E0453/E1105/E1106 registered and
+explained; INV-35 partial-landing recorded; sim/ artifact family =
+follow-up ticket; impl-scope binding named in sim.rs as a follow-on.
 
 <!-- ticket:T-0026 -->
 ```yaml
@@ -2021,6 +2028,24 @@ threat: null
 id: T-0067
 title: wire BuildPayload.power_nets through the crates API so backends source compiled
   payloads (T-0064 follow-up)
+state: queued
+kind: feature
+origin: agent
+created: '2026-07-19'
+blocked_by: []
+parent: null
+scope: []
+evidence: []
+attachments: []
+acceptance: []
+threat: null
+```
+
+<!-- ticket:T-0068 -->
+```yaml
+id: T-0068
+title: 'sim/ artifact family: trace.vcd + sim_report.json emission (WO-155 deliverable
+  7)'
 state: queued
 kind: feature
 origin: agent
