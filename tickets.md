@@ -1092,12 +1092,25 @@ parent: null
 scope:
 - examples/flagships/**
 - demos/**
-evidence: []
+evidence:
+- tests/test_wo158_riscv_sim_crosscheck.py::test_crosscheck_agreement_when_port_matches_and_sim_clean
+- tests/test_wo158_riscv_sim_crosscheck.py::test_crosscheck_disagreement_when_port_matches_but_mismatched
 attachments: []
 acceptance:
 - see docs/workflow/work-orders/WO-158-riscv-sim-demo.md
 threat: null
 ```
+## Done report
+
+WO-158 landed: demo22 builds riscv_hart_rv1, discharges
+hdl.sim_assert through the real model, emits sim/uarch/
+{trace.vcd,sim_report.json}, and cross-checks shipped
+expected_signals windows against the simulated port set
+(agreement/disagreement/no_overlap). Real fleet finding reported
+honestly: HartPackage.clk_in = no_overlap (SI impedance claim, not
+a hart port). mux2 ok/broken labeled fixtures prove discrimination;
+manifest deterministic twice. Ship sim= channel gap -> T-0073.
+
 
 ### Progress note (2026-07-20)
 
@@ -1588,6 +1601,16 @@ attachments: []
 acceptance: []
 threat: null
 ```
+## Done report
+
+Coverage backfill complete across both phases (100 evidence ids):
+docgen/status 40/17 -> 98/96; three D266-withdrawn generators ->
+~95 (synthetic schema-shaped fixtures only); health/consistency
+46/32 -> 97/92; cli/app branch 33 -> 89 incl. error paths;
+orchestrator/test_expect 72/47 -> 98/97; buck_efficiency/quantity/
+drawings-attest branch gaps to 100%. Tests only, no production
+edits, no weakened assertions.
+
 Measured 2026-07-19 from a fresh coverage.xml (2094 tests green): 329
 TEST005 sites failed the default unit_branch_cov=90 floor, spread from
 1.5% to 89.9% branch coverage with no clean cutoff. Lowered
