@@ -396,6 +396,12 @@ _EXT_CLASSIFY: dict[str, tuple[str, Viewer | None, str]] = {
     ".c": ("source", "text", "text/plain"),
     ".txt": ("text", "text", "text/plain"),
     ".sigrok-cli": ("capture_config", "text", "text/plain"),
+    # WO-155 deliverable 7 (T-0068): the `sim/` family's waveform trace --
+    # a real verilator `--trace` VCD (ASCII, so the honest `text` viewer
+    # fallback renders it, never a fabricated richer waveform viewer;
+    # actual waveform RENDERING is deferred to the signal-design/
+    # graphite surface, D264 ruling 5).
+    ".vcd": ("vcd_trace", "text", "text/plain"),
 }
 
 #: Gerber X2 layer suffixes (WO-124's `GERBER_LAYER_FILES`) -- stable
@@ -549,6 +555,11 @@ def default_artifact_family_registry() -> ArtifactFamilyRegistry:
         # (AD-27), narrowed by the common extension baseline (its own
         # `.json` sidecar classifies as `json`).
         ("power_oneline", "svg"),
+        # WO-155 deliverable 7 (T-0068): the `hdl.sim_assert` discharge's
+        # sim/ family -- trace.vcd (text default, narrowed by the common
+        # extension baseline's new `.vcd` entry) + sim_report.json
+        # (narrowed to `json` by the same baseline).
+        ("sim", "text"),
     )
     for family, viewer in builtins:
         patterns = (

@@ -100,6 +100,11 @@ FAMILY_DIRS = (
     # its underlying DrawingModel json). Absent on any package whose
     # spec/inputs name no power net subject.
     "power_oneline",
+    # WO-155 deliverable 7 (T-0068): the `hdl.sim_assert` discharge's
+    # sim/ family (trace.vcd + sim_report.json), one per subject naming
+    # a declared stimulus. Absent on any package that ships no sim
+    # discharge (e.g. an HDL subject with no stimulus clause).
+    "sim",
 )
 
 

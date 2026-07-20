@@ -50,6 +50,7 @@ if TYPE_CHECKING:
     from regolith.backends.drawings.producers import SiSheetRow
     from regolith.backends.firmware import FirmwareArtifact
     from regolith.backends.hdl import HdlBuildProducts
+    from regolith.backends.sim import SimProducts
     from regolith.realizer.elec.board_assignment import RealizedBoardAssignment
     from regolith.realizer.elec.debug_placement import TapPlacementPlan
     from regolith.realizer.mech.wire_edm import RealizedWireEdmProfile
@@ -72,15 +73,19 @@ class ToolIdentity(BaseModel):
 class ArtifactProvenance(BaseModel):
     """One artifact's provenance tier (WO-160, AD-45): ``real_tool``
     (produced by an actual third-party tool invocation, ``tool``
-    required) or ``deterministic`` (produced by regolith's own
-    deterministic logic with no external tool, ``tool`` is ``None``).
-    Never inferred post-hoc from relpath naming or toolenv state -- a
-    producer supplies this at construction time (``OutputFile.of``'s
-    ``provenance`` kwarg)."""
+    required), ``deterministic`` (produced by regolith's own
+    deterministic logic with no external tool, ``tool`` is ``None``),
+    or ``model_derived`` (WO-155 deliverable 7, T-0068: evidence a
+    DISCHARGING MODEL produced -- e.g. the `sim/` family's `trace.vcd`/
+    `sim_report.json`, built by running a real tool [``tool`` present]
+    against an author-cited stimulus rather than a raw manufacturing
+    pass over pinned geometry). Never inferred post-hoc from relpath
+    naming or toolenv state -- a producer supplies this at construction
+    time (``OutputFile.of``'s ``provenance`` kwarg)."""
 
     model_config = ConfigDict(frozen=True)
 
-    tier: Literal["real_tool", "deterministic"]
+    tier: Literal["real_tool", "deterministic", "model_derived"]
     tool: ToolIdentity | None = None
 
 
@@ -162,6 +167,7 @@ class BackendInputs:
         si_rows: Mapping[str, tuple[SiSheetRow, ...]] = {},  # noqa: B006 (frozen inputs)
         firmware: Mapping[str, FirmwareArtifact] = {},  # noqa: B006 (frozen inputs)
         hdl: Mapping[str, HdlBuildProducts] = {},  # noqa: B006 (frozen inputs)
+        sim: Mapping[str, SimProducts] = {},  # noqa: B006 (frozen inputs)
         cost_estimates: Mapping[str, ItemizedEstimate] = {},  # noqa: B006 (frozen inputs)
         cost_profile: str | None = None,
         debug_taps: TapSet | None = None,
@@ -212,6 +218,17 @@ class BackendInputs:
         `HdlBackend` input) is an `HdlBuildProducts` (source set +
         the WO-82 tier evidence already discharged for that subject)
         keyed by subject, caller-supplied for the same reason.
+        ``sim`` (WO-155 deliverable 7, T-0068) is a `SimProducts`
+        (trace/report already produced by a `hdl.sim_assert` discharge,
+        `harness.models.hdl.sim_artifacts.SimArtifactFamily`'s
+        backend-local mirror) keyed by subject -- the `SimBackend`'s
+        input. Like ``hdl``, it carries no `PayloadRef` any obligation
+        cites at THIS layer (the harness-side digests already resolved
+        it), so a caller supplies it explicitly; AD-22 stands here too
+        -- nothing in `SimBackend` re-invokes verilator, it only
+        serializes what a discharge already produced (and, on a cache
+        hit, RE-LINKS the identical family instead of asking the
+        caller to re-run anything).
         ``power_nets`` (F-WO137-1, T-0064) is a `PowerNetPayload` keyed
         by subject -- the `power_oneline` producer's input. Like
         ``opt_traces``/``assemblies``/``firmware``/``hdl``, it is
@@ -239,6 +256,9 @@ class BackendInputs:
         # WO-102: the computer-track backends' realized inputs.
         self.firmware = firmware
         self.hdl = hdl
+        # WO-155 deliverable 7 (T-0068): the sim/ family's caller-
+        # supplied products, keyed by subject -- `SimBackend`'s input.
+        self.sim = sim
         # WO-101 residual (F124 bundle): the build's persisted itemized cost
         # estimates, resolved from `report.cost_estimates` digests through
         # the discharge-time `PayloadStore` and keyed by subject (the BOM

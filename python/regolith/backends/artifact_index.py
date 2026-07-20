@@ -225,7 +225,9 @@ def check_index_consistency(
     with `classify()` deleted, this is the ONE remaining place a NEW
     artifact type could sneak in without registering patterns at all);
     every row's ``provenance`` must be internally consistent -- ``tool``
-    present iff ``tier == "real_tool"`` (WO-160). Any one of these
+    present iff ``tier`` names an actual tool invocation (``"real_tool"``
+    or ``"model_derived"``, WO-160/WO-155 deliverable 7), absent for the
+    pure-``"deterministic"`` tier. Any one of these
     failing is drift -- an `Err`, never a warning.
     """
     registry = (
@@ -257,7 +259,7 @@ def check_index_consistency(
     malformed_provenance = sorted(
         r.relpath
         for r in index.rows
-        if (r.provenance.tier == "real_tool") != (r.provenance.tool is not None)
+        if (r.provenance.tier != "deterministic") != (r.provenance.tool is not None)
     )
     if (
         missing_from_index

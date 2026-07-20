@@ -285,6 +285,23 @@ give cuprite digital designs simulation-backed evidence per
 `harness/models/hdl/__init__.py` re-exports the hdl model surface
 for registration; no logic lives here.
 
+<a id="models-hdl-sim-artifacts"></a>
+### `harness/models/hdl/sim_artifacts.py`
+
+The `sim/` artifact family's content model (WO-155 deliverable 7,
+T-0068): `SimReport`/`SimArtifactFamily` (vectors run/passed, the
+structured mismatch table, tool+version, stimulus provenance, content
+address), `render_sim_report_json`'s deterministic JSON, and
+`sim_artifact_cache_key`'s blake3 domain-tagged cache key (deliverable
+8, the SAME law `orchestrator/cache.py::obligation_cache_key` uses one
+layer up). `SimArtifactCache` is the in-process lookup
+`HdlSimAssertGenericModel` re-links a cached family through -- a hit
+means verilator never runs a second time for an unchanged
+(src, stimulus, tool-version) triple. `VerilatorTraceBinaryArgs`
+(`--trace`) and `trace_dump_statements` are this module's own
+`ToolArgs` subclass/testbench-injection helper (kept out of
+`regolith.procio`, out of this ticket's scope).
+
 ## harness/models/timing.py
 
 <a id="models-timing"></a>

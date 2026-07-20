@@ -289,6 +289,18 @@ re-runs verilator/ghdl (AD-22). The verilated build directory is a
 cache, never packaged; a synthesis tier that never ran is a named
 absence, never a fabricated netlist.
 
+<a id="backends-sim"></a>
+### `backends/sim.py`
+
+The `sim/` manufacturing package (WO-155 deliverable 7, T-0068):
+serializes a `hdl.sim_assert` discharge's already-produced family
+(`trace.vcd` + `sim_report.json`) -- nothing here re-invokes verilator
+(AD-22), mirroring `backends/hdl.py`'s posture exactly. Provenance
+tier is `model_derived` (AD-45): discharge evidence, not a raw
+manufacturing-tool pass or plain deterministic serialization. A
+missing trace is an honest named absence recorded in
+`sim_report.json`, never a fabricated waveform (D264 ruling 2).
+
 <a id="backends-instructions"></a>
 ### `backends/instructions.py`
 

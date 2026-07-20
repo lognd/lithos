@@ -42,7 +42,7 @@ from __future__ import annotations
 import re
 import tempfile
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, NamedTuple
 
 from typani.result import Err, Ok, Result
 
@@ -55,6 +55,17 @@ from regolith.harness.models.hdl.fixtures import (
 from regolith.harness.models.hdl.signal_table import (
     SignalTable,
     check_signal_table_provenance,
+)
+from regolith.harness.models.hdl.sim_artifacts import (
+    SimArtifactCache,
+    SimArtifactFamily,
+    SimMismatch,
+    SimReport,
+    VerilatorTraceBinaryArgs,
+    parse_mismatches,
+    read_trace_file,
+    sim_artifact_cache_key,
+    trace_dump_statements,
 )
 from regolith.harness.models.hdl.verilator_adapter import (
     ToolFailure,
@@ -507,7 +518,7 @@ class HdlEquivDirectedModel(_HdlModel):
 
 # frob:doc docs/modules/py-harness.md#models-hdl
 # frob:waive TEST001 reason="exercised transitively through HdlSimAssertGenericModel.estimate, test_hdl_sim_assert_generic_discharges_a_non_fixture_design; no isolated unit test calls it directly"
-def build_generated_testbench(table: SignalTable) -> str:
+def build_generated_testbench(table: SignalTable, *, trace: bool = False) -> str:
     """WO-155 (D264) deliverable 4: generate a SystemVerilog testbench
     from a `signal_table`'s directed vectors, PASS/ASSERT-FAIL/SIM_OK
     discipline unchanged (the exact grammar `_run_generated_testbench`
@@ -515,7 +526,14 @@ def build_generated_testbench(table: SignalTable) -> str:
     testbenches, `_PASS_RE`/`_FAIL_RE`/`_SIM_OK_RE`/`_SIM_FAIL_RE`) --
     this is the source-generic replacement for a per-fixture hand-
     written testbench, D202's "one model, not one per fixture" pattern
-    applied to `hdl.sim_assert`."""
+    applied to `hdl.sim_assert`.
+
+    ``trace`` (WO-155 deliverable 7, T-0068) inserts the
+    `$dumpfile`/`$dumpvars` pair (`sim_artifacts.trace_dump_statements`)
+    as the first statements of the `initial` block, so a verilator
+    `--trace` binary build actually writes `trace.vcd` -- omitted by
+    default, keeping every existing (non-traced) caller's generated
+    text byte-identical."""
     decl: list[str] = []
     conn: list[str] = []
     for p in table.ports:
@@ -556,6 +574,7 @@ def build_generated_testbench(table: SignalTable) -> str:
         f"  {table.top_module} dut({', '.join(conn)});\n\n"
         f"{clock_gen}"
         "  initial begin\n"
+        + (trace_dump_statements("tb") if trace else "")
         + "\n".join(body)
         + '\n    if (errors == 0) $display("SIM_OK vectors=%0d", vectors);\n'
         '    else $display("SIM_FAIL vectors=%0d errors=%0d", vectors, errors);\n'
@@ -565,20 +584,42 @@ def build_generated_testbench(table: SignalTable) -> str:
     )
 
 
+class _GeneratedSimOutcome(NamedTuple):
+    """`_run_generated_testbench`'s richer result (WO-155 deliverable 7,
+    T-0068): the ordinary (vectors, errors, note) triple plus the FULL
+    structured mismatch table and the `--trace` result -- either the
+    captured `trace.vcd` bytes, or an honest absence reason (never
+    both, never neither)."""
+
+    vectors: int
+    errors: int
+    note: str
+    mismatches: tuple[SimMismatch, ...]
+    trace_vcd: bytes | None
+    trace_absent_reason: str | None
+
+
 def _run_generated_testbench(
     table: SignalTable, hdl_filename: str, src: bytes, *, model_id: str
-) -> Result[tuple[int, int, str], HarnessError]:
+) -> Result[_GeneratedSimOutcome, HarnessError]:
     """The source-generic sibling of `_run_testbench`: build+run a
     testbench GENERATED from a `signal_table` (rather than reading a
     hand-authored fixture testbench file) -- same build/run/parse shape
-    (NO DUPLICATION beyond what the differing testbench SOURCE forces)."""
-    tb_src = build_generated_testbench(table)
+    (NO DUPLICATION beyond what the differing testbench SOURCE forces).
+
+    WO-155 deliverable 7 (T-0068): the testbench is generated WITH the
+    `$dumpfile`/`$dumpvars` trace statements and built through
+    `VerilatorTraceBinaryArgs` (`--trace`), so a real `hdl.sim_assert`
+    discharge is always a chance at a real `trace.vcd` -- `read_trace_
+    file` reports the honest named absence (never a fabricated trace)
+    when this tool environment did not actually emit one."""
+    tb_src = build_generated_testbench(table, trace=True)
     with tempfile.TemporaryDirectory(prefix="regolith_hdl_sim_gen_") as tmp:
         work = Path(tmp)
         (work / hdl_filename).write_bytes(src)
         tb_path = work / "tb.sv"
         tb_path.write_text(tb_src)
-        args = VerilatorBinaryArgs(
+        args = VerilatorTraceBinaryArgs(
             top_module="tb",
             tb_filename=tb_path.name,
             hdl_filename=hdl_filename,
@@ -603,8 +644,8 @@ def _run_generated_testbench(
                 )
             )
         proc = spawned.danger_ok
-        lines = proc.stdout.decode("ascii", errors="replace").splitlines()
-        first_fail = ""
+        stdout_text = proc.stdout.decode("ascii", errors="replace")
+        lines = stdout_text.splitlines()
         vectors = 0
         errors = 0
         for line in lines:
@@ -617,13 +658,6 @@ def _run_generated_testbench(
                 vectors = int(m.group(1))
                 errors = int(m.group(2))
                 continue
-            m = _FAIL_RE.match(line)
-            if m and not first_fail:
-                name, cycle, expected, got = m.groups()
-                first_fail = (
-                    f"assertion {name!r} failed at cycle {cycle}: "
-                    f"expected={expected} got={got}"
-                )
         if vectors == 0:
             return Err(
                 DomainError(
@@ -634,8 +668,28 @@ def _run_generated_testbench(
                     ),
                 )
             )
+        mismatches = parse_mismatches(stdout_text)
+        first_fail = (
+            f"assertion {mismatches[0].vector!r} failed at cycle "
+            f"{mismatches[0].cycle}: expected={mismatches[0].expected} "
+            f"got={mismatches[0].got}"
+            if mismatches
+            else ""
+        )
         note = first_fail or f"{vectors} directed vector(s), 0 failures"
-        return Ok((vectors, errors, note))
+        traced = read_trace_file(work)
+        trace_vcd = traced.ok
+        trace_absent_reason = traced.err
+        return Ok(
+            _GeneratedSimOutcome(
+                vectors=vectors,
+                errors=errors,
+                note=note,
+                mismatches=mismatches,
+                trace_vcd=trace_vcd,
+                trace_absent_reason=trace_absent_reason,
+            )
+        )
 
 
 # frob:doc docs/modules/py-harness.md#models-hdl
@@ -663,6 +717,21 @@ class HdlSimAssertGenericModel(Model):
     satisfied, never the wrong fixture's hand-authored testbench run
     against arbitrary bytes."""
 
+    # frob:tests tests/harness/test_hdl_models.py::test_hdl_sim_assert_generic_second_identical_discharge_relinks_cached_family
+    def __init__(self, artifact_cache: SimArtifactCache | None = None) -> None:
+        """``artifact_cache`` (WO-155 deliverable 8, T-0068) defaults to
+        a FRESH, INSTANCE-OWNED :class:`SimArtifactCache` rather than
+        the module-wide :func:`default_sim_artifact_cache` singleton --
+        each `HdlSimAssertGenericModel()` construction (every existing
+        test's own pattern, `register_hdl_models`'s ONE registration)
+        starts with a clean cache, so two unrelated tests/registrations
+        never leak a cached family into each other. A caller that
+        deliberately wants cross-instance sharing passes
+        `default_sim_artifact_cache()` explicitly."""
+        self._artifact_cache = (
+            artifact_cache if artifact_cache is not None else SimArtifactCache()
+        )
+
     @property
     # frob:doc docs/modules/py-harness.md#models-hdl
     def version(self) -> str:
@@ -687,6 +756,8 @@ class HdlSimAssertGenericModel(Model):
         )
 
     # frob:doc docs/modules/py-harness.md#models-hdl
+    # frob:tests tests/harness/test_hdl_models.py::test_hdl_sim_assert_generic_produces_a_sim_artifact_family_with_mismatches
+    # frob:tests tests/harness/test_hdl_models.py::test_hdl_sim_assert_generic_second_identical_discharge_relinks_cached_family
     def estimate(
         self, request: DischargeRequest, *, resolver: PayloadResolver | None = None
     ) -> Result[Prediction, HarnessError]:
@@ -716,18 +787,68 @@ class HdlSimAssertGenericModel(Model):
         table = parsed.danger_ok
         ref = request.payloads.get(SRC_PORT)
         filename = Path(ref.origin).name if ref is not None and ref.origin else "src.v"
+        stimulus_ref = request.payloads.get(STIMULUS_PORT)
+        src_digest = ref.digest if ref is not None else "unknown"
+        stimulus_digest = stimulus_ref.digest if stimulus_ref is not None else "unknown"
+        stimulus_origin = (
+            stimulus_ref.origin
+            if stimulus_ref is not None and stimulus_ref.origin
+            else stimulus_digest
+        )
+
+        # WO-155 deliverable 8 (T-0068): the sim/ artifact family's OWN
+        # content-address cache, keyed by (src, stimulus, model version)
+        # exactly like the harness EvidenceStore one layer up. A hit
+        # re-links the previously produced family -- trace.vcd and
+        # sim_report.json are NEVER regenerated for an unchanged digest
+        # triple, verilator is NEVER invoked a second time for it.
+        cache_key = sim_artifact_cache_key(src_digest, stimulus_digest, self.version)
+        artifact_cache = self._artifact_cache
+        cached = artifact_cache.get(cache_key)
+        if cached is not None:
+            report = cached.report
+            _log.info(
+                "%s: sim artifact family cache HIT (%s) -- re-linking, no re-run",
+                self.model_id,
+                cache_key,
+            )
+            errors = report.vectors_run - report.vectors_passed
+            return Ok(Prediction(value=float(errors), eps=0.0, coverage=1.0))
+
         outcome = _run_generated_testbench(
             table, filename, src.danger_ok, model_id=self.model_id
         )
         if outcome.is_err:
             return Err(outcome.danger_err)
-        vectors, errors, note = outcome.danger_ok
+        result = outcome.danger_ok
         _log.debug(
-            "%s: %s (vectors=%d errors=%d, stimulus trust_tier=%s)",
+            "%s: %s (vectors=%d errors=%d, stimulus trust_tier=%s, "
+            "trace_present=%s)",
             self.model_id,
-            note,
-            vectors,
-            errors,
+            result.note,
+            result.vectors,
+            result.errors,
             table.trust_tier,
+            result.trace_vcd is not None,
         )
-        return Ok(Prediction(value=float(errors), eps=0.0, coverage=1.0))
+        subject = Path(filename).stem
+        report = SimReport(
+            subject=subject,
+            tool_version=verilator_version(),
+            src_digest=src_digest,
+            stimulus_digest=stimulus_digest,
+            stimulus_ref=stimulus_origin,
+            content_address=cache_key,
+            vectors_run=result.vectors,
+            vectors_passed=result.vectors - result.errors,
+            mismatches=result.mismatches,
+            trace_present=result.trace_vcd is not None,
+            trace_absent_reason=result.trace_absent_reason,
+        )
+        artifact_cache.put(
+            cache_key,
+            SimArtifactFamily(
+                subject=subject, report=report, trace_vcd=result.trace_vcd
+            ),
+        )
+        return Ok(Prediction(value=float(result.errors), eps=0.0, coverage=1.0))

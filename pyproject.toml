@@ -140,6 +140,9 @@ select = ["E", "F", "I", "UP", "B", "SIM"]
 # class.method path routinely exceeds 88 cols on that single directive
 # line; the code lines around it still follow house style.
 "python/regolith/realizer/elec/kicad.py" = ["E501"]
+"python/regolith/harness/models/hdl/sim_artifacts.py" = ["E501"]
+"python/regolith/backends/sim.py" = ["E501"]
+"tests/harness/test_hdl_sim_artifacts.py" = ["E501"]
 "tests/backends/test_artifact_index.py" = ["E501"]
 "tests/backends/test_debug_emission.py" = ["E501"]
 "tests/backends/test_drawings.py" = ["E501"]
