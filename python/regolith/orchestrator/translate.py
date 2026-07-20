@@ -109,6 +109,8 @@ from regolith.harness.models.hdl.models import (
 from regolith.harness.models.hdl.models import CLAIM_SIM_ASSERT as _HDL_SIM_ASSERT_KIND
 from regolith.harness.models.hdl.models import SRC_KIND as _HDL_SRC_KIND
 from regolith.harness.models.hdl.models import SRC_PORT as _HDL_SRC_PORT
+from regolith.harness.models.hdl.models import STIMULUS_KIND as _HDL_STIMULUS_KIND
+from regolith.harness.models.hdl.models import STIMULUS_PORT as _HDL_STIMULUS_PORT
 from regolith.harness.models.link_budget import CLAIM_KIND as _LINK_KIND
 from regolith.harness.models.link_budget import INPUTS as _LINK_INPUTS
 from regolith.harness.models.lumped_thermal import CLAIM_KIND as _THERMO_KIND
@@ -225,6 +227,11 @@ _CAM_CLAIM_KINDS = frozenset(
 # field names -- never invented as part of this dispatch's own scope).
 _HDL_SRC_REF_FIELD = "hdl_src_ref"
 _HDL_REGIME_FIELD = "hdl_regime"
+# WO-155 (D264): the `require: sim(<stimulus-ref>)` clause's given-field
+# name (`regolith_lower::claims::sim`'s emitted `stimulus_ref: <ref>`
+# load) -- the digital sibling of `hdl_src_ref`, resolved the SAME way
+# (a project-relative extern-style ref, `resolve_plan_bytes`).
+_HDL_STIMULUS_REF_FIELD = "stimulus_ref"
 _HDL_CLAIM_KINDS = frozenset(
     {_HDL_BUILD_KIND, _HDL_SIM_ASSERT_KIND, _HDL_EQUIV_DIRECTED_KIND}
 )
@@ -4165,11 +4172,18 @@ def _translate_hdl(
     `resolve_plan_bytes` (a generic project-relative extern-ref reader,
     not gcode-specific despite its name) and the SAME `PlanContext`
     plumbing rather than inventing a second one (NO DUPLICATION). Every
-    resolution failure is a named :class:`Deferral`. NOTE: as of this
-    dispatch no Rust lowering emits `hdl.*` obligations with the
-    `hdl_src_ref`/`hdl_regime` given-fields this reads (see the WO-82
-    ledger) -- this function is dead code until that lands, wired now
-    so the field names are settled in one place.
+    resolution failure is a named :class:`Deferral`.
+
+    WO-155 (D264): when the obligation also carries a `stimulus_ref`
+    given (the ONLY claim kind `regolith_lower::claims::sim` ever emits
+    this field beside is `hdl.sim_assert`), it resolves the SAME way as
+    `hdl_src_ref` and rides along as a second `sim_stimulus`
+    (`signal_table`) payload -- the structural trigger
+    `HdlSimAssertGenericModel`'s signature requires before it ever
+    matches a request. A `stimulus_ref` that fails to resolve is a
+    named :class:`Deferral` (`stimulus_ref_unresolved`, E1106's
+    orchestrator-side leg -- the compiler cannot check resolution
+    itself, AD-17).
     """
     fields = _load_fields(obligation.given.loads)
     src_ref = fields.get(_HDL_SRC_REF_FIELD)
@@ -4201,11 +4215,37 @@ def _translate_hdl(
     payloads = {
         _HDL_SRC_PORT: _payload_ref(_HDL_SRC_KIND, src_digest, src_ref),
     }
+
+    stimulus_ref = fields.get(_HDL_STIMULUS_REF_FIELD)
+    if stimulus_ref:
+        stimulus_bytes = resolve_plan_bytes(plan_context, stimulus_ref)
+        if stimulus_bytes.is_err:
+            failure = stimulus_bytes.danger_err
+            _log.error(
+                "hdl stimulus ref %s did not resolve (E1106): %s",
+                stimulus_ref,
+                failure.detail,
+            )
+            return Err(
+                Deferral(
+                    reason="stimulus_ref_unresolved",
+                    detail=(
+                        f"E1106: declared stimulus {stimulus_ref!r} does not "
+                        f"resolve: {failure.detail}"
+                    ),
+                )
+            )
+        _, stimulus_digest = stimulus_bytes.danger_ok
+        payloads[_HDL_STIMULUS_PORT] = _payload_ref(
+            _HDL_STIMULUS_KIND, stimulus_digest, stimulus_ref
+        )
+
     _log.debug(
-        "translated hdl obligation subject=%s -> claim_kind=%s regime=%s",
+        "translated hdl obligation subject=%s -> claim_kind=%s regime=%s stimulus=%s",
         obligation.subject_ref,
         claim_kind,
         regime,
+        stimulus_ref or "-",
     )
     return Ok(
         DischargeRequest(

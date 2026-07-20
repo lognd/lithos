@@ -703,15 +703,38 @@ takes a NEW invariant number.
 
 Number confirmed next-free after INV-34 (do not reuse INV-33,
 RESERVED per D253.4). Entry TEXT drafted now per WO-154 (D264); the
-ENFORCING code that discharges each leg has NOT landed as of this
-docs pass and lands across WO-155 (leg a, functional sim), WO-156
-(timing's share of legs a/c), and WO-157 (the totality of leg c, the
-coverage sweep) -- per house law "new guarantees need a proof
-argument in the SAME change," this entry is PARKED/PROVISIONAL until
-those WOs land, the same accretion pattern the ledger already used
-for INV-24's acceptance-ledger proof across WO-98 and its
-dependents. Do not read this entry as `discharged` until the cited
-WOs' close-outs update it.
+ENFORCING code that discharges each leg lands across WO-155 (leg a,
+functional sim), WO-156 (timing's share of legs a/c), and WO-157
+(the totality of leg c, the coverage sweep) -- per house law "new
+guarantees need a proof argument in the SAME change," this entry
+stays PARKED/PROVISIONAL until ALL cited WOs land, the same
+accretion pattern the ledger already used for INV-24's
+acceptance-ledger proof across WO-98 and its dependents.
+
+WO-155 STATUS (partial, this entry still does NOT flip to
+`discharged`): leg (a)'s emission/discharge machinery has landed --
+`regolith_lower::claims::sim` auto-emits `hdl.sim_assert` off a
+declared `require: sim(<stimulus-ref>)` clause on an HDL extern-edge
+decl (E0453 the malformed-clause guard); `HdlSimAssertGenericModel`
+(`harness/models/hdl/models.py`) discharges it source-generically
+from generated-testbench vectors, cache-keyed on
+(hdl_src digest x stimulus digest x model version); the
+`signal_table` payload (`harness/models/hdl/signal_table.py`)
+enforces leg (b)'s authored-only trust-tier vocabulary BY
+CONSTRUCTION (E1105 is the untrusted-JSON-on-disk belt to that
+suspenders) with NO wire-schema change (the `stimulus_ref` given
+rides the existing `Given.loads: Vec<String>` field, so this WO
+opens no second cycle-37 `SCHEMA_VERSION` bump, D264 ruling 4).
+STILL OPEN, why this entry does not flip: leg (a)'s SHIP-PATH
+digest-reverification check (the INV-32 tap-agreement-pattern half
+that refuses a `sim/` artifact whose digests do not re-verify) and
+the `sim/` artifact family itself (`trace.vcd`/`sim_report.json`,
+charter 38 sec. 5) are a `python/regolith/backends/**` emission hook
+this WO's implementer escalated rather than landed (a concurrent
+agent owns that tree this cycle); leg (c) (the coverage sweep) is
+WO-157 entirely, unstarted; leg (a)'s timing share and all of leg
+(c)'s timing budget totality are WO-156, unstarted. Do not read this
+entry as `discharged` until the cited WOs' close-outs update it.
 
 **Every released cuprite design's simulation and timing verdicts are
 grounded: (a) a shipped sim artifact always names the exact

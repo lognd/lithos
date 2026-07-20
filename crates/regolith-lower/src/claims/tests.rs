@@ -1947,6 +1947,95 @@ fn non_hdl_extern_dialect_emits_no_hdl_obligation() {
     );
 }
 
+const HDL_SIM_SRC: &str = "block PcIncrement:\n    ports:\n        pc_in: digital(in, width=64)\n        pc_next: digital(out, width=64)\n    require:\n        stimulus: sim(mux_directed_vectors)\nimpl PcIncrement by extern(\"pc_incr.v\", verilog2001) as rtl\n";
+
+#[test]
+fn declared_sim_stimulus_on_an_hdl_extern_decl_emits_hdl_sim_assert_obligation() {
+    // WO-155 (D264): a `require: sim(<ref>)` claim on a decl that also
+    // carries a known-HDL `by extern` edge auto-emits one
+    // `hdl.sim_assert` obligation, carrying the same hdl_src_ref/
+    // hdl_regime loads as hdl.build PLUS the stimulus_ref -- the author
+    // cannot forget the claim once a stimulus is declared.
+    let set = plan_obligation_set(HDL_SIM_SRC, None);
+    let sim: Vec<&super::Obligation> = set
+        .obligations
+        .iter()
+        .filter(|o| o.claim.name.as_deref() == Some("hdl.sim_assert"))
+        .collect();
+    assert_eq!(
+        sim.len(),
+        1,
+        "exactly one hdl.sim_assert obligation: {set:?}"
+    );
+    let loads = &sim[0].given.loads;
+    assert!(
+        loads.contains(&"hdl_src_ref: pc_incr.v".to_string()),
+        "{loads:?}"
+    );
+    assert!(
+        loads.contains(&"hdl_regime: verilog2001".to_string()),
+        "{loads:?}"
+    );
+    assert!(
+        loads.contains(&"stimulus_ref: mux_directed_vectors".to_string()),
+        "{loads:?}"
+    );
+    // hdl.build still fires unchanged (the sim gate is additive).
+    assert!(set
+        .obligations
+        .iter()
+        .any(|o| o.claim.name.as_deref() == Some("hdl.build")));
+}
+
+#[test]
+fn behavioral_subject_with_no_declared_stimulus_emits_no_sim_assert_obligation() {
+    // The absent-stimulus half of the same acceptance criterion: no
+    // sim() clause -> no hdl.sim_assert obligation (named-absence
+    // coverage is WO-157's job, not a fabricated obligation here).
+    let set = plan_obligation_set(HDL_EXTERN_SRC, None);
+    assert!(
+        !set.obligations
+            .iter()
+            .any(|o| o.claim.name.as_deref() == Some("hdl.sim_assert")),
+        "no sim(...) clause declared -> no hdl.sim_assert obligation: {set:?}"
+    );
+}
+
+#[test]
+fn sim_clause_with_no_matching_hdl_extern_edge_emits_no_obligation() {
+    // A sim(...) clause with no known-HDL extern edge on the SAME decl
+    // (the structural trigger, mirroring hdl_build_obligation) forms
+    // no obligation -- honest silence, not a guess at which edge it
+    // meant.
+    let src = "block Mux:\n    ports:\n        a: digital(in)\n    require:\n        stimulus: sim(mux_directed_vectors)\n";
+    let set = plan_obligation_set(src, None);
+    assert!(
+        !set.obligations
+            .iter()
+            .any(|o| o.claim.name.as_deref() == Some("hdl.sim_assert")),
+        "no HDL extern edge on this decl -> no hdl.sim_assert obligation: {set:?}"
+    );
+}
+
+#[test]
+fn malformed_sim_clause_is_e0453_and_emits_no_obligation() {
+    let src = "block PcIncrement:\n    ports:\n        pc_in: digital(in, width=64)\n    require:\n        stimulus: sim()\nimpl PcIncrement by extern(\"pc_incr.v\", verilog2001) as rtl\n";
+    let set = plan_obligation_set(src, None);
+    assert!(
+        !set.obligations
+            .iter()
+            .any(|o| o.claim.name.as_deref() == Some("hdl.sim_assert")),
+        "a malformed sim(...) clause must not emit an obligation: {set:?}"
+    );
+    assert!(
+        set.diagnostics
+            .iter()
+            .any(|d| d.code == super::codes::SIM_CLAUSE_MALFORMED),
+        "expected E0453 SIM_CLAUSE_MALFORMED: {:?}",
+        set.diagnostics
+    );
+}
+
 #[test]
 fn plan_obligations_gain_a_geometry_realized_payload_when_target_supplied() {
     let with_target = plan_obligation_set(PLAN_SRC, Some("p"));

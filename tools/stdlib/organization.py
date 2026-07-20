@@ -257,6 +257,15 @@ _UNCITED_MODEL_BASELINE = {
     "hdl_build",
     "hdl_sim_assert_counter",
     "hdl_equiv_directed_counter",
+    # WO-155 (D264): the source-generic `hdl.sim_assert` model
+    # (`HdlSimAssertGenericModel`) is the exact same "no literature
+    # citation to attach" shape as its `hdl_build`/`hdl_sim_assert_
+    # counter` siblings immediately above -- the method IS running the
+    # request's own bytes through verilator against a declared
+    # `signal_table` stimulus, not a closed-form formula from a paper
+    # or standard. Baselined for the identical reason those three are,
+    # not a new gap this WO opened.
+    "hdl_sim_assert_generic",
 }
 
 

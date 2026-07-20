@@ -506,6 +506,18 @@ pub mod codes {
     /// not lowered (never a guessed subject).
     // frob:doc docs/modules/regolith-diag.md#code
     pub const SI_IMPEDANCE_MALFORMED: DiagCode = DiagCode::new(Family::Contracts, 52);
+    /// `E0453` -- WO-155/D264: a `require: sim(<stimulus-ref>)` clause
+    /// (`docs/spec/cuprite/03-behavioral-layer.md` sec. 2) is
+    /// malformed: the stimulus ref is empty or not a bare identifier.
+    /// No `hdl.sim_assert` obligation is emitted for a malformed clause
+    /// (honest silence, mirroring `PLAN_CLAUSE_MALFORMED`'s E0449
+    /// posture) -- this diagnostic is the only signal. Ref RESOLUTION
+    /// (does the name exist in the package) is an orchestrator-side
+    /// concern (the compiler has no IO, AD-17) -- see
+    /// `STIMULUS_REF_UNRESOLVED` (E1106) for that leg.
+    // frob:doc docs/modules/regolith-diag.md#code
+    // frob:ticket T-0025
+    pub const SIM_CLAUSE_MALFORMED: DiagCode = DiagCode::new(Family::Contracts, 53);
     /// `E0501` -- positional index used where a domain is required.
     // frob:doc docs/modules/regolith-diag.md#code
     pub const INDEX_VS_DOMAIN: DiagCode = DiagCode::new(Family::Instances, 1);
@@ -648,6 +660,31 @@ pub mod codes {
     /// grandfathering (D247.2's house mechanism).
     // frob:doc docs/modules/regolith-diag.md#code
     pub const BRINGUP_EXPECTATION_AUTHORED_POSTURE: DiagCode = DiagCode::new(Family::BringUp, 4);
+    /// `E1105` -- WO-155/D264 leg (b): a `signal_table` stimulus/
+    /// expectation payload consumed by an `hdl.sim_assert` discharge
+    /// carries no provenance/authored-tier record, or carries a
+    /// provenance/trust-tier combination outside the authored-only
+    /// vocabulary the D260.3 evidence-honesty rule allows for a drawn
+    /// stimulus (never model-backed/measured for an authored
+    /// artifact -- the same unrepresentability move as D257's
+    /// citation-less datasheet value). Raised Python-side
+    /// (`regolith.harness.models.hdl`, the `signal_table` payload's
+    /// provenance check) -- registered here per the D247.1 one-code-
+    /// space rule so Rust and Python share one registry.
+    // frob:doc docs/modules/regolith-diag.md#code
+    // frob:ticket T-0025
+    pub const STIMULUS_PROVENANCE_UNAUTHORED: DiagCode = DiagCode::new(Family::BringUp, 5);
+    /// `E1106` -- WO-155/D264: a `require: sim(<stimulus-ref>)` clause
+    /// names a stimulus artifact that does not resolve anywhere in the
+    /// built package (mirrors the extern-ref-does-not-resolve family;
+    /// loud at ship, never a silent skip). The grammar/lowering pass
+    /// only checks the clause's SYNTACTIC shape (`SIM_CLAUSE_MALFORMED`,
+    /// E0453); resolution is an orchestrator-side concern (the
+    /// compiler has no IO, AD-17), so this code is raised Python-side
+    /// (`regolith.orchestrator.translate::_translate_hdl`).
+    // frob:doc docs/modules/regolith-diag.md#code
+    // frob:ticket T-0025
+    pub const STIMULUS_REF_UNRESOLVED: DiagCode = DiagCode::new(Family::BringUp, 6);
 
     /// Every registered code paired with its Rust symbol name, for the
     /// completeness sweep (D247.4) and for the generated Python
@@ -657,6 +694,7 @@ pub mod codes {
     /// test) -- this is what makes D247.4's rule able to FAIL.
     // frob:doc docs/modules/regolith-diag.md#code
     // frob:ticket T-0008
+    // frob:ticket T-0025
     pub const ALL: &[(&str, DiagCode)] = &[
         ("INCOMPATIBLE_QUANTITIES", INCOMPATIBLE_QUANTITIES),
         ("EQUALITY_ON_CONTINUOUS", EQUALITY_ON_CONTINUOUS),
@@ -735,6 +773,7 @@ pub mod codes {
         ("FORALL_DOMAIN_UNDECLARED", FORALL_DOMAIN_UNDECLARED),
         ("REMOVAL_FAMILY_MALFORMED", REMOVAL_FAMILY_MALFORMED),
         ("SI_IMPEDANCE_MALFORMED", SI_IMPEDANCE_MALFORMED),
+        ("SIM_CLAUSE_MALFORMED", SIM_CLAUSE_MALFORMED),
         ("INDEX_VS_DOMAIN", INDEX_VS_DOMAIN),
         ("BROKEN_ORBIT_ANY", BROKEN_ORBIT_ANY),
         ("DEAD_GENERIC", DEAD_GENERIC),
@@ -768,6 +807,11 @@ pub mod codes {
             "BRINGUP_EXPECTATION_AUTHORED_POSTURE",
             BRINGUP_EXPECTATION_AUTHORED_POSTURE,
         ),
+        (
+            "STIMULUS_PROVENANCE_UNAUTHORED",
+            STIMULUS_PROVENANCE_UNAUTHORED,
+        ),
+        ("STIMULUS_REF_UNRESOLVED", STIMULUS_REF_UNRESOLVED),
     ];
 }
 
@@ -778,6 +822,7 @@ mod tests {
 
     #[test]
     // frob:ticket T-0008
+    // frob:ticket T-0025
     fn code_renders_zero_padded() {
         assert_eq!(codes::AMBIGUOUS_SELECTION.to_string(), "E0301");
         assert_eq!(codes::BUDGET_CANNOT_CLOSE.to_string(), "E0432");
@@ -793,6 +838,7 @@ mod tests {
         assert_eq!(codes::SHEET_BLANK_NO_GAUGE_SOURCE.to_string(), "E0448");
         assert_eq!(codes::REMOVAL_FAMILY_MALFORMED.to_string(), "E0451");
         assert_eq!(codes::SI_IMPEDANCE_MALFORMED.to_string(), "E0452");
+        assert_eq!(codes::SIM_CLAUSE_MALFORMED.to_string(), "E0453");
         assert_eq!(codes::IMPOSER_FREE_SUBNET.to_string(), "E0201");
         assert_eq!(codes::UNJOINED_TERMINAL.to_string(), "E0202");
         assert_eq!(codes::TRANSIENT_NO_COMPLIANCE.to_string(), "E0203");
@@ -835,6 +881,7 @@ mod tests {
     /// D247.2: the three WO-131 families render with the E-prefix and
     /// the expected four-digit numbers (900/1000/1100 bases).
     #[test]
+    // frob:ticket T-0025
     fn wo131_families_render() {
         assert_eq!(codes::FAB_SET_INCOMPLETE.to_string(), "E0901");
         assert_eq!(codes::DRAFTING_AUDIT_REFUSED.to_string(), "E0902");
@@ -855,6 +902,8 @@ mod tests {
             codes::BRINGUP_EXPECTATION_AUTHORED_POSTURE.to_string(),
             "E1104"
         );
+        assert_eq!(codes::STIMULUS_PROVENANCE_UNAUTHORED.to_string(), "E1105");
+        assert_eq!(codes::STIMULUS_REF_UNRESOLVED.to_string(), "E1106");
     }
 
     /// D247.4: `codes::ALL` is the completeness sweep's source of
@@ -864,6 +913,7 @@ mod tests {
     /// `pub const`).
     #[test]
     // frob:ticket T-0008
+    // frob:ticket T-0025
     fn all_registry_has_no_duplicates() {
         let mut names = std::collections::HashSet::new();
         let mut numbers = std::collections::HashSet::new();
@@ -876,7 +926,7 @@ mod tests {
         }
         assert_eq!(
             codes::ALL.len(),
-            80,
+            83,
             "codes::ALL count drifted; if you added a code, bump this and \
              the completeness registry in explain.rs"
         );

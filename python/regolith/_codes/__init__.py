@@ -140,6 +140,26 @@ ALL: tuple[CodeEntry, ...] = (
         authored=True,
     ),
     CodeEntry(
+        code="E1105",
+        symbol="STIMULUS_PROVENANCE_UNAUTHORED",
+        family="BringUp",
+        meaning="A `signal_table` stimulus/expectation payload consumed by an `hdl.sim_assert` discharge carries no provenance/authored-tier record, or claims a trust tier outside the authored-only vocabulary a drawn/typed stimulus is allowed (WO-155/D264 leg (b), D260 ruling 3).",
+        why="An authored (hand-drawn or hand-typed) stimulus vector is design INTENT, never a model-backed or measured value -- the same unrepresentability move D257 already made for a citation-less datasheet value. Letting an authored `signal_table` claim a model-backed/measured tier would let a fabricated stimulus drive a simulation PASS/FAIL verdict that reads as more trustworthy than it is; the sim run itself is still the model-backed step, but the STIMULUS driving it stays authored-tier by construction.",
+        fix="Attach the required provenance/trust-tier fields to the `signal_table` record (`method`, `trust_tier = authored | asserted`), or cite a genuinely model-derived/measured source if one exists -- never widen the authored constructor to accept a stronger tier.",
+        example='A `signal_table` record with `trust_tier` unset, or `trust_tier = "model_derived"` on a hand-typed vector table -> E1105 names the record and the offending tier.',
+        authored=True,
+    ),
+    CodeEntry(
+        code="E1106",
+        symbol="STIMULUS_REF_UNRESOLVED",
+        family="BringUp",
+        meaning="A `require: sim(<stimulus-ref>)` clause (WO-155/D264, `docs/spec/cuprite/03-behavioral-layer.md` sec. 2) names a stimulus artifact that does not resolve anywhere in the built package.",
+        why="The grammar/lowering pass only validates the clause's SYNTACTIC shape (`SIM_CLAUSE_MALFORMED`, E0453) -- it cannot resolve the ref itself (the compiler has no IO, AD-17, mirroring how an `extern(ref, dialect)`/`plan:` ref resolves orchestrator-side). A ref that resolves to nothing would otherwise silently defer (never simulating) with no loud signal at ship -- refused instead, the same posture as the extern-ref-does-not-resolve family.",
+        fix="Point `sim(<stimulus-ref>)` at a stimulus record that actually exists in the built package, or add the missing record.",
+        example="`require: sim(mux_directed_vectors)` where no `mux_directed_vectors` stimulus artifact is staged into the build -> E1106 names the unresolved ref.",
+        authored=True,
+    ),
+    CodeEntry(
         code="E0101",
         symbol="INCOMPATIBLE_QUANTITIES",
         family="Parse",
@@ -650,6 +670,16 @@ ALL: tuple[CodeEntry, ...] = (
         authored=False,
     ),
     CodeEntry(
+        code="E0453",
+        symbol="SIM_CLAUSE_MALFORMED",
+        family="Contracts",
+        meaning="A `require: sim(<stimulus-ref>)` clause (WO-155/D264, `docs/spec/cuprite/03-behavioral-layer.md` sec. 2) is malformed: the stimulus ref is empty or is not a bare identifier.",
+        why="`sim(<stimulus-ref>)` deliberately names exactly ONE artifact, resolved by digest (the same unambiguous-first discipline `extern(ref, format)` already applies) -- a missing or non-identifier ref would leave the discharge machinery nothing concrete to resolve, so no `hdl.sim_assert` obligation is emitted for a malformed clause (honest silence, mirroring `PLAN_CLAUSE_MALFORMED`'s E0449 posture).",
+        fix="Name exactly one bare identifier inside `sim(...)` -- the stimulus/expectation `signal_table` record's declared name.",
+        example='`require: sim()` or `require: sim("quoted")` -> E0453 names the empty/malformed argument; `require: sim(mux_directed_vectors)` is well-formed.',
+        authored=True,
+    ),
+    CodeEntry(
         code="E0449",
         symbol="PLAN_CLAUSE_MALFORMED",
         family="Contracts",
@@ -844,6 +874,8 @@ EXPECTATION_PROVENANCE_UNRESOLVED = "E1101"
 RELEASE_GATE_REFUSES_DEBUG_EVIDENCE = "E1102"
 TAP_MAP_DISAGREEMENT = "E1103"
 BRINGUP_EXPECTATION_AUTHORED_POSTURE = "E1104"
+STIMULUS_PROVENANCE_UNAUTHORED = "E1105"
+STIMULUS_REF_UNRESOLVED = "E1106"
 INCOMPATIBLE_QUANTITIES = "E0101"
 INTERVAL_RANGE_CONFUSION = "E0103"
 ILLEGAL_LOG_SUM = "E0104"
@@ -895,6 +927,7 @@ CAVITY_CHAIN_INEXPRESSIBLE = "E0445"
 SELECT_DUPLICATE_CANDIDATE = "E0446"
 SKETCH_CLOSE_EDGE_UNDERCONSTRAINED = "E0447"
 SHEET_BLANK_NO_GAUGE_SOURCE = "E0448"
+SIM_CLAUSE_MALFORMED = "E0453"
 PLAN_CLAUSE_MALFORMED = "E0449"
 FORALL_DOMAIN_UNDECLARED = "E0450"
 REMOVAL_FAMILY_MALFORMED = "E0451"

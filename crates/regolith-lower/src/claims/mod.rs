@@ -55,6 +55,7 @@ mod frame;
 mod plan;
 mod require;
 mod rule;
+mod sim;
 #[cfg(test)]
 mod tests;
 
@@ -74,6 +75,7 @@ use require::{
     sweep_domain_from_ast, ClaimLoweringCtx,
 };
 use rule::{given_for_decl, push_rule_obligations};
+use sim::push_hdl_sim_assert_obligations;
 
 /// Every obligation this pass produced, the snapshot records for every
 /// committed scope, and any diagnostics.
@@ -337,6 +339,21 @@ pub fn build_obligations(
                 &decl_name,
                 &subject_ref,
                 realized_inputs,
+            );
+
+            // WO-155 (D264): a declared `sim(<stimulus-ref>)` claim on
+            // a decl carrying a known-HDL `by extern` edge auto-emits
+            // one `hdl.sim_assert` obligation per stimulus -- the
+            // digital sibling of the `plan:`/`hdl.build` auto-emission
+            // above, run once per decl after its ordinary claims.
+            push_hdl_sim_assert_obligations(
+                &mut out.obligations,
+                &mut out.diagnostics,
+                &pf.path,
+                &decl,
+                &decl_name,
+                &subject_ref,
+                &graph.conformance,
             );
         }
 

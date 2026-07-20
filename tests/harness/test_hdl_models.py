@@ -16,10 +16,14 @@ from regolith.harness.models.hdl.fixtures import FIXTURES_BY_ID
 from regolith.harness.models.hdl.models import (
     SRC_KIND,
     SRC_PORT,
+    STIMULUS_KIND,
+    STIMULUS_PORT,
     HdlBuildModel,
     HdlEquivDirectedModel,
+    HdlSimAssertGenericModel,
     HdlSimAssertModel,
 )
+from regolith.harness.models.hdl.verilator_adapter import ToolFailure
 from regolith.orchestrator.payload_store import PayloadStore
 
 _EXAMPLES_HDL = Path(__file__).resolve().parents[2] / "examples" / "hdl"
@@ -209,3 +213,153 @@ def test_hdl_sim_assert_catches_broken_priority_mutant(store: PayloadStore) -> N
     result = model.discharge(req, registry_version="test", resolver=store.resolver())
     assert result.is_ok, result
     assert result.danger_ok.status.value == "violated"
+
+
+# --- WO-155 (D264): the source-generic hdl.sim_assert gate ------------
+
+_FIXTURES_HDL_DIR = Path(__file__).resolve().parents[1] / "fixtures" / "hdl"
+
+_MUX_STIMULUS = {
+    "top_module": "mux2",
+    "ports": [
+        {"name": "sel", "width": 1, "direction": "in"},
+        {"name": "a", "width": 8, "direction": "in"},
+        {"name": "b", "width": 8, "direction": "in"},
+        {"name": "y", "width": 8, "direction": "out"},
+    ],
+    "vectors": [
+        {
+            "name": "sel_low_passes_a",
+            "inputs": [
+                {"signal": "sel", "value": "1'b0"},
+                {"signal": "a", "value": "8'h11"},
+                {"signal": "b", "value": "8'h22"},
+            ],
+            "expect": [{"signal": "y", "expected": "8'h11"}],
+        },
+        {
+            "name": "sel_high_passes_b",
+            "inputs": [{"signal": "sel", "value": "1'b1"}],
+            "expect": [{"signal": "y", "expected": "8'h22"}],
+        },
+    ],
+    "method": "hand-typed directed vectors (WO-155 recon)",
+    "trust_tier": "authored",
+}
+
+
+# frob:ticket T-0025
+def _build_sim_request(
+    store: PayloadStore, src: bytes, stimulus: dict, *, regime: str = "verilog2001"
+) -> DischargeRequest:
+    import json
+
+    src_digest = store.put(src)
+    stim_digest = store.put(json.dumps(stimulus).encode("utf-8"))
+    return DischargeRequest(
+        claim_kind="hdl.sim_assert",
+        limit=0.0,
+        inputs={},
+        payloads={
+            SRC_PORT: PayloadRef(kind=SRC_KIND, digest=src_digest, origin="mux2.v"),
+            STIMULUS_PORT: PayloadRef(
+                kind=STIMULUS_KIND,
+                digest=stim_digest,
+                origin="mux_directed_vectors",
+            ),
+        },
+        regimes=(regime,),
+    )
+
+
+# frob:ticket T-0025
+def test_hdl_sim_assert_generic_discharges_a_non_fixture_design(
+    store: PayloadStore,
+) -> None:
+    """The acceptance criterion: a NEW, non-fixture example design (a
+    plain 2:1 mux, never registered as a `FixtureSpec`) discharges
+    `hdl.sim_assert` for real through the source-generic model."""
+    src = (_FIXTURES_HDL_DIR / "mux2.v").read_bytes()
+    req = _build_sim_request(store, src, _MUX_STIMULUS)
+    model = HdlSimAssertGenericModel()
+    result = model.discharge(req, registry_version="test", resolver=store.resolver())
+    assert result.is_ok, result
+    assert result.danger_ok.status.value == "discharged"
+
+
+# frob:ticket T-0025
+def test_hdl_sim_assert_generic_catches_a_violation(store: PayloadStore) -> None:
+    """The negative fixture (`mux2_broken.v`, sel ignored) must be caught
+    as a violated (nonzero-excess) claim, never a silent pass."""
+    src = (_FIXTURES_HDL_DIR / "mux2_broken.v").read_bytes()
+    req = _build_sim_request(store, src, _MUX_STIMULUS)
+    model = HdlSimAssertGenericModel()
+    result = model.discharge(req, registry_version="test", resolver=store.resolver())
+    assert result.is_ok, result
+    assert result.danger_ok.status.value == "violated"
+
+
+# frob:ticket T-0025
+def test_hdl_sim_assert_generic_defers_on_tool_absence(
+    store: PayloadStore, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A missing/broken verilator tool renders INDETERMINATE, never a
+    fabricated pass (the named-deferral half of the two-tier honesty
+    posture, D264 ruling 1)."""
+
+    def _absent(*_args: object, **_kwargs: object):
+        from typani.result import Err as _Err
+
+        return _Err(
+            ToolFailure(
+                tool="verilator",
+                version=None,
+                argv=("verilator",),
+                returncode=None,
+                stderr_excerpt="",
+                kind="not_found",
+            )
+        )
+
+    monkeypatch.setattr("regolith.harness.models.hdl.models.run_verilator", _absent)
+    src = (_FIXTURES_HDL_DIR / "mux2.v").read_bytes()
+    req = _build_sim_request(store, src, _MUX_STIMULUS)
+    model = HdlSimAssertGenericModel()
+    result = model.discharge(req, registry_version="test", resolver=store.resolver())
+    assert result.is_err
+    assert isinstance(result.danger_err, DomainError)
+
+
+# frob:ticket T-0025
+def test_hdl_sim_assert_generic_refuses_a_non_authored_stimulus_tier(
+    store: PayloadStore,
+) -> None:
+    """E1105 (STIMULUS_PROVENANCE_UNAUTHORED): a stimulus payload
+    claiming a `model`/`measured` trust tier is refused before it ever
+    reaches the pydantic constructor (D260 ruling 3, INV-35 leg (b))."""
+    bad_stimulus = dict(_MUX_STIMULUS, trust_tier="model")
+    src = (_FIXTURES_HDL_DIR / "mux2.v").read_bytes()
+    req = _build_sim_request(store, src, bad_stimulus)
+    model = HdlSimAssertGenericModel()
+    result = model.discharge(req, registry_version="test", resolver=store.resolver())
+    assert result.is_err
+    assert isinstance(result.danger_err, DomainError)
+    assert "E1105" in result.danger_err.message
+
+
+# frob:ticket T-0025
+def test_hdl_sim_assert_generic_does_not_match_a_request_with_no_stimulus() -> None:
+    """A request carrying only `hdl_src` (no `sim_stimulus` payload)
+    never matches the generic model's signature -- the structural
+    trigger this WO requires before any sim discharge is attempted."""
+    model = HdlSimAssertGenericModel()
+    req = DischargeRequest(
+        claim_kind="hdl.sim_assert",
+        limit=0.0,
+        inputs={},
+        payloads={
+            SRC_PORT: PayloadRef(kind=SRC_KIND, digest="blake3:x", origin="mux2.v")
+        },
+        regimes=("verilog2001",),
+    )
+    assert not model.signature.accepts_payloads(req.payload_ports())

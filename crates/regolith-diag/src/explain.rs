@@ -70,6 +70,7 @@ macro_rules! authored {
 /// fewer (`completeness_is_total` enforces both directions).
 // frob:doc docs/modules/regolith-diag.md#explain
 // frob:ticket T-0008
+// frob:ticket T-0025
 pub const ALL: &[ExplainEntry] = &[
 
     authored!(
@@ -267,6 +268,50 @@ pub const ALL: &[ExplainEntry] = &[
          E1104 names the channel and the ref."
     ),
 
+    authored!(
+        STIMULUS_PROVENANCE_UNAUTHORED,
+        "A `signal_table` stimulus/expectation payload consumed by an \
+         `hdl.sim_assert` discharge carries no provenance/authored-tier \
+         record, or claims a trust tier outside the authored-only \
+         vocabulary a drawn/typed stimulus is allowed (WO-155/D264 leg \
+         (b), D260 ruling 3).",
+        "An authored (hand-drawn or hand-typed) stimulus vector is design \
+         INTENT, never a model-backed or measured value -- the same \
+         unrepresentability move D257 already made for a citation-less \
+         datasheet value. Letting an authored `signal_table` claim a \
+         model-backed/measured tier would let a fabricated stimulus drive \
+         a simulation PASS/FAIL verdict that reads as more trustworthy \
+         than it is; the sim run itself is still the model-backed step, \
+         but the STIMULUS driving it stays authored-tier by construction.",
+        "Attach the required provenance/trust-tier fields to the \
+         `signal_table` record (`method`, `trust_tier = authored | \
+         asserted`), or cite a genuinely model-derived/measured source \
+         if one exists -- never widen the authored constructor to accept \
+         a stronger tier.",
+        "A `signal_table` record with `trust_tier` unset, or \
+         `trust_tier = \"model_derived\"` on a hand-typed vector table -> \
+         E1105 names the record and the offending tier."
+    ),
+    authored!(
+        STIMULUS_REF_UNRESOLVED,
+        "A `require: sim(<stimulus-ref>)` clause (WO-155/D264, \
+         `docs/spec/cuprite/03-behavioral-layer.md` sec. 2) names a \
+         stimulus artifact that does not resolve anywhere in the built \
+         package.",
+        "The grammar/lowering pass only validates the clause's SYNTACTIC \
+         shape (`SIM_CLAUSE_MALFORMED`, E0453) -- it cannot resolve the \
+         ref itself (the compiler has no IO, AD-17, mirroring how an \
+         `extern(ref, dialect)`/`plan:` ref resolves orchestrator-side). \
+         A ref that resolves to nothing would otherwise silently defer \
+         (never simulating) with no loud signal at ship -- refused \
+         instead, the same posture as the extern-ref-does-not-resolve \
+         family.",
+        "Point `sim(<stimulus-ref>)` at a stimulus record that actually \
+         exists in the built package, or add the missing record.",
+        "`require: sim(mux_directed_vectors)` where no \
+         `mux_directed_vectors` stimulus artifact is staged into the \
+         build -> E1106 names the unresolved ref."
+    ),
     stub!(INCOMPATIBLE_QUANTITIES, "arithmetic between incompatible quantities."),
     stub!(INTERVAL_RANGE_CONFUSION, "a `[a, b]` interval and a `[i .. j]` index range were confused: both separators in one bracket, or a range endpoint carrying a unit/fractional literal (regolith/02 sec. 3)."),
     stub!(ILLEGAL_LOG_SUM, "an illegal logarithmic-unit sum: after cancelling subtracted references against added ones, more than one reference survives (`dBm + dBm`) or a subtracted reference is uncancelled (regolith/02 sec. 5a; the linear product/quotient is not a valid quantity)."),
@@ -318,6 +363,24 @@ pub const ALL: &[ExplainEntry] = &[
     stub!(SELECT_DUPLICATE_CANDIDATE, "a `by select(...)` (WO-56, D161) candidate list names the same impl-ref twice. Constructive: the check names the repeated candidate and its subject, since a duplicate candidate can never change a search's outcome and is always a authoring mistake (a copy/paste or a stale edit), never a legal \"weight\" on one alternative to preserve."),
     stub!(SKETCH_CLOSE_EDGE_UNDERCONSTRAINED, "a walk with a labeled `close` edge (an unconstrained 2-DOF vector, WO-62 D171/AD-32) still carries an explicit `free` segment length: closure gives the close edge both equations, so there is nothing left to determine the other free length -- under-constrained, naming the residual segment and the missing constraint class (assert its length or remove the `close` label). The over-constrained sibling is `E0441`."),
     stub!(SHEET_BLANK_NO_GAUGE_SOURCE, "a sheet-metal `Blank(...)` op has no thickness value source: no explicit `thickness=` arg AND no enclosing `process=<proc>(sheet=<t>)` gauge source (WO-62 D171/AD-32, INV-21's `cause: process(<proc>.sheet)` API). A gauge-less unasserted sheet part is a compile diagnostic, never a silently unthickened blank."),
+    authored!(
+        SIM_CLAUSE_MALFORMED,
+        "A `require: sim(<stimulus-ref>)` clause (WO-155/D264, \
+         `docs/spec/cuprite/03-behavioral-layer.md` sec. 2) is malformed: \
+         the stimulus ref is empty or is not a bare identifier.",
+        "`sim(<stimulus-ref>)` deliberately names exactly ONE artifact, \
+         resolved by digest (the same unambiguous-first discipline \
+         `extern(ref, format)` already applies) -- a missing or \
+         non-identifier ref would leave the discharge machinery nothing \
+         concrete to resolve, so no `hdl.sim_assert` obligation is \
+         emitted for a malformed clause (honest silence, mirroring \
+         `PLAN_CLAUSE_MALFORMED`'s E0449 posture).",
+        "Name exactly one bare identifier inside `sim(...)` -- the \
+         stimulus/expectation `signal_table` record's declared name.",
+        "`require: sim()` or `require: sim(\"quoted\")` -> E0453 names \
+         the empty/malformed argument; `require: sim(mux_directed_vectors)` \
+         is well-formed."
+    ),
     stub!(PLAN_CLAUSE_MALFORMED, "a `plan: extern(<ref>, <dialect>)` field (WO-69, regolith/08 sec. 4's L6 row) is malformed: the extern ref string is missing, OR the dialect is not a registered `fmt.gcode_*` name (`gcode_fanuc`/`gcode_marlin`). No `cam.*` obligations are emitted for a malformed clause (honest silence, never a guess); this diagnostic is the only signal."),
     stub!(FORALL_DOMAIN_UNDECLARED, "a `forall <var> in <domain>:` sweep names a BARE PLURAL (`boards`, `assemblies`) that resolves to no declared domain, so the sweep silently covers zero points -- a vacuous pass, the honesty gap WO-90 closes. A declared domain (`[lo, hi]` interval, `{a, b}` discrete set, `registry(<family>)`, `<Entity>.members.all`, or a dotted pack ref) is legal; an explicitly EMPTY declared domain stays legal (empty sweep = zero obligations, honestly). Only the undeclared bare-plural name trips this diagnostic."),
     stub!(REMOVAL_FAMILY_MALFORMED, "a material-removal family constructor (`Ribs`, `PocketGrid`, `Shell`, `Lattice` -- charter 34 phase 1, D200/ WO-77) spells malformed parameters: a missing required slot, an unknown/duplicate slot, a wrong-dimension value (an int slot given a length, a length slot given a bare number), a `density` outside `[0, 1]`, or an unknown lattice `cell` name. Constructive: the diagnostic names the family's full signature and the exact offending slot; the op is omitted from the emitted feature program (never a guessed value, never silent truncation)."),

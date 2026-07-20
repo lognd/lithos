@@ -105,6 +105,11 @@ select = ["E", "F", "I", "UP", "B", "SIM"]
 "demos/demo7_drawings_multiview.py" = ["E501"]
 "demos/demo8_bom_cost_schedule.py" = ["E501"]
 "python/regolith/backends/calc.py" = ["E501"]
+# WO-155 (D264): the `frob:tests` directive naming a long test id must
+# stay a single physical line (frob's directive parser rejects a
+# trailing `# noqa`), so these two lines ride the E501 ignore instead.
+"python/regolith/harness/models/hdl/models.py" = ["E501"]
+"python/regolith/harness/models/hdl/signal_table.py" = ["E501"]
 "python/regolith/backends/harness_pack.py" = ["E501"]
 "python/regolith/harness/models/dfm/*.py" = ["E501"]
 "tests/golden/test_negative_corpus.py" = ["E501"]

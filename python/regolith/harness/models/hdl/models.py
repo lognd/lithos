@@ -1,16 +1,24 @@
 """The std.hdl `Model` pack (WO-82 deliverables 1-3; AD-19/AD-35;
 D202 cycle 33 source-generic `hdl.build`).
 
-Three ordinary `regolith.harness.model.Model`s, one per check-mode claim
-kind (`hdl.build`/`hdl.sim_assert`/`hdl.equiv_directed`). `hdl.build`
-(D202) is SOURCE-GENERIC: ONE model instance verilates whatever bytes
-and filename the REQUEST itself carries, with NO fixture identity and
-no hardcoded top module (see `HdlBuildModel`'s docstring for the WO-89
-collision this closes). `hdl.sim_assert`/`hdl.equiv_directed` stay
-fixture-bound (registered per `examples/hdl/` fixture with a landed
-testbench, the cuprite/09 D120 calibration corpus) -- they genuinely
-need a per-fixture hand-authored testbench, mirroring `std.cam`'s
-per-dialect registration shape (`harness/models/cam/models.py`).
+Three check-mode claim kinds (`hdl.build`/`hdl.sim_assert`/
+`hdl.equiv_directed`), backed by a MIX of source-generic and
+fixture-bound `regolith.harness.model.Model`s. `hdl.build` (D202) is
+SOURCE-GENERIC: ONE model instance verilates whatever bytes and
+filename the REQUEST itself carries, with NO fixture identity and no
+hardcoded top module (see `HdlBuildModel`'s docstring for the WO-89
+collision this closes). `hdl.sim_assert` gained a SECOND,
+source-generic model in WO-155 (D264): `HdlSimAssertGenericModel`
+discharges any request naming a declared `sim_stimulus`
+(`signal_table`) payload by generating a testbench harness FROM its
+directed vectors (`build_generated_testbench`) rather than reading a
+hand-authored fixture file -- the same D202 generalization applied
+one claim kind later. `hdl.sim_assert`/`hdl.equiv_directed` ALSO stay
+registered fixture-bound (registered per `examples/hdl/` fixture with
+a landed testbench, the cuprite/09 D120 calibration corpus) for the 5
+existing calibration fixtures -- WO-155 is additive, not a
+replacement: a request with no declared stimulus never matches the
+generic model's signature, so the fixture path is unchanged.
 All share the ONE discharge/margin path (`Model.discharge`): value=excess
 (count of failures), eps=0.0, limit=0.0 (upper-bound sense -- "zero
 verilator/testbench failures"); a tool failure or an unsupported regime
@@ -44,6 +52,10 @@ from regolith.harness.models.hdl.fixtures import (
     VHDL_REGIMES,
     FixtureSpec,
 )
+from regolith.harness.models.hdl.signal_table import (
+    SignalTable,
+    check_signal_table_provenance,
+)
 from regolith.harness.models.hdl.verilator_adapter import (
     ToolFailure,
     run_verilator,
@@ -69,6 +81,16 @@ SRC_PORT = "hdl_src"
 # frob:doc docs/modules/py-harness.md#models-hdl
 SRC_KIND = "hdl_source"
 
+# WO-155 (D264): the `sim_stimulus` payload port (kind `signal_table`,
+# charter 38 sec. 5 registry addition) beside `hdl_src` -- the
+# hash-pinned directed stimulus/expectation vector table a `require:
+# sim(<stimulus-ref>)` clause resolves by digest
+# (cuprite/03-behavioral-layer.md sec. 2).
+# frob:doc docs/modules/py-harness.md#models-hdl
+STIMULUS_PORT = "sim_stimulus"
+# frob:doc docs/modules/py-harness.md#models-hdl
+STIMULUS_KIND = "signal_table"
+
 # frob:doc docs/modules/py-harness.md#models-hdl
 CLAIM_BUILD = "hdl.build"
 # frob:doc docs/modules/py-harness.md#models-hdl
@@ -91,15 +113,20 @@ def _tool_failure_message(fail: ToolFailure) -> str:
     )
 
 
-def _resolve_src(
+def _resolve_payload(
     request: DischargeRequest,
     resolver: PayloadResolver | None,
     *,
+    port: str,
     model_id: str,
 ) -> Result[bytes, HarnessError]:
-    ref = request.payloads.get(SRC_PORT)
+    """Resolve any one of this request's payload ports to bytes (WO-155:
+    generalized from the `hdl_src`-only `_resolve_src` so the same
+    digest-resolution path serves the new `sim_stimulus` port too --
+    NO DUPLICATION of the resolver-call/error-wrapping idiom)."""
+    ref = request.payloads.get(port)
     if ref is None:  # pragma: no cover -- signature match guarantees it
-        return Err(DomainError(model_id=model_id, message="no hdl_src payload"))
+        return Err(DomainError(model_id=model_id, message=f"no {port} payload"))
     if resolver is None:
         return Err(
             DomainError(
@@ -118,6 +145,15 @@ def _resolve_src(
             )
         )
     return Ok(resolved.danger_ok)
+
+
+def _resolve_src(
+    request: DischargeRequest,
+    resolver: PayloadResolver | None,
+    *,
+    model_id: str,
+) -> Result[bytes, HarnessError]:
+    return _resolve_payload(request, resolver, port=SRC_PORT, model_id=model_id)
 
 
 class _HdlModel(Model):
@@ -466,4 +502,232 @@ class HdlEquivDirectedModel(_HdlModel):
             "seed=fixed/hand-authored -- DIRECTED coverage only, never formal)"
         )
         _log.debug("%s: %s", self.model_id, full_note)
+        return Ok(Prediction(value=float(errors), eps=0.0, coverage=1.0))
+
+
+# frob:doc docs/modules/py-harness.md#models-hdl
+# frob:waive TEST001 reason="exercised transitively through HdlSimAssertGenericModel.estimate, test_hdl_sim_assert_generic_discharges_a_non_fixture_design; no isolated unit test calls it directly"
+def build_generated_testbench(table: SignalTable) -> str:
+    """WO-155 (D264) deliverable 4: generate a SystemVerilog testbench
+    from a `signal_table`'s directed vectors, PASS/ASSERT-FAIL/SIM_OK
+    discipline unchanged (the exact grammar `_run_generated_testbench`
+    parses back with the SAME regexes as the hand-authored fixture
+    testbenches, `_PASS_RE`/`_FAIL_RE`/`_SIM_OK_RE`/`_SIM_FAIL_RE`) --
+    this is the source-generic replacement for a per-fixture hand-
+    written testbench, D202's "one model, not one per fixture" pattern
+    applied to `hdl.sim_assert`."""
+    decl: list[str] = []
+    conn: list[str] = []
+    for p in table.ports:
+        kind = "reg" if p.direction == "in" else "wire"
+        width = f" [{p.width - 1}:0]" if p.width > 1 else ""
+        decl.append(f"  {kind}{width} {p.name};")
+        conn.append(f".{p.name}({p.name})")
+    if table.clock is not None and not any(p.name == table.clock for p in table.ports):
+        decl.append(f"  reg {table.clock} = 0;")
+        conn.append(f".{table.clock}({table.clock})")
+    if table.reset is not None and not any(p.name == table.reset for p in table.ports):
+        decl.append(f"  reg {table.reset} = 0;")
+        conn.append(f".{table.reset}({table.reset})")
+
+    body: list[str] = []
+    for vec in table.vectors:
+        for a in vec.inputs:
+            body.append(f"    {a.signal} = {a.value};")
+        if table.clock is not None:
+            body.append(f"    @(posedge {table.clock}); #1;")
+        else:
+            body.append("    #1;")
+        for e in vec.expect:
+            body.append("    vectors++;")
+            body.append(
+                f"    if ({e.signal} !== {e.expected}) begin\n"
+                f'      errors++;\n      $display("ASSERT FAIL {vec.name} '
+                f'cycle=%0d expected=%0d got=%0d", vectors, {e.expected}, '
+                f"{e.signal});\n    end else begin\n"
+                f'      $display("PASS {vec.name} cycle=%0d value=%0d", '
+                f"vectors, {e.signal});\n    end"
+            )
+
+    clock_gen = f"  always #5 {table.clock} = ~{table.clock};\n" if table.clock else ""
+    return (
+        "`timescale 1ns/1ps\n"
+        "module tb;\n" + "\n".join(decl) + "\n  int errors = 0;\n  int vectors = 0;\n\n"
+        f"  {table.top_module} dut({', '.join(conn)});\n\n"
+        f"{clock_gen}"
+        "  initial begin\n"
+        + "\n".join(body)
+        + '\n    if (errors == 0) $display("SIM_OK vectors=%0d", vectors);\n'
+        '    else $display("SIM_FAIL vectors=%0d errors=%0d", vectors, errors);\n'
+        "    $finish;\n"
+        "  end\n"
+        "endmodule\n"
+    )
+
+
+def _run_generated_testbench(
+    table: SignalTable, hdl_filename: str, src: bytes, *, model_id: str
+) -> Result[tuple[int, int, str], HarnessError]:
+    """The source-generic sibling of `_run_testbench`: build+run a
+    testbench GENERATED from a `signal_table` (rather than reading a
+    hand-authored fixture testbench file) -- same build/run/parse shape
+    (NO DUPLICATION beyond what the differing testbench SOURCE forces)."""
+    tb_src = build_generated_testbench(table)
+    with tempfile.TemporaryDirectory(prefix="regolith_hdl_sim_gen_") as tmp:
+        work = Path(tmp)
+        (work / hdl_filename).write_bytes(src)
+        tb_path = work / "tb.sv"
+        tb_path.write_text(tb_src)
+        args = VerilatorBinaryArgs(
+            top_module="tb",
+            tb_filename=tb_path.name,
+            hdl_filename=hdl_filename,
+        )
+        build = run_verilator(args, cwd=work)
+        if build.is_err:
+            return Err(
+                DomainError(
+                    model_id=model_id, message=_tool_failure_message(build.danger_err)
+                )
+            )
+        exe = work / "obj_dir" / "Vtb"
+        spawned = run_argv(
+            (str(exe),), cwd=work, timeout_s=_TESTBENCH_RUN_TIMEOUT_S, tool=exe.name
+        )
+        if spawned.is_err:
+            fail = spawned.danger_err
+            return Err(
+                DomainError(
+                    model_id=model_id,
+                    message=f"simulation binary failed to run: {fail.stderr_excerpt}",
+                )
+            )
+        proc = spawned.danger_ok
+        lines = proc.stdout.decode("ascii", errors="replace").splitlines()
+        first_fail = ""
+        vectors = 0
+        errors = 0
+        for line in lines:
+            m = _SIM_OK_RE.match(line)
+            if m:
+                vectors = int(m.group(1))
+                continue
+            m = _SIM_FAIL_RE.match(line)
+            if m:
+                vectors = int(m.group(1))
+                errors = int(m.group(2))
+                continue
+            m = _FAIL_RE.match(line)
+            if m and not first_fail:
+                name, cycle, expected, got = m.groups()
+                first_fail = (
+                    f"assertion {name!r} failed at cycle {cycle}: "
+                    f"expected={expected} got={got}"
+                )
+        if vectors == 0:
+            return Err(
+                DomainError(
+                    model_id=model_id,
+                    message=(
+                        "generated simulation produced no SIM_OK/SIM_FAIL "
+                        f"marker (stdout: {proc.stdout!r})"
+                    ),
+                )
+            )
+        note = first_fail or f"{vectors} directed vector(s), 0 failures"
+        return Ok((vectors, errors, note))
+
+
+# frob:doc docs/modules/py-harness.md#models-hdl
+class HdlSimAssertGenericModel(Model):
+    """WO-155 (D264): the SOURCE-GENERIC `hdl.sim_assert` model -- ONE
+    instance, not one per fixture, mirroring `HdlBuildModel`'s D202
+    posture. Discharges any request that carries BOTH the ordinary
+    `hdl_src` payload AND the new `sim_stimulus` (`signal_table`)
+    payload: the structural trigger this WO's Rust emission
+    (`regolith_lower::claims::sim`) requires before it ever forms an
+    obligation. A request with no stimulus payload never matches this
+    model's signature (`payload_kinds` requires the `sim_stimulus`
+    port), so the 5 fixture-bound `HdlSimAssertModel` registrations
+    (WO-82) keep discharging their own fixtures completely unchanged --
+    this is an ADDITIVE model, not a replacement of the fixture path
+    (WO-82's per-fixture hand-authored testbenches are still real
+    fixture coverage; this WO does not retire them).
+
+    Cost is DELIBERATELY lower than the fixture-bound spine's (2 < 3):
+    `ModelRegistry.select` breaks ties by ascending cost, and a real
+    fleet request naming a stimulus could otherwise collide with a
+    fixture model sharing the same bare regime tag (`sv2017`,
+    `verilog2005`, ...) -- the lower cost guarantees THIS model wins
+    whenever its payload requirement (a declared stimulus) is actually
+    satisfied, never the wrong fixture's hand-authored testbench run
+    against arbitrary bytes."""
+
+    @property
+    # frob:doc docs/modules/py-harness.md#models-hdl
+    def version(self) -> str:
+        return f"1+verilator{verilator_version()}"
+
+    @property
+    # frob:doc docs/modules/py-harness.md#models-hdl
+    def cost(self) -> int:
+        return 2
+
+    @property
+    # frob:doc docs/modules/py-harness.md#models-hdl
+    def signature(self) -> ModelSignature:
+        return ModelSignature(
+            name="hdl_sim_assert_generic",
+            claim_kind=CLAIM_SIM_ASSERT,
+            sense=ClaimSense.upper_bound(),
+            inputs=(),
+            domain=("hdl", "sim_assert", "generic"),
+            payload_kinds={SRC_PORT: SRC_KIND, STIMULUS_PORT: STIMULUS_KIND},
+            required_regimes=(),
+        )
+
+    # frob:doc docs/modules/py-harness.md#models-hdl
+    def estimate(
+        self, request: DischargeRequest, *, resolver: PayloadResolver | None = None
+    ) -> Result[Prediction, HarnessError]:
+        regime = request.regimes[0] if request.regimes else None
+        if regime in VHDL_REGIMES:
+            return Err(
+                DomainError(
+                    model_id=self.model_id,
+                    message=(
+                        f"VHDL ({regime}) has no verilator front-end -- "
+                        "deferred, not simulated (WO-82 ledger, same cut "
+                        "hdl.build's VHDL guard names)"
+                    ),
+                )
+            )
+        src = _resolve_src(request, resolver, model_id=self.model_id)
+        if src.is_err:
+            return Err(src.danger_err)
+        stimulus_bytes = _resolve_payload(
+            request, resolver, port=STIMULUS_PORT, model_id=self.model_id
+        )
+        if stimulus_bytes.is_err:
+            return Err(stimulus_bytes.danger_err)
+        parsed = check_signal_table_provenance(stimulus_bytes.danger_ok)
+        if parsed.is_err:
+            return Err(parsed.danger_err)
+        table = parsed.danger_ok
+        ref = request.payloads.get(SRC_PORT)
+        filename = Path(ref.origin).name if ref is not None and ref.origin else "src.v"
+        outcome = _run_generated_testbench(
+            table, filename, src.danger_ok, model_id=self.model_id
+        )
+        if outcome.is_err:
+            return Err(outcome.danger_err)
+        vectors, errors, note = outcome.danger_ok
+        _log.debug(
+            "%s: %s (vectors=%d errors=%d, stimulus trust_tier=%s)",
+            self.model_id,
+            note,
+            vectors,
+            errors,
+            table.trust_tier,
+        )
         return Ok(Prediction(value=float(errors), eps=0.0, coverage=1.0))
