@@ -952,7 +952,7 @@ grounding when this unblocks.
 ```yaml
 id: T-0027
 title: 'WO-157: sim/timing fleet adoption -- census flip + coverage sweep'
-state: in-progress
+state: done
 kind: feature
 origin: agent
 created: '2026-07-18'
@@ -969,6 +969,19 @@ acceptance:
 - see docs/workflow/work-orders/WO-157-sim-fleet-adoption.md
 threat: null
 ```
+## Done report
+
+WO-157's achievable slice landed across two phases: riscv_hart_rv1
+authored sim stimulus (census 4->5 discharged, verified through the
+real pipeline, F152 bar); TimingBudgetModel registered + additive
+elec.timing_budget translate route proven end-to-end at the WO-155
+precedent level (timing_budget@1 discharge); D226 oracle added for
+the new fleet-discharging hdl_sim_assert_generic family. Honest
+rulings: sdr ddr_timing forms ZERO obligations today (BudgetStmt
+hides nested require lines from decl.claims(); Rust shape recorded
+in T-0072), named in place, not fabricated into a waiver; remaining
+authoring + sweep/E1105/INV deliverables split to T-0072.
+
 ## Progress note (2026-07-20, sim-half slice)
 
 Landed: `riscv_hart_rv1`'s `PcIncrement` decl declares a directed-vector
@@ -2270,7 +2283,7 @@ threat: null
 id: T-0068
 title: 'sim/ artifact family: trace.vcd + sim_report.json emission (WO-155 deliverable
   7)'
-state: in-progress
+state: done
 kind: feature
 origin: agent
 created: '2026-07-19'
@@ -2294,6 +2307,15 @@ acceptance:
 - goldens/tests cover report shape + index registration; no schema bump
 threat: null
 ```
+## Done report
+
+sim/ artifact family landed: SimReport/SimArtifactFamily (blake3
+domain-tagged key), HdlSimAssertGenericModel caches by (src,
+stimulus, version) and re-links the cached family on hit (proven:
+verilator call count unchanged, byte-identical family), SimBackend
+serializes at ship time (AD-22, never re-invokes), rows
+tier=model_derived with tool recorded, trace absence honest
+in-report. Fleet wiring intentionally WO-157 territory.
 
 <!-- ticket:T-0069 -->
 ```yaml
@@ -2318,7 +2340,7 @@ threat: null
 id: T-0070
 title: wire bringup_waveform_view into harness_files + regenerate demo17 (WO-152 deliverable
   5 residual)
-state: in-progress
+state: done
 kind: feature
 origin: human
 created: '2026-07-19'
@@ -2334,6 +2356,15 @@ attachments: []
 acceptance: []
 threat: null
 ```
+## Done report
+
+bringup_waveform_view wired into harness_files' per-tap loop:
+record-kind refs that resolve produce harness/waveform_tap_N.svg
+(badge from record posture only); unresolvable -> skip+warn;
+demo17 regenerated honestly unchanged (its fixture cites no
+record-kind taps), determinism proven twice; ship.py now passes the
+project's records/ dir + package so the production path is live.
+
 WO-152/T-0022 landed bringup_waveform_view (chart+tap table on one sheet, tested) but did not wire it into harness_files's per-tap emission loop or regenerate demos/out/demo17_physical_bringup_pack/ to show it -- see cycle-38 design log WO-152 close-out.
 
 <!-- ticket:T-0071 -->
