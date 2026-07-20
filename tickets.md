@@ -1430,7 +1430,25 @@ created: '2026-07-19'
 blocked_by: []
 parent: null
 scope: []
-evidence: []
+evidence:
+- tests/test_docgen_status.py::test_claim_statuses_empty_when_no_regolith_dir
+- tests/test_docgen_status.py::test_claim_statuses_empty_when_evidence_cache_unreadable
+- tests/test_docgen_status.py::test_claim_statuses_empty_when_compiler_check_fails
+- tests/test_docgen_status.py::test_claim_statuses_happy_path_formats_cached_hit
+- tests/test_docgen_status.py::test_claim_statuses_skips_unnamed_claim
+- tests/test_docgen_status.py::test_bits_to_float_round_trips_f64_to_bits
+- tests/tools/test_stdlib_gen_withdrawn_generators.py::test_nasa_glenn_rows_are_sorted_by_key_and_carry_every_coeff
+- tests/tools/test_stdlib_gen_withdrawn_generators.py::test_nasa_glenn_generate_writes_rendered_content_via_synthetic_fixture
+- tests/tools/test_stdlib_gen_withdrawn_generators.py::test_nasa_glenn_main_writes_file_to_disk
+- tests/tools/test_stdlib_gen_withdrawn_generators.py::test_p_sat_mpa_matches_the_reference_implementation_at_500k
+- tests/tools/test_stdlib_gen_withdrawn_generators.py::test_iapws_rows_reject_temperature_outside_region4_domain
+- tests/tools/test_stdlib_gen_withdrawn_generators.py::test_iapws_rows_builds_key_and_pressure_for_in_domain_grid
+- tests/tools/test_stdlib_gen_withdrawn_generators.py::test_iapws_water_generate_writes_rendered_content_via_synthetic_fixture
+- tests/tools/test_stdlib_gen_withdrawn_generators.py::test_iapws_water_main_writes_file_to_disk
+- tests/tools/test_stdlib_gen_withdrawn_generators.py::test_processors_evidence_assembles_reference_and_structured_fields
+- tests/tools/test_stdlib_gen_withdrawn_generators.py::test_processors_section_row_drops_page_table_and_marks_confirmed
+- tests/tools/test_stdlib_gen_withdrawn_generators.py::test_processors_generate_writes_five_files_via_synthetic_fixture
+- tests/tools/test_stdlib_gen_withdrawn_generators.py::test_processors_main_writes_every_file_to_disk
 attachments: []
 acceptance: []
 threat: null
