@@ -105,6 +105,8 @@ from regolith.backends.quantity import DimensionedValue
 # producer invents" (WO-143 deliverable 1).
 from regolith.harness.models.friction_factor import _haaland, _laminar
 from regolith.logging_setup import get_logger
+from regolith.magnetite.waveform import AuthoredProvenance as _WaveformAuthored
+from regolith.magnetite.waveform import WaveformMaskRecord
 from regolith.realizer.elec.board_assignment import RealizedBoardAssignment
 
 _Entity = SegmentEntity | Entity2 | Entity3 | SymbolEntity
@@ -1096,6 +1098,147 @@ def opt_trace(subject: str, trace: OptimizationTrace) -> DrawingModel:
         len(trace.candidates),
         trace.termination.value,
     )
+    return DrawingModel(subject=subject, sheets=[sheet])
+
+
+def _waveform_authored_annotation(
+    record: WaveformMaskRecord, *, anchor: list[float], role: str
+) -> Annotation | None:
+    """The `AUTHORED (design intent)` chart annotation for `record`, or
+    `None` when its provenance is not `authored` (WO-152 deliverable 2 /
+    D260 ruling 3): the badge is driven strictly by the record's own
+    `provenance.posture` field, never assumed from context (D263.1
+    provenance honesty, AD-45) -- a `measured`/`model_derived` record
+    gets no badge at all, never a differently-worded one."""
+    if not isinstance(record.provenance, _WaveformAuthored):
+        return None
+    return Annotation(
+        text=f"AUTHORED (design intent) [{role}: {record.package}/{record.key}]",
+        anchor=anchor,
+        text_height_mm=3.0,
+        datum_refs=[],
+        per=None,
+    )
+
+
+# frob:doc docs/modules/py-backends.md#drawings-producers
+def waveform_chart(
+    subject: str,
+    record: WaveformMaskRecord,
+    *,
+    overlay: WaveformMaskRecord | None = None,
+) -> DrawingModel:
+    """Project a `waveform`/`mask` record (WO-151's record class) into a
+    real axes-with-ticks chart (WO-152 deliverable 1, charter 41 rule
+    6): the record's own `segments` plot against its declared `axes`/
+    `quantity`, through the SAME chart code path `opt_trace` uses (a
+    `waveform.record` view, `_CHART_SOURCE_KINDS` in `renderer.py` --
+    no second renderer, AD-7).
+
+    `overlay` (WO-152 deliverable 3, e.g. a mask a claim's own signal
+    must `stays_within`) renders as a SECOND series on the SAME axes,
+    not a separate figure: its segments form a second, disjoint
+    `SegmentEntity` chain in the same view (`_chart_polylines` in
+    `renderer.py` splits disjoint chains back into separate strokes).
+
+    An `authored`-posture `record` OR `overlay` gets its own unmistakable
+    `AUTHORED (design intent)` chart annotation (deliverable 2); a
+    `measured`/`model_derived` record gets none, per its own provenance
+    field -- never assumed.
+    """
+    source_bytes = record.model_dump_json(by_alias=True).encode("utf-8")
+    digest = record.content_hash
+
+    entities: list[_Entity] = []
+    entity_indices: list[EntityIndice] = []
+    signal_points = [(s.t, s.v) for s in record.segments]
+    for start, end in zip(signal_points, signal_points[1:], strict=False):
+        entities.append(
+            SegmentEntity(kind=Kind.segment, **{"from": list(start)}, to=list(end))
+        )
+        entity_indices.append(EntityIndice(len(entities) - 1))
+
+    if overlay is not None:
+        mask_points = [(s.t, s.v) for s in overlay.segments]
+        for start, end in zip(mask_points, mask_points[1:], strict=False):
+            entities.append(
+                SegmentEntity(kind=Kind.segment, **{"from": list(start)}, to=list(end))
+            )
+            entity_indices.append(EntityIndice(len(entities) - 1))
+
+    x_label = f"t [{record.axes.t}]"
+    y_label = f"{record.quantity} [{record.axes.value}]"
+    view = View(
+        name=f"{record.record_class}:{record.package}/{record.key}",
+        # WO-152: `plane` carries the chart's axis-label pair
+        # (`renderer._chart_labels`'s convention for `waveform.record`
+        # views) -- the field's own docstring already calls it a free
+        # "axis label" string, so this is not a schema repurposing.
+        plane=f"{x_label}|{y_label}",
+        scale=1.0,
+        source=ViewSource(source_digest=digest, source_kind="waveform.record"),
+        entity_indices=entity_indices,
+    )
+
+    annotations: list[Annotation] = []
+    signal_anchor = list(signal_points[0]) if signal_points else [0.0, 0.0]
+    signal_badge = _waveform_authored_annotation(
+        record, anchor=signal_anchor, role="signal"
+    )
+    if signal_badge is not None:
+        annotations.append(signal_badge)
+    if overlay is not None:
+        overlay_badge = _waveform_authored_annotation(
+            overlay,
+            anchor=list(mask_points[0]) if mask_points else [0.0, 0.0],
+            role="mask",
+        )
+        if overlay_badge is not None:
+            annotations.append(overlay_badge)
+
+    rows = [
+        TableRow(cells=["package", record.package]),
+        TableRow(cells=["key", record.key]),
+        TableRow(cells=["class", record.record_class]),
+        TableRow(cells=["quantity", record.quantity]),
+        TableRow(cells=["kind", record.kind]),
+        TableRow(cells=["interp", record.interp]),
+        TableRow(cells=["posture", record.provenance.posture]),
+        TableRow(cells=["content hash", record.content_hash]),
+    ]
+    if overlay is not None:
+        rows.append(TableRow(cells=["mask key", f"{overlay.package}/{overlay.key}"]))
+        rows.append(TableRow(cells=["mask posture", overlay.provenance.posture]))
+    table = Table(
+        title=f"Waveform/Mask Record ({record.package}/{record.key}, digest {digest})",
+        columns=["field", "value"],
+        rows=rows,
+    )
+
+    sheet = Sheet(
+        size=SheetSize2.ansi_b,
+        title_block=TitleBlock(
+            title=f"{subject}: {record.package}/{record.key}",
+            drawing_number=f"WAVE-{record.key}",
+            revision="A",
+            scale_label="NTS",
+            subject=subject,
+        ),
+        views=[view],
+        entities=entities,
+        dimensions=[],
+        annotations=annotations,
+        tables=[table],
+    )
+    _log.info(
+        "waveform chart producer: %s -> %s/%s (%d segment(s), overlay=%s)",
+        subject,
+        record.package,
+        record.key,
+        len(record.segments),
+        f"{overlay.package}/{overlay.key}" if overlay is not None else "none",
+    )
+    _log.debug("waveform chart producer source bytes: %d", len(source_bytes))
     return DrawingModel(subject=subject, sheets=[sheet])
 
 

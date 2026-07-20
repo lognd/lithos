@@ -21,11 +21,14 @@ from regolith._schema.models import Entity2 as ArcEntity
 from regolith._schema.models import Entity3 as PolylineEntity
 from regolith._schema.models import Entity4 as SymbolEntity
 from regolith.backends.drawings.renderer import (
+    _CHART_SOURCE_KINDS,
     _IDENTITY,
     ChartGeometry,
     DimensionGeometry,
     TableLayout,
+    _chart_labels,
     _chart_marker_lines,
+    _chart_polylines,
     _sheet_furniture,
     _sheet_size_mm,
     _Transform,
@@ -399,20 +402,24 @@ def _render_table(
 # frob:waive PERF003 reason="O(1) check against a fixed small set, not nested"
 def _render_chart(
     chart: ChartGeometry,
-    points: list[tuple[float, float]],
+    polylines: list[list[tuple[float, float]]],
     page_h_pt: float,
     builder: _ContentBuilder,
     style: StyleRecord,
     winner_anchor: tuple[float, float] | None = None,
 ) -> None:
-    """Axes with ticks, gridlines, and the plotted series (charter 41
-    sec. 1.6 / sec. 2: opt-trace convergence charts). Gridlines render
-    at the style's thin (minor-emphasis) weight AND a lighter gray
-    (D238.4 defect 2: a thinner black stroke alone reads identically to
-    a normal-weight line once rasterized at review resolution) so data
-    reads first and the grid recedes; axes/series render at normal
-    weight, solid black. `winner_anchor` (data-space), when given,
-    marks the winning candidate ON the chart (defect 11).
+    """Axes with ticks, gridlines, and every plotted series (charter 41
+    sec. 1.6 / sec. 2: opt-trace convergence charts; WO-152's
+    waveform/mask-overlay charts join the same code path). Gridlines
+    render at the style's thin (minor-emphasis) weight AND a lighter
+    gray (D238.4 defect 2: a thinner black stroke alone reads
+    identically to a normal-weight line once rasterized at review
+    resolution) so data reads first and the grid recedes; the PRIMARY
+    series renders at normal weight, solid black; any further series
+    (WO-152's mask overlay, on the SAME axes) renders at the grid's
+    lighter gray so the two are visually distinguishable without a
+    second chart. `winner_anchor` (data-space), when given, marks the
+    winning candidate ON the chart (defect 11).
     """
     grid_w = _pt(style.line_weight_thin_mm)
     normal_w = _pt(style.line_weight_normal_mm)
@@ -454,11 +461,19 @@ def _render_chart(
         page_h_pt,
     )
     builder.text(ypx, ypy, _pt(style.caption_text_height_mm), chart.y_label)
-    plotted = chart.data_to_plot(points)
-    for (x1, y1), (x2, y2) in zip(plotted, plotted[1:], strict=False):
-        p1 = _to_page(x1, y1, page_h_pt)
-        p2 = _to_page(x2, y2, page_h_pt)
-        builder.line(p1[0], p1[1], p2[0], p2[1], width_pt=normal_w)
+    for series_index, series in enumerate(polylines):
+        plotted = chart.data_to_plot(series)
+        for (x1, y1), (x2, y2) in zip(plotted, plotted[1:], strict=False):
+            p1 = _to_page(x1, y1, page_h_pt)
+            p2 = _to_page(x2, y2, page_h_pt)
+            builder.line(
+                p1[0],
+                p1[1],
+                p2[0],
+                p2[1],
+                width_pt=normal_w,
+                gray=0.5 if series_index else None,
+            )
     if winner_anchor is not None:
         mx, my = chart.point(winner_anchor[0], winner_anchor[1])
         for (x1, y1), (x2, y2) in _chart_marker_lines(mx, my, 2.0):
@@ -548,20 +563,16 @@ def _sheet_content(
     margin = style.margin_mm
     bounds = (margin, margin, w_mm - margin, h_mm - margin - style.title_block_h_mm)
 
-    is_chart = any(v.source.source_kind == "optimize.trace" for v in sheet.views)
+    is_chart = any(v.source.source_kind in _CHART_SOURCE_KINDS for v in sheet.views)
     chart_geometry: ChartGeometry | None = None
     if is_chart:
         for view in sheet.views:
             entities = [sheet.entities[int(i.root)] for i in view.entity_indices]
-            points: list[tuple[float, float]] = [
-                (e.from_[0], e.from_[1])
-                for e in entities
-                if isinstance(e, SegmentEntity)
-            ]
-            if entities and isinstance(entities[-1], SegmentEntity):
-                points.append((entities[-1].to[0], entities[-1].to[1]))
+            polylines = _chart_polylines(entities)
+            points = [p for poly in polylines for p in poly]
+            x_label, y_label = _chart_labels(view)
             chart_geometry = ChartGeometry(
-                points, cells.get(view.name, bounds), style, "objective"
+                points, cells.get(view.name, bounds), style, y_label, x_label
             )
             winner_anchor = next(
                 (
@@ -573,7 +584,7 @@ def _sheet_content(
             )
             _render_chart(
                 chart_geometry,
-                points,
+                polylines,
                 page_h_pt,
                 builder,
                 style,

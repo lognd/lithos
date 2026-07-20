@@ -776,7 +776,12 @@ blocked_by:
 parent: null
 scope:
 - python/regolith/emission/**
-evidence: []
+evidence:
+- tests/backends/test_waveform_chart.py::TestWaveformChartProducer::test_authored_posture_renders_the_authored_badge
+- tests/backends/test_waveform_chart.py::TestWaveformChartProducer::test_measured_posture_renders_no_authored_badge
+- tests/backends/test_waveform_chart.py::TestWaveformMaskOverlay::test_mask_overlay_renders_on_the_same_axes_not_a_second_figure
+- tests/backends/test_waveform_chart.py::TestBringupWaveformView::test_tap_table_and_chart_share_one_sheet
+- tests/backends/test_waveform_chart.py::TestOptTraceUnaffectedByWaveformChanges::test_opt_trace_chart_still_labeled_objective_vs_candidate_index
 attachments: []
 acceptance:
 - see docs/workflow/work-orders/WO-152-waveform-sheet-rendering.md

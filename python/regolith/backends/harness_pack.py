@@ -38,7 +38,7 @@ from regolith.backends.debug_taps import Tap, TapHeaderRecord, TapSet, tap_marke
 from regolith.backends.framework import OutputFile
 from regolith.errors import BackendError
 from regolith.logging_setup import get_logger
-from regolith.magnetite.waveform import resolve_mask_ref
+from regolith.magnetite.waveform import WaveformMaskRecord, resolve_mask_ref
 from regolith.orchestrator.discharge import ObligationResult
 from regolith.orchestrator.translate import si_sheet_fields
 
@@ -576,6 +576,56 @@ def check_bringup_expectation_authored_posture(
         "record cited as a verified expectation"
     )
     return Ok(None)
+
+
+# frob:doc docs/modules/py-backends.md#backends-harness-pack
+def bringup_waveform_view(
+    tap: Tap,
+    expected_value: str,
+    expected_units: str,
+    record: WaveformMaskRecord,
+    *,
+    overlay: WaveformMaskRecord | None = None,
+):  # noqa: ANN201 -- DrawingModel (avoid import cycle at top, mirrors calc.calc_sheet_drawing)
+    """WO-152 deliverable 5: the same mask/waveform chart
+    (`regolith.backends.drawings.producers.waveform_chart`) beside one
+    allocated tap's expected scalar, reusing the SAME chart component
+    every calc sheet uses (no duplicate renderer, AD-7) -- an extra
+    "Tap" table row naming the tap's channel/target path and expected
+    value, appended onto the waveform chart's own sheet rather than a
+    second, disconnected sheet.
+
+    NOTE: this builds the DrawingModel for ONE tap; wiring it into
+    `harness_files`'s file-emission loop for every tap whose
+    `expected_signals` row cites a `mask=`/waveform ref (and
+    regenerating the `demo17_physical_bringup_pack` demo fixture) is a
+    follow-up integration pass, tracked in the cycle-38 design log
+    close-out for this WO -- not landed here.
+    """
+    from regolith._schema.models import Table, TableRow
+    from regolith.backends.drawings.producers import waveform_chart
+
+    model = waveform_chart(f"tap-{tap.channel}", record, overlay=overlay)
+    sheet = model.sheets[0]
+    tap_table = Table(
+        title=f"Tap {tap.channel}",
+        columns=["field", "value"],
+        rows=[
+            TableRow(cells=["channel", str(tap.channel)]),
+            TableRow(cells=["target", tap.target_path]),
+            TableRow(cells=["expected", f"{expected_value} {expected_units}"]),
+        ],
+    )
+    updated_sheet = sheet.model_copy(update={"tables": [*sheet.tables, tap_table]})
+    _log.info(
+        "bringup_waveform_view: tap %d (%s) -> mask/waveform %s/%s, overlay=%s",
+        tap.channel,
+        tap.target_path,
+        record.package,
+        record.key,
+        f"{overlay.package}/{overlay.key}" if overlay is not None else "none",
+    )
+    return model.model_copy(update={"sheets": [updated_sheet]})
 
 
 def _tap_line(

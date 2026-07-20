@@ -978,6 +978,63 @@ def render_svg(model: DrawingModel, style: StyleRecord | None = None) -> bytes:
     return ("\n".join(lines) + "\n").encode("ascii", errors="xmlcharrefreplace")
 
 
+# WO-152: the chart branch (originally opt-trace-only) recognizes any
+# view whose `source_kind` names a series-shaped payload -- a second
+# family (`waveform.record`) joins `optimize.trace` rather than a
+# second rendering code path (charter 41's ONE renderer, AD-7).
+_CHART_SOURCE_KINDS = ("optimize.trace", "waveform.record")
+
+
+# frob:doc docs/modules/py-backends.md#drawings-renderer
+def _chart_polylines(
+    entities: list[object],
+) -> list[list[tuple[float, float]]]:
+    """Split a view's `SegmentEntity` list into one or more disjoint
+    polylines (WO-152 deliverable 3, the mask-overlay chart): a
+    continuous chain (`entity[i].to == entity[i+1].from_`) stays one
+    stroke, exactly `optimize.trace`'s existing single-series shape;
+    a JUMP between entities starts a new stroke, so a producer emitting
+    two independent chains in one view (a signal series + a mask
+    overlay series, WO-152) renders as two series on the SAME axes
+    instead of one falsely-joined zigzag. Backward compatible by
+    construction: every existing continuous-chain producer (`opt_trace`)
+    never jumps, so it still yields exactly one polyline.
+    """
+    polylines: list[list[tuple[float, float]]] = []
+    current: list[tuple[float, float]] = []
+    for e in entities:
+        if not isinstance(e, SegmentEntity):
+            continue
+        start = (e.from_[0], e.from_[1])
+        end = (e.to[0], e.to[1])
+        if current and current[-1] != start:
+            polylines.append(current)
+            current = [start]
+        elif not current:
+            current = [start]
+        current.append(end)
+    if current:
+        polylines.append(current)
+    return polylines
+
+
+# frob:doc docs/modules/py-backends.md#drawings-renderer
+def _chart_labels(view: View) -> tuple[str, str]:
+    """The chart's `(x_label, y_label)` for `view` (WO-152): a
+    `waveform.record` view encodes both in its own `plane` field
+    (`View.plane`'s docstring: "the projection plane/axis label, free
+    string") as `"<x_label>|<y_label>"` -- no schema change, since the
+    field is already documented as a free axis-label carrier and no
+    other producer gives it chart-axis meaning. Every other chart kind
+    (`optimize.trace`) keeps its pre-existing hardcoded labels
+    byte-identical.
+    """
+    if view.source.source_kind == "waveform.record" and "|" in view.plane:
+        x_label, y_label = view.plane.split("|", 1)
+        return x_label, y_label
+    return "candidate index", "objective"
+
+
 def _render_sheet(
     sheet: Sheet,
     w: float,
@@ -1044,24 +1101,21 @@ def _render_sheet(
     cells = _view_cells(sheet, content_area, style)
     bounds = (margin, margin, w - margin, h - margin - style.title_block_h_mm)
 
-    is_chart = any(v.source.source_kind == "optimize.trace" for v in sheet.views)
+    is_chart = any(v.source.source_kind in _CHART_SOURCE_KINDS for v in sheet.views)
     chart_geometry: ChartGeometry | None = None
     for view in sheet.views:
         transform = transforms.get(view.name, _IDENTITY)
         if is_chart:
             entities = [sheet.entities[int(i.root)] for i in view.entity_indices]
-            points = [
-                (e.from_[0], e.from_[1])
-                for e in entities
-                if isinstance(e, SegmentEntity)
-            ]
-            if entities and isinstance(entities[-1], SegmentEntity):
-                last_to = entities[-1].to
-                points.append((last_to[0], last_to[1]))
+            polylines = _chart_polylines(entities)
+            points = [p for poly in polylines for p in poly]
+            x_label, y_label = _chart_labels(view)
             chart_geometry = ChartGeometry(
-                points, cells.get(view.name, bounds), style, "objective"
+                points, cells.get(view.name, bounds), style, y_label, x_label
             )
-            lines.extend(_render_chart_svg(chart_geometry, points, view.name, style))
+            lines.extend(
+                _render_chart_svg(chart_geometry, polylines, view.name, style)
+            )
         else:
             lines.append(
                 f'<g class="view" data-view="{_text(view.name)}" '
@@ -1189,12 +1243,17 @@ def _cumulative(widths: list[float]) -> list[float]:
 
 def _render_chart_svg(
     chart: ChartGeometry,
-    points: list[tuple[float, float]],
+    polylines: list[list[tuple[float, float]]],
     view_name: str,
     style: StyleRecord,
 ) -> list[str]:
-    """Axes, ticks, gridlines, and the plotted polyline for one chart
-    view (charter 41 sec. 1.6)."""
+    """Axes, ticks, gridlines, and every plotted series for one chart
+    view (charter 41 sec. 1.6). `polylines` is one or more disjoint
+    series (`_chart_polylines`): the first is the primary series
+    (`chart-series`, solid); any further series (WO-152's mask
+    overlay -- the SAME axes, not a second figure) render as
+    `chart-series-overlay` (dashed) so the two are visually
+    distinguishable without a second chart."""
     lines = [f'<g class="chart" data-view="{_text(view_name)}">']
     for (x1, y1), (x2, y2) in chart.gridlines:
         lines.append(
@@ -1237,13 +1296,21 @@ def _render_chart_svg(
         f'font-size="{_fmt(style.caption_text_height_mm)}">'
         f"{_text(chart.y_label)}</text>"
     )
-    plotted = chart.data_to_plot(points)
-    if len(plotted) > 1:
+    for series_index, series in enumerate(polylines):
+        plotted = chart.data_to_plot(series)
+        if len(plotted) <= 1:
+            continue
         pts = " ".join(f"{_fmt(x)},{_fmt(y)}" for x, y in plotted)
-        lines.append(
-            f'<polyline class="chart-series" points="{pts}" '
-            f'fill="none" stroke="black"/>'
-        )
+        if series_index == 0:
+            lines.append(
+                f'<polyline class="chart-series" points="{pts}" '
+                f'fill="none" stroke="black"/>'
+            )
+        else:
+            lines.append(
+                f'<polyline class="chart-series-overlay" points="{pts}" '
+                f'fill="none" stroke="black" stroke-dasharray="2,1"/>'
+            )
     lines.append("</g>")
     return lines
 
@@ -1367,11 +1434,21 @@ def _render_annotation(
     height, lines_of_text = fit_text(
         ann.text, max_width, max_y - y, requested_height, style
     )
+    # WO-152 / D260 ruling 3: an AUTHORED-posture badge renders with its
+    # own CSS class -- never indistinguishable from an ordinary chart
+    # caption or a measured/model_derived trace (D263.1 provenance
+    # honesty, AD-45): the class is driven by the annotation's own
+    # literal text, never assumed.
+    css_class = (
+        "annotation authored-badge"
+        if ann.text.startswith("AUTHORED (design intent)")
+        else "annotation"
+    )
     out = []
     ty = min(max(y, min_y + height), max_y)
     for line in lines_of_text:
         out.append(
-            f'<text class="annotation" x="{_fmt(x)}" y="{_fmt(ty)}" '
+            f'<text class="{css_class}" x="{_fmt(x)}" y="{_fmt(ty)}" '
             f'font-size="{_fmt(height)}">{_text(line)}</text>'
         )
         ty += height + 0.5
