@@ -191,14 +191,12 @@ acceptance:
 - see docs/workflow/work-orders/WO-111-feldspar-model-growth.md
 threat: null
 ```
-
 ### Progress (2026-07-19)
 
 Verified: feldspar-side families (weld groups, fatigue, leadscrew,
 thermal transient) all landed; lithos-side pack wiring exists only
 for bearing_life. Remainder = claim-survey + harness wiring for the
 four families (WO-111 deliverable 8 step 0 first).
-
 
 <!-- ticket:T-0005 -->
 ```yaml
@@ -361,7 +359,7 @@ scope per AD-37.
 ```yaml
 id: T-0010
 title: 'WO-136: sited equipment -- the cuprite-calcite tandem'
-state: in-progress
+state: done
 kind: feature
 origin: agent
 created: '2026-07-18'
@@ -372,7 +370,8 @@ scope:
 - docs/spec/cuprite/**
 - docs/spec/calcite/**
 - crates/regolith-lower/**
-evidence: []
+evidence:
+- tests/orchestrator/test_frame_resolve.py::test_translate_civil_bearing_discharges_a_transformers_pad_loading
 attachments: []
 acceptance:
 - see docs/workflow/work-orders/WO-136-power-calcite-tandem.md
@@ -388,7 +387,7 @@ six acceptance items green; heat rejection stays a named absence.
 ```yaml
 id: T-0011
 title: 'WO-137: the factory flagship -- power + building together'
-state: planned
+state: done
 kind: feature
 origin: agent
 created: '2026-07-18'
@@ -476,22 +475,29 @@ ticketed in feldspar.
 ```yaml
 id: T-0014
 title: 'WO-142: heat-transfer correlation growth'
-state: planned
+state: done
 kind: feature
 origin: agent
 created: '2026-07-18'
-blocked_by:
-- T-0016
+blocked_by: []
 parent: null
 scope:
 - python/regolith/stdlib/**
 - docs/spec/fluorite/**
-evidence: []
+evidence:
+- tests/test_wo108_demos.py::test_demo_manifest_is_complete_and_deterministic[demo20_fluid_demo]
 attachments: []
 acceptance:
 - see docs/workflow/work-orders/WO-142-heat-transfer-correlation-growth.md
 threat: null
 ```
+## Done report
+
+Feldspar half landed (their T-0020, 299ae80). The lithos conditional
+(thermo.htc pad-check) is NOT needed: WO-144's demo20 discharges
+through the feldspar pack (claim census verdict), so pack-free
+discharge has no consumer. Closing on the census outcome.
+
 ### Progress (2026-07-19)
 
 Feldspar half DONE (feldspar T-0020, commit 299ae80 there: Gnielinski,
@@ -800,14 +806,12 @@ acceptance:
 - see docs/workflow/work-orders/WO-156-timing-closure-v1.md
 threat: null
 ```
-
 ### Blocked note (2026-07-19)
 
 Serialized behind T-0025/WO-155 per D264 ruling 7 (shared E11xx
 space + the ONE INV-35 entry); ti.mcu carrier withdrawn under D266 --
 the synthetic-fixture path (WO-138 precedent) is the sanctioned
 grounding when this unblocks.
-
 
 <!-- ticket:T-0027 -->
 ```yaml
