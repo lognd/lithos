@@ -85,7 +85,7 @@ part WheelShaft:
         basis: "no registered harness model for label kind 'fit_holds' (F126.1 model gap)"
         by doc(memos/release-residuals.md)
     waive life:
-        basis: "no registered harness model for label kind 'life' (F126.1 model gap)"
+        basis: "FatigueDamageModel is registered (WO-111/D223, mech.fatigue.damage) and DOES discharge this claim kind end-to-end (tests/orchestrator/test_wo111_fatigue_drive_torque_routing.py); NOT flipped here -- named-absence refusal (D250.3), not a model gap: the wheel-seat shoulder Kt (kf_notch) has no cited value in-repo (no declared shoulder-fillet radius, no Peterson chart table in stdlib) -- fabricating one would be exactly the D250.3 violation this project forbids"
         by doc(memos/release-residuals.md)
     # `crit_speed` waiver DELETED (WO-113/D224.2): lumped k/m inputs
     # declared above with recorded derivations; the claim discharges

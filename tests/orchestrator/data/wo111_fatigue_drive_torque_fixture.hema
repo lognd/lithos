@@ -1,0 +1,39 @@
+# WO-111 (D223) coordinator wiring dispatch (translate.py routing)
+# regression fixture: a minimal part exercising `mech.fatigue.damage`
+# and `mech.drive_torque` end to end through the REAL pipeline
+# (compiler.check -> orchestrator.translate -> harness discharge), the
+# same shape `wo72_bolted_joint_bearing_fixture.hema` already proves
+# for the bolt/bearing pair. Both claims' calls carry the `under=`
+# keyword arg the corpus's own multi-arg calls use, so the core lowers
+# them through the `op="require"` placeholder shape this routing
+# targets. Each model's own `INPUTS` names are supplied as literal
+# `name=value` keyword arguments on the call itself
+# (`_parse_call_kwargs`'s mechanism, not `given.loads`) -- `spindle`
+# carries all thirteen `FatigueDamageModel` inputs, `drive` all three
+# `DriveTorqueModel` inputs plus an `N*m` bound (the WO-111 native-unit
+# route, `_translate_drive_torque`'s own doc).
+
+import std.mech.cnc (saw_stock, cnc_mill)
+
+part ScrewBlock:
+    material: AISI_4340
+
+    stage stock: process=saw_stock(rect(80mm, 40mm, 10mm))
+
+    stage milled: process=cnc_mill(axes=3), from=stock
+        then:
+            mount = PatternOf<Drill(M8)>(n=6, rect(60mm x 30mm))
+
+    boundary:
+        structure: static
+
+    require Structural:
+        spindle: mech.fatigue.damage(mount, under=boundary,
+                     sigma_a_pa=120e6, sigma_m_pa=40e6, kf_notch=1.6,
+                     sut_pa=700e6, se_prime_pa=350e6, marin_ka=0.80,
+                     marin_kb=0.90, marin_kc=1.0, marin_kd=1.0,
+                     marin_ke=0.90, marin_kf=1.0, basquin_f=0.85,
+                     cycles_applied=5e5) < 1.0
+        drive: mech.drive_torque(mount, under=boundary,
+                   axial_force_n=800, lead_m=0.005, efficiency=0.90)
+                   <= 1.2 N*m

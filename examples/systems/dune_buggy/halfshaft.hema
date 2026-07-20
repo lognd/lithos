@@ -63,7 +63,7 @@ part Halfshaft:
         basis: "entity-derived bound; D103 ref resolution on this path is a recorded machinery residual"
         by doc(memos/release-residuals.md)
     waive spline_fatigue:
-        basis: "no registered harness model for label kind 'spline_fatigue' (F126.1 model gap)"
+        basis: "FatigueDamageModel is registered (WO-111/D223, mech.fatigue.damage) and DOES discharge this claim kind end-to-end (tests/orchestrator/test_wo111_fatigue_drive_torque_routing.py); NOT flipped here -- named-absence refusal (D250.3), not a model gap: the DIN 5480 spline-root stress concentration (kf_notch, a spline-specific Kt with no Peterson-chart or ISO-spline-standard entry in stdlib) has no cited value in-repo -- SUT IS available (AISI_300M ultimate_MPa=1930, stdlib/std.materials/records/steels.toml), but fabricating Kt for the spline root would be exactly the D250.3 violation this project forbids"
         by doc(memos/release-residuals.md)
     waive boots:
         basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"

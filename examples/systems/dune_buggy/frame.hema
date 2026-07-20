@@ -79,5 +79,5 @@ part SpaceFrame:
         basis: "no registered harness model for label kind 'torsion' (F126.1 model gap)"
         by doc(memos/release-residuals.md)
     waive weld_life:
-        basis: "no registered harness model for label kind 'weld_life' (F126.1 model gap)"
+        basis: "FatigueDamageModel is registered (WO-111/D223, mech.fatigue.damage) and DOES discharge this claim kind end-to-end (tests/orchestrator/test_wo111_fatigue_drive_torque_routing.py); NOT flipped here -- named-absence refusal (D250.3), not a model gap: the Eurocode detail-class weld-toe stress concentration (kf_notch) has no cited value in-repo for this chassis weld set (no declared weld geometry, no Peterson chart table in stdlib) -- fabricating one would be exactly the D250.3 violation this project forbids"
         by doc(memos/release-residuals.md)

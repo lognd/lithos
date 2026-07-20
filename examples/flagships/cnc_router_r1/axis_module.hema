@@ -120,7 +120,7 @@ assembly LinearAxis<travel: length, pitch: length, nut_c: length = 38mm, screw: 
         basis: "no registered harness model for label kind 'crit_speed' (F126.1 model gap)"
         by doc(memos/release-residuals.md)
     waive reserve:
-        basis: "no registered harness model for label kind 'reserve' (F126.1 model gap)"
+        basis: "DriveTorqueModel is registered (WO-111/D223, mech.drive_torque) and DOES discharge this claim kind end-to-end (tests/orchestrator/test_wo111_fatigue_drive_torque_routing.py); this specific claim's bound (0.6 * motor_a.holding_torque) is an entity-derived reference across the forall(ride.pos) sweep, the same D103 ref-resolution residual weld_static/ear_stress/brake_torque already carry -- not a model gap (T-0069)"
         by doc(memos/release-residuals.md)
     waive trucks_l10:
         basis: "entity-derived bound; D103 ref resolution on this path is a recorded machinery residual"

@@ -55,7 +55,7 @@ part RearHub:
         basis: "entity-derived bound; D103 ref resolution on this path is a recorded machinery residual"
         by doc(memos/release-residuals.md)
     waive axle_life:
-        basis: "no registered harness model for label kind 'axle_life' (F126.1 model gap)"
+        basis: "FatigueDamageModel is registered (WO-111/D223, mech.fatigue.damage) and DOES discharge this claim kind end-to-end (tests/orchestrator/test_wo111_fatigue_drive_torque_routing.py); NOT flipped here -- named-absence refusal (D250.3), not a model gap: no cited stress-concentration (kf_notch) value exists in-repo for this axle's geometry (no declared fillet/spline radius, no Peterson chart table in stdlib) -- fabricating one would be exactly the D250.3 violation this project forbids"
         by doc(memos/release-residuals.md)
     waive pilot_fit:
         basis: "no registered harness model for label kind 'pilot_fit' (F126.1 model gap)"

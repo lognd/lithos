@@ -55,9 +55,8 @@
     "name": "arm_life",
     "op": "<",
     "verdict": {
-      "claim_kind": "mech.fatigue.damage",
-      "limit": 1.0,
-      "status": "lowered"
+      "reason": "mech.fatigue.damage_inputs_missing",
+      "status": "deferred"
     }
   },
   {
@@ -73,9 +72,8 @@
     "name": "axle_life",
     "op": "<",
     "verdict": {
-      "claim_kind": "mech.fatigue.damage",
-      "limit": 1.0,
-      "status": "lowered"
+      "reason": "mech.fatigue.damage_inputs_missing",
+      "status": "deferred"
     }
   },
   {
@@ -327,9 +325,8 @@
     "name": "crank_life",
     "op": "<",
     "verdict": {
-      "claim_kind": "mech.fatigue.damage",
-      "limit": 1.0,
-      "status": "lowered"
+      "reason": "mech.fatigue.damage_inputs_missing",
+      "status": "deferred"
     }
   },
   {
@@ -568,9 +565,8 @@
     "name": "hanger_life",
     "op": "<",
     "verdict": {
-      "claim_kind": "mech.fatigue.damage",
-      "limit": 1.0,
-      "status": "lowered"
+      "reason": "mech.fatigue.damage_inputs_missing",
+      "status": "deferred"
     }
   },
   {
@@ -1687,18 +1683,16 @@
     "name": "spindle_life",
     "op": "<",
     "verdict": {
-      "claim_kind": "mech.fatigue.damage",
-      "limit": 1.0,
-      "status": "lowered"
+      "reason": "mech.fatigue.damage_inputs_missing",
+      "status": "deferred"
     }
   },
   {
     "name": "spline_fatigue",
     "op": "<",
     "verdict": {
-      "claim_kind": "mech.fatigue.damage",
-      "limit": 1.0,
-      "status": "lowered"
+      "reason": "mech.fatigue.damage_inputs_missing",
+      "status": "deferred"
     }
   },
   {
@@ -1765,9 +1759,8 @@
     "name": "strap_life",
     "op": "<",
     "verdict": {
-      "claim_kind": "mech.fatigue.damage",
-      "limit": 1.0,
-      "status": "lowered"
+      "reason": "mech.fatigue.damage_inputs_missing",
+      "status": "deferred"
     }
   },
   {
@@ -1900,9 +1893,8 @@
     "name": "weld_life",
     "op": "<",
     "verdict": {
-      "claim_kind": "mech.fatigue.damage",
-      "limit": 1.0,
-      "status": "lowered"
+      "reason": "mech.fatigue.damage_inputs_missing",
+      "status": "deferred"
     }
   }
 ]

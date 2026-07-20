@@ -105,7 +105,7 @@ part FrontHub:
     # WO-105 release residuals (D206/D207): memo-backed accepted
     # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
     waive spindle_life:
-        basis: "no registered harness model for label kind 'spindle_life' (F126.1 model gap)"
+        basis: "FatigueDamageModel is registered (WO-111/D223, mech.fatigue.damage) and DOES discharge this claim kind end-to-end (tests/orchestrator/test_wo111_fatigue_drive_torque_routing.py); NOT flipped here -- named-absence refusal (D250.3), not a model gap: the flange-fillet stress concentration (kf_notch, Peterson Kt for this exact shoulder's r/d) has no cited value in-repo (this file declares no fillet radius, and no Peterson chart table exists in stdlib/std.materials) -- SUT/Se' ARE available (AISI_4140 ultimate_MPa=1020, stdlib/std.materials/records/steels.toml, Se'=0.5*Sut per Shigley 10th ed. eq. 6-8 since Sut<1400MPa), but fabricating Kt without a declared fillet geometry would be exactly the D250.3 violation this project forbids"
         by doc(memos/release-residuals.md)
     # `life` waiver DELETED (WO-113/D224.2): ISO 281 inputs declared
     # above with provenance (new std.bearings 32005 record + derived

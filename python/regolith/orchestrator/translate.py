@@ -99,6 +99,10 @@ from regolith.harness.models.dfm.models import (
 )
 from regolith.harness.models.dfm.records import MILL_FAMILY as _DFM_MILL_FAMILY
 from regolith.harness.models.dfm.records import DfmToolSet
+from regolith.harness.models.drive_torque import CLAIM_KIND as _DRIVE_TORQUE_KIND
+from regolith.harness.models.drive_torque import INPUTS as _DRIVE_TORQUE_INPUTS
+from regolith.harness.models.fatigue_damage import CLAIM_KIND as _FATIGUE_DAMAGE_KIND
+from regolith.harness.models.fatigue_damage import INPUTS as _FATIGUE_DAMAGE_INPUTS
 from regolith.harness.models.fluid_pressure_drop import CLAIM_KIND as _FLUID_DP_KIND
 from regolith.harness.models.fluid_pressure_drop import INPUTS as _FLUID_DP_INPUTS
 from regolith.harness.models.friction_factor import FrictionFactorModel
@@ -375,6 +379,15 @@ def _split_frame_predicate(rhs: str) -> tuple[str, str, str] | None:
 # wrongly defer them.
 _BOLT_JOINT_FORM_NAMES: tuple[str, ...] = (_BOLT_JOINT_KIND,)
 _BEARING_L10_FORM_NAMES: tuple[str, ...] = (_BEARING_L10_KIND,)
+# WO-111 (D223): `mech.fatigue.damage`/`mech.drive_torque` -- the same
+# non-frame call-form shape as the bolt/bearing pair above (a NON-frame
+# `op="require"` predicate whose comparator sits after the full call
+# expression), matched by the same `_split_named_call_predicate`/
+# `_match_call_lhs` pair. Both models are thin in-tree closed-form
+# packs (`fatigue_damage.py`/`drive_torque.py`'s own module docs: no
+# feldspar-side physics for either family exists today).
+_FATIGUE_DAMAGE_FORM_NAMES: tuple[str, ...] = (_FATIGUE_DAMAGE_KIND,)
+_DRIVE_TORQUE_FORM_NAMES: tuple[str, ...] = (_DRIVE_TORQUE_KIND,)
 # WO-94 (D196.1): the fluorite `fluids.dp(...)` single-segment
 # Darcy-Weisbach call form -- same non-frame call-form shape as the
 # bolt/bearing pair above, matched by the same `_split_named_call_
@@ -2051,6 +2064,56 @@ def _translate_bearing_l10(
     )
 
 
+def _translate_fatigue_damage(
+    obligation: Obligation, split: tuple[str, str, str]
+) -> Result[DischargeRequest, Deferral]:
+    """Lower a `mech.fatigue.damage(<member>, ...) < <limit>` claim (the
+    single-block Marin/Goodman/Basquin Miner damage `FatigueDamageModel`
+    discharges -- see `fatigue_damage.py`'s module doc) against the
+    member's `given.loads` inputs (`sigma_a_pa`/`sigma_m_pa`/`kf_notch`/
+    `sut_pa`/`se_prime_pa`/the six `marin_k*` factors/`basquin_f`/
+    `cycles_applied`, the model's own `INPUTS`). Damage is dimensionless
+    (`< 1.0`), so no `native_unit` -- the bound is a bare number, not a
+    quantity with a unit to reconcile.
+    """
+    _, args_text, bound_text = split
+    subject = args_text.split(",", 1)[0].strip()
+    return _translate_call_kwargs_claim(
+        obligation,
+        claim_kind=_FATIGUE_DAMAGE_KIND,
+        inputs_needed=_FATIGUE_DAMAGE_INPUTS,
+        subject=subject,
+        args_text=args_text,
+        bound_text=bound_text,
+    )
+
+
+def _translate_drive_torque(
+    obligation: Obligation, split: tuple[str, str, str]
+) -> Result[DischargeRequest, Deferral]:
+    """Lower a `mech.drive_torque(<nut>, ...) <= <T_reserve>` claim (the
+    ballscrew/leadscrew driving-torque estimate `DriveTorqueModel`
+    discharges -- see `drive_torque.py`'s module doc) against the
+    screw's `given.loads` inputs (`axial_force_n`/`lead_m`/
+    `efficiency`, the model's own `INPUTS`). The model computes N*m
+    (its claim kind's physical quantity), so `N*m` is this route's
+    declared native port unit (WO-122), same posture
+    `_translate_bearing_l10`'s `hr` takes: a bound written in N*m
+    resolves to its bare value in the model's own unit.
+    """
+    _, args_text, bound_text = split
+    subject = args_text.split(",", 1)[0].strip()
+    return _translate_call_kwargs_claim(
+        obligation,
+        claim_kind=_DRIVE_TORQUE_KIND,
+        inputs_needed=_DRIVE_TORQUE_INPUTS,
+        subject=subject,
+        args_text=args_text,
+        bound_text=bound_text,
+        native_unit="N*m",
+    )
+
+
 def _translate_cantilever_deflection(
     obligation: Obligation, split: tuple[str, str, str]
 ) -> Result[DischargeRequest, Deferral]:
@@ -2591,6 +2654,22 @@ _BOUND_NUMBER = re.compile(r"\s*([+-]?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)")
 _BOUND_UNIT_TOKEN = r"[A-Za-z][A-Za-z0-9/.]*|%"
 _BOUND_ATTACHED_UNIT = re.compile(rf"({_BOUND_UNIT_TOKEN})")
 _BOUND_DETACHED_UNIT = re.compile(rf"\s*({_BOUND_UNIT_TOKEN})\s*$")
+# WO-111 (D223): `N*m` (the corpus's own torque spelling, e.g.
+# `contracts.hema`'s `moment: <= 120 N*m`) is the ONE compound unit
+# `_resolve_bound` recognizes -- a DEDICATED, fully-anchored pattern
+# (never folded into `_BOUND_UNIT_TOKEN`'s alternation): that token
+# grammar's ATTACHED-unit branch has no end-of-string anchor (by
+# design, for a genuinely-unbounded lookup elsewhere in this module),
+# so a compound token folded in there would silently swallow only its
+# OWN letter run and leave the trailing `*m2`/etc. of some other
+# claim's unit unconsumed -- exactly the failure mode a same-shape fix
+# hit here first (an `elec.dipole(...) >= 0.18A*m2` bound, caught by
+# this route's own dipole golden regression before landing). This
+# regex requires the WHOLE bound text to be `<number>N*m` (optional
+# space), so it can never mis-fire on any other unit spelling.
+_TORQUE_BOUND_RE = re.compile(
+    r"\s*([+-]?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)\s*N\*m\s*$"
+)
 
 
 def _split_bound_term(term: str) -> tuple[float, str | None] | None:
@@ -2686,7 +2765,16 @@ def _resolve_bound(
     # the number).
     stripped = _SF_SUFFIX.sub("", bound_text).strip()
     stripped = stripped.split("\n", 1)[0].strip()
-    if "*" in stripped:
+    torque_match = _TORQUE_BOUND_RE.match(stripped)
+    if torque_match is not None:
+        # WO-111 (D223): the ONE compound-unit bound shape this
+        # resolver accepts, checked before the generic `*` handling
+        # below so `<num> N*m` never mis-parses as a two-operand
+        # scalar-arithmetic expression (see `_TORQUE_BOUND_RE`'s own
+        # comment on why this is a dedicated, fully-anchored check
+        # rather than a `_BOUND_UNIT_TOKEN` alternative).
+        magnitude, unit = float(torque_match.group(1)), "N*m"
+    elif "*" in stripped:
         parts = stripped.split("*")
         if len(parts) != 2:
             return None, "bound_expression_unresolved"
@@ -4674,6 +4762,20 @@ def translate(
             return _pin_model(
                 _translate_bearing_l10(obligation, bearing_split), model_pin
             )
+        fatigue_damage_split = _split_named_call_predicate(
+            form.rhs, _FATIGUE_DAMAGE_FORM_NAMES
+        )
+        if fatigue_damage_split is not None:
+            return _pin_model(
+                _translate_fatigue_damage(obligation, fatigue_damage_split), model_pin
+            )
+        drive_torque_split = _split_named_call_predicate(
+            form.rhs, _DRIVE_TORQUE_FORM_NAMES
+        )
+        if drive_torque_split is not None:
+            return _pin_model(
+                _translate_drive_torque(obligation, drive_torque_split), model_pin
+            )
         fluid_dp_split = _split_named_call_predicate(form.rhs, _FLUID_DP_FORM_NAMES)
         if fluid_dp_split is not None:
             return _pin_model(
@@ -4871,6 +4973,24 @@ def translate(
         return _pin_model(
             _translate_bearing_l10(
                 obligation, (_BEARING_L10_KIND, args_text, bound_text)
+            ),
+            model_pin,
+        )
+    fatigue_damage_lhs = _match_call_lhs(form.lhs, _FATIGUE_DAMAGE_FORM_NAMES)
+    if fatigue_damage_lhs is not None:
+        _, args_text = fatigue_damage_lhs
+        return _pin_model(
+            _translate_fatigue_damage(
+                obligation, (_FATIGUE_DAMAGE_KIND, args_text, bound_text)
+            ),
+            model_pin,
+        )
+    drive_torque_lhs = _match_call_lhs(form.lhs, _DRIVE_TORQUE_FORM_NAMES)
+    if drive_torque_lhs is not None:
+        _, args_text = drive_torque_lhs
+        return _pin_model(
+            _translate_drive_torque(
+                obligation, (_DRIVE_TORQUE_KIND, args_text, bound_text)
             ),
             model_pin,
         )
