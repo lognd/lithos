@@ -543,6 +543,12 @@ def default_artifact_family_registry() -> ArtifactFamilyRegistry:
         # load rows plus the panel siting verdict, same table default).
         ("cable_schedule", "table"),
         ("panel_schedule", "table"),
+        # F-WO137-1 (T-0064): the power one-line diagram package -- an
+        # svg-renderer-family default since it rides the same
+        # `DrawingModel` -> svg projection every drawing family uses
+        # (AD-27), narrowed by the common extension baseline (its own
+        # `.json` sidecar classifies as `json`).
+        ("power_oneline", "svg"),
     )
     for family, viewer in builtins:
         patterns = (

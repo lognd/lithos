@@ -64,6 +64,7 @@ class BareKindViolation:
     kind: str
 
 
+# frob:ticket T-0064
 # EXEMPT[(relpath, kind)] = reason. Keyed on the exact bare-string
 # `kind=` literal a deferred call site raises, not its line number --
 # a refactor that moves the call site (without changing what it
@@ -257,6 +258,14 @@ EXEMPT: dict[tuple[str, str], str] = {
         "python/regolith/backends/capabilities.py",
         "capability_registry_drift",
     ): "deferred: T-0053 close-out (capability consistency refusal)",
+    # power_oneline v1 (F-WO137-1, T-0064): realized-IR (PowerNetPayload)
+    # unavailability refusal; code assignment deferred to the same
+    # make-codes next-free batch shape the perfboard/capabilities
+    # siblings above used.
+    (
+        "python/regolith/backends/power_oneline.py",
+        "power_net_ir_unavailable",
+    ): "deferred: T-0064 close-out (power_oneline realized-IR refusal)",
 }
 
 

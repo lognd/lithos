@@ -147,6 +147,7 @@ select = ["E", "F", "I", "UP", "B", "SIM"]
 "tests/realizer/test_wo_frob_coverage.py" = ["E501"]
 "tests/magnetite/test_wo_frob_coverage.py" = ["E501"]
 "tests/backends/test_wo_frob_coverage.py" = ["E501"]
+"tests/backends/test_power_oneline.py" = ["E501"]
 
 [tool.ty.environment]
 python-version = "3.12"

@@ -96,6 +96,10 @@ FAMILY_DIRS = (
     # spec names no dwelling-wiring program.
     "cable_schedule",
     "panel_schedule",
+    # F-WO137-1 (T-0064): the power one-line diagram package (svg +
+    # its underlying DrawingModel json). Absent on any package whose
+    # spec/inputs name no power net subject.
+    "power_oneline",
 )
 
 

@@ -28,6 +28,7 @@ from regolith._schema.models import (
     HarnessPayload,
     ItemizedEstimate,
     OptimizationTrace,
+    PowerNetPayload,
     RealizedAssembly,
     RealizedGeometry,
     RealizedLayout,
@@ -169,6 +170,7 @@ class BackendInputs:
         hdl_debug_pins: Mapping[str, tuple[str, ...]] = {},  # noqa: B006 (frozen inputs)
         board_assignments: Mapping[str, RealizedBoardAssignment] = {},  # noqa: B006 (frozen inputs)
         edm_profiles: Mapping[str, RealizedWireEdmProfile] = {},  # noqa: B006 (frozen inputs)
+        power_nets: Mapping[str, PowerNetPayload] = {},  # noqa: B006 (frozen inputs)
     ) -> None:
         """Bind the inputs a backend may ever read.
 
@@ -210,6 +212,14 @@ class BackendInputs:
         `HdlBackend` input) is an `HdlBuildProducts` (source set +
         the WO-82 tier evidence already discharged for that subject)
         keyed by subject, caller-supplied for the same reason.
+        ``power_nets`` (F-WO137-1, T-0064) is a `PowerNetPayload` keyed
+        by subject -- the `power_oneline` producer's input. Like
+        ``opt_traces``/``assemblies``/``firmware``/``hdl``, it is
+        ALWAYS caller-supplied for now: `BuildPayload` (the
+        `regolith-lower` -> orchestrator channel) has no `power_nets`
+        field yet (the crates-side wiring is a separate, in-flight
+        ticket), so there is nothing in `report.realized_inputs` or
+        `report.final.payload_json` to derive it from today.
         """
         self.lockfile = lockfile
         self.evidence = evidence
@@ -259,6 +269,11 @@ class BackendInputs:
         # `edm_profile.realized` payload, keyed by subject -- the
         # EDM backend's input, mirroring `board_assignments`' shape.
         self.edm_profiles = edm_profiles
+        # F-WO137-1 (T-0064): the power-net payload, keyed by subject --
+        # the `power_oneline` producer's input, mirroring `opt_traces`'/
+        # `firmware`'s always-caller-supplied shape (see the docstring
+        # above -- no `BuildPayload.power_nets` channel exists yet).
+        self.power_nets = power_nets
 
 
 # frob:doc docs/modules/py-backends.md#backends-framework

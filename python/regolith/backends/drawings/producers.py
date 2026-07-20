@@ -43,6 +43,12 @@ from pydantic import BaseModel, ConfigDict
 
 from regolith._schema.models import (
     Annotation,
+    Branch,
+    BranchParams1,
+    BranchParams2,
+    BranchParams3,
+    BranchParams4,
+    Bus,
     ContractGraphPayload,
     Dimension,
     DrawingModel,
@@ -59,6 +65,7 @@ from regolith._schema.models import (
     Kind2,
     Kind3,
     Kind5,
+    Load,
     MemberRole1,
     MemberRole2,
     MemberRole3,
@@ -68,7 +75,9 @@ from regolith._schema.models import (
     MemberRole7,
     OptimizationTrace,
     Point,
+    PowerNetPayload,
     RealizedGeometry,
+    ScalarInterval,
     Sheet,
     SheetSize1,
     SheetSize2,
@@ -88,6 +97,7 @@ from regolith._schema.models import (
     Provenance2 as RecordProvenance,
 )
 from regolith.backends.drawings.layout import layered_positions, standoff_ladder
+from regolith.backends.quantity import DimensionedValue
 
 # NO DUPLICATION (WO-143): the laminar/Haaland closed forms this
 # producer plots are WO-139's own model formulas, reused verbatim
@@ -454,6 +464,231 @@ def elec_blocks(subject: str, harness: HarnessPayload) -> DrawingModel:
         subject,
         len(node_order),
         len(edges),
+    )
+    return DrawingModel(subject=subject, sheets=[sheet])
+
+
+# frob:doc docs/modules/py-backends.md#drawings-producers
+def _scalar_label(interval: ScalarInterval) -> str:
+    """A `ScalarInterval` rendered as one label token (INV-34/D262: the
+    magnitude never reaches text without going through
+    `DimensionedValue`, so a bare numeral is never representable here,
+    matching the D265 "unit rides attached to the value's own text"
+    call `perfboard.py`/`calc.py` already made). A degenerate interval
+    (``lo == hi``, the common case for a declared nameplate value)
+    renders as one number; a genuine range renders `lo-hi`."""
+    lo = DimensionedValue.of(f"{interval.lo:g}", interval.unit)
+    if interval.hi == interval.lo:
+        return f"{lo.magnitude} {lo.unit}"
+    hi = DimensionedValue.of(f"{interval.hi:g}", interval.unit)
+    return f"{lo.magnitude}-{hi.magnitude} {lo.unit}"
+
+
+def _bus_label(bus: Bus) -> str:
+    """A bus bar's label: id, nominal voltage, phase count (charter 43
+    sec. 1's bus vocabulary) -- the one-line diagram's node identity."""
+    return f"{bus.id}  {_scalar_label(bus.nominal_voltage)}  {bus.phases}ph"
+
+
+def _branch_label(branch: Branch) -> str:
+    """A branch edge's label: apparatus kind + its standard family + the
+    key nameplate ratings the params variant declares (charter 43 sec.
+    2's four `BranchParams` shapes -- source/transformer/feeder/
+    protective-device); an optional field absent from the declaration
+    is honestly omitted rather than fabricated (the AD-25 GeomExtract
+    idiom this drawing track already follows elsewhere in this
+    module)."""
+    params = branch.params
+    parts: list[str] = [f"apparatus={params.apparatus.value}"]
+    if isinstance(params, BranchParams1):
+        if params.voltage is not None:
+            parts.append(f"V={_scalar_label(params.voltage)}")
+        if params.available_fault_current is not None:
+            parts.append(f"Isc={_scalar_label(params.available_fault_current)}")
+        if params.x_over_r is not None:
+            parts.append(f"X/R={_scalar_label(params.x_over_r)}")
+    elif isinstance(params, BranchParams2):
+        parts.append(f"kVA={_scalar_label(params.kva)}")
+        if params.pct_z is not None:
+            parts.append(f"%Z={_scalar_label(params.pct_z)}")
+        if params.vector_group is not None:
+            parts.append(f"vector={params.vector_group}")
+        if params.standard_family is not None:
+            parts.append(f"std={params.standard_family.value}")
+    elif isinstance(params, BranchParams3):
+        parts.append(f"L={_scalar_label(params.length)}")
+        if params.standard_family is not None:
+            parts.append(f"std={params.standard_family.value}")
+    elif isinstance(params, BranchParams4):
+        parts.append(f"frame={_scalar_label(params.frame)}")
+        if params.trip is not None:
+            parts.append(f"trip={_scalar_label(params.trip)}")
+        if params.standard_family is not None:
+            parts.append(f"std={params.standard_family.value}")
+    return f"{branch.id} ({branch.kind.value}): " + " ".join(parts)
+
+
+def _load_label(load: Load) -> str:
+    """A load terminal's label: id, connected kVA, declared class, and a
+    motor marker (`M(<hp/kW>)`) when the load declares motor nameplate
+    fields (charter 43 sec. 2's motor vocabulary)."""
+    parts = [load.id, _scalar_label(load.connected_kva)]
+    if load.class_ is not None:
+        parts.append(load.class_)
+    if load.motor is not None:
+        parts.append(f"M({_scalar_label(load.motor.hp_kw)})")
+    return " ".join(parts)
+
+
+# frob:doc docs/modules/py-backends.md#drawings-producers
+# frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
+def power_oneline(subject: str, power: PowerNetPayload) -> DrawingModel:
+    """Project a `PowerNetPayload` into a one-line diagram (charter 43,
+    F-WO137-1): buses as horizontal bars, branches as vertical labeled
+    edges between bars, loads as terminal symbols hanging off their bus.
+
+    A net-derived diagram cannot disagree with what was verified
+    (charter sec. 1 decision 6, the same reading the fluid P&ID/civil
+    plan producers already apply): bus/branch/load POSITIONS are a pure
+    function of the payload's own declared graph (`layered_positions`,
+    D165's "mechanical, not aesthetic" layout rule -- never a solver),
+    and every rendered magnitude reaches text only through
+    `_scalar_label`'s `DimensionedValue` construction (INV-34). Load
+    terminal symbols cite `record_digest=digest` (this payload's own
+    digest) -- v1 has no per-load symbol RECORD to cite, the same CUT
+    the fluid/civil producers already name.
+    """
+    source_bytes = power.model_dump_json(by_alias=True).encode("utf-8")
+    digest = _digest_of(source_bytes)
+
+    buses = sorted(power.buses, key=lambda b: b.id)
+    bus_ids = tuple(b.id for b in buses)
+    branches = sorted(power.branches, key=lambda br: br.id)
+    branch_edges = tuple((br.a, br.b) for br in branches)
+    layout = layered_positions(bus_ids, branch_edges)
+
+    bar_half_width = 25.0
+    entities: list[_Entity] = []
+    entity_indices: list[EntityIndice] = []
+    annotations: list[Annotation] = []
+
+    for bus in buses:
+        x, y = layout.positions[bus.id]
+        entities.append(
+            SegmentEntity(
+                kind=Kind.segment,
+                **{"from": [x - bar_half_width, y]},
+                to=[x + bar_half_width, y],
+            )
+        )
+        entity_indices.append(EntityIndice(len(entities) - 1))
+        annotations.append(
+            Annotation(
+                text=_bus_label(bus),
+                anchor=[x - bar_half_width, y],
+                text_height_mm=3.0,
+                datum_refs=[],
+                per=None,
+            )
+        )
+
+    # WO-123-style de-overlap: two branch labels sharing a route midpoint
+    # (two branches between the same bus pair) ladder apart, mirroring
+    # `fluid_pid`/`elec_blocks`'s own collision-key discipline.
+    branch_label_index: dict[tuple[float, float], int] = {}
+    for branch in branches:
+        route = layout.routes.get((branch.a, branch.b))
+        if route is None:
+            _log.warning(
+                "power_oneline: branch %r cites an unresolved bus (%r -> %r)",
+                branch.id,
+                branch.a,
+                branch.b,
+            )
+            continue
+        for start, end in zip(route, route[1:], strict=False):
+            entities.append(SegmentEntity(kind=Kind.segment, **{"from": start}, to=end))
+            entity_indices.append(EntityIndice(len(entities) - 1))
+        mid = route[len(route) // 2]
+        midpoint: tuple[float, float] = (mid[0], mid[1])
+        index = branch_label_index.get(midpoint, 0)
+        branch_label_index[midpoint] = index + 1
+        annotations.append(
+            Annotation(
+                text=_branch_label(branch),
+                anchor=standoff_ladder(list(midpoint), index),
+                text_height_mm=3.0,
+                datum_refs=[],
+                per=None,
+            )
+        )
+
+    loads_by_bus: dict[str, list[Load]] = {}
+    for load in sorted(power.loads, key=lambda ld: ld.id):
+        loads_by_bus.setdefault(load.bus, []).append(load)
+
+    stub_step_mm = 12.0
+    stub_drop_mm = 15.0
+    for bus_name in sorted(loads_by_bus):
+        base = layout.positions.get(bus_name)
+        if base is None:
+            _log.warning("power_oneline: load(s) on unresolved bus %r", bus_name)
+            continue
+        bx, by = base
+        for i, load in enumerate(loads_by_bus[bus_name]):
+            lx = bx + (i + 1) * stub_step_mm
+            ly = by + stub_drop_mm
+            entities.append(
+                SegmentEntity(kind=Kind.segment, **{"from": [lx, by]}, to=[lx, ly])
+            )
+            entity_indices.append(EntityIndice(len(entities) - 1))
+            entities.append(
+                SymbolEntity(
+                    kind=Kind3.symbol,
+                    record_digest=digest,
+                    origin=[lx, ly],
+                    rotation=0.0,
+                )
+            )
+            entity_indices.append(EntityIndice(len(entities) - 1))
+            annotations.append(
+                Annotation(
+                    text=_load_label(load),
+                    anchor=[lx, ly + 4.0],
+                    text_height_mm=3.0,
+                    datum_refs=[],
+                    per=None,
+                )
+            )
+
+    view = View(
+        name="oneline",
+        plane="schematic",
+        scale=1.0,
+        source=ViewSource(source_digest=digest, source_kind="power_net"),
+        entity_indices=entity_indices,
+    )
+    sheet = Sheet(
+        size=SheetSize2.ansi_b,
+        title_block=TitleBlock(
+            title=f"{subject} one-line diagram",
+            drawing_number=f"PWR-{subject}",
+            revision="A",
+            scale_label="NTS",
+            subject=subject,
+        ),
+        views=[view],
+        entities=entities,
+        dimensions=[],
+        annotations=annotations,
+        tables=[],
+    )
+    _log.info(
+        "power one-line producer: %s -> %d bus(es), %d branch(es), %d load(s)",
+        subject,
+        len(buses),
+        len(branches),
+        len(power.loads),
     )
     return DrawingModel(subject=subject, sheets=[sheet])
 

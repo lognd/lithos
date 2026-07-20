@@ -255,6 +255,22 @@ of kerf/spark-gap/lead-in/per-vertex corner-radii plus the SAME
 `CamOutcome` DFM-outcome objects the realize step already computed
 (never re-derived here).
 
+<a id="backends-power-oneline"></a>
+### `backends/power_oneline.py`
+
+The `power_oneline` manufacturing package: a one-line diagram (WO-137,
+F-WO137-1, T-0064). Mirrors `PerfboardBackend`'s shape over
+`BackendInputs.power_nets` (a `PowerNetPayload` keyed by subject --
+ALWAYS caller-supplied for now, since `BuildPayload` has no
+`power_nets` field yet, a separate in-flight crates-side ticket). No
+external tool runs -- every emitted file is `tier="deterministic"`
+(WO-160/AD-45). The diagram is projected via
+`regolith.backends.drawings.producers.power_oneline` (buses as
+horizontal bars, branches as vertical labeled edges, loads as terminal
+symbols; every rendered magnitude reaches text only through
+`DimensionedValue`, INV-34) and rendered through the SAME `DrawingModel`
+-> svg path every other track uses (AD-27).
+
 <a id="backends-firmware"></a>
 ### `backends/firmware.py`
 
