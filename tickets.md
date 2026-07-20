@@ -767,7 +767,7 @@ cycle-38 log.
 ```yaml
 id: T-0022
 title: 'WO-152: waveform/mask records on sheets -- rendering + AUTHORED badge'
-state: in-progress
+state: done
 kind: feature
 origin: agent
 created: '2026-07-18'
@@ -775,7 +775,8 @@ blocked_by:
 - T-0021
 parent: null
 scope:
-- python/regolith/emission/**
+- python/regolith/backends/**
+- tests/**
 evidence:
 - tests/backends/test_waveform_chart.py::TestWaveformChartProducer::test_authored_posture_renders_the_authored_badge
 - tests/backends/test_waveform_chart.py::TestWaveformChartProducer::test_measured_posture_renders_no_authored_badge
@@ -787,6 +788,16 @@ acceptance:
 - see docs/workflow/work-orders/WO-152-waveform-sheet-rendering.md
 threat: null
 ```
+## Done report
+
+WO-152 landed (waveform-rendering commit): waveform_chart producer +
+multi-polyline chart generalization (SVG+PDF), mask overlays,
+AUTHORED badge driven strictly by the record's own provenance
+posture (byte-diff proven both ways), bringup_waveform_view at
+function level; 15 tests + opt-trace byte-compat pin. Remaining
+per-tap harness_files wiring + demo17 regen = T-0070. Scope glob
+corrected: python/regolith/emission/ never existed; the sheet
+renderers live under backends/ (agent-verified in_scope clean).
 
 <!-- ticket:T-0023 -->
 ```yaml
