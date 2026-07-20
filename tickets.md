@@ -952,7 +952,7 @@ grounding when this unblocks.
 ```yaml
 id: T-0027
 title: 'WO-157: sim/timing fleet adoption -- census flip + coverage sweep'
-state: queued
+state: in-progress
 kind: feature
 origin: agent
 created: '2026-07-18'
@@ -2174,7 +2174,7 @@ threat: null
 id: T-0068
 title: 'sim/ artifact family: trace.vcd + sim_report.json emission (WO-155 deliverable
   7)'
-state: queued
+state: in-progress
 kind: feature
 origin: agent
 created: '2026-07-19'
@@ -2220,7 +2220,7 @@ threat: null
 id: T-0070
 title: wire bringup_waveform_view into harness_files + regenerate demo17 (WO-152 deliverable
   5 residual)
-state: queued
+state: in-progress
 kind: feature
 origin: human
 created: '2026-07-19'
