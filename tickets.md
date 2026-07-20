@@ -1957,18 +1957,24 @@ threat: null
 ```yaml
 id: T-0064
 title: power_oneline drawing producer for PowerNetPayload (F-WO137-1)
-state: in-progress
+state: done
 kind: feature
 origin: agent
 created: '2026-07-19'
 blocked_by: []
 parent: null
 scope: []
-evidence: []
+evidence:
+- tests/backends/test_power_oneline.py::test_deterministic_bytes_x2
 attachments: []
 acceptance: []
 threat: null
 ```
+## Done report
+
+power_oneline landed (producer/backend/family/tests, deterministic
+tier, INV-34 labels); crates-side BuildPayload.power_nets wiring =
+follow-up ticket so backends can source compiled payloads.
 
 <!-- ticket:T-0065 -->
 ```yaml
@@ -1997,6 +2003,24 @@ wrapper left as-is (works either way now).
 ```yaml
 id: T-0066
 title: espresso group_head body.cavity claim + flow-path subject naming (T-0059 finding)
+state: queued
+kind: feature
+origin: agent
+created: '2026-07-19'
+blocked_by: []
+parent: null
+scope: []
+evidence: []
+attachments: []
+acceptance: []
+threat: null
+```
+
+<!-- ticket:T-0067 -->
+```yaml
+id: T-0067
+title: wire BuildPayload.power_nets through the crates API so backends source compiled
+  payloads (T-0064 follow-up)
 state: queued
 kind: feature
 origin: agent
