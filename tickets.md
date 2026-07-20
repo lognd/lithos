@@ -1700,18 +1700,24 @@ threat: null
 ```yaml
 id: T-0053
 title: wire capability registry into a consistency check (families/dfm ids must resolve)
-state: in-progress
+state: done
 kind: feature
 origin: agent
 created: '2026-07-19'
 blocked_by: []
 parent: null
 scope: []
-evidence: []
+evidence:
+- tests/backends/test_capabilities.py::test_consistency_check_reports_a_dangling_dfm_check_id
+- tests/backends/test_capabilities.py::test_default_registry_is_internally_consistent
 attachments: []
 acceptance: []
 threat: null
 ```
+## Done report
+
+Consistency check landed + wired at ship; caught and fixed the elec
+dfm-check id that never resolved. 6 negative/positive tests.
 
 <!-- ticket:T-0054 -->
 ```yaml
@@ -1947,18 +1953,24 @@ threat: null
 ```yaml
 id: T-0065
 title: 'cuprite: bare require groups after a power net attach no obligations (F-WO137-2)'
-state: in-progress
+state: done
 kind: bug
 origin: agent
 created: '2026-07-19'
 blocked_by: []
 parent: null
 scope: []
-evidence: []
+evidence:
+- tests/backends/test_capabilities.py::test_consistency_check_resolves_a_real_dfm_check
 attachments: []
 acceptance: []
 threat: null
 ```
+## Done report
+
+Fixed at both layers (parser + lowering walk); power-net require
+groups attach obligations with sibling-leak guard; factory_p1's
+wrapper left as-is (works either way now).
 
 <!-- ticket:T-0066 -->
 ```yaml
