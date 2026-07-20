@@ -156,6 +156,11 @@ _INPUT_ORACLES = {
         structural.hdl_build_errors,
         "zero-error build identity (re-proven live by the demos leg)",
     ),
+    "hdl_sim_assert_generic": (
+        structural.hdl_sim_mismatches,
+        "zero-mismatch directed-vector identity (WO-155; re-proven live "
+        "by the verilator testbench PASS/FAIL protocol)",
+    ),
 }
 
 _PAYLOAD_ORACLES = {

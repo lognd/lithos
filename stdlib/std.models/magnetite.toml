@@ -46,6 +46,7 @@ models = [
     "bearing_life",
     "drive_torque",
     "fatigue_damage",
+    "timing",
     "beam_utilization",
     "beam_service_deflection",
     "post_embedment",

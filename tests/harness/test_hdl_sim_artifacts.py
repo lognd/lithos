@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
 from regolith.harness.models.hdl.sim_artifacts import (
     SimArtifactCache,
@@ -22,7 +23,7 @@ from regolith.harness.models.hdl.sim_artifacts import (
 )
 
 
-def _report(**overrides: object) -> SimReport:
+def _report(**overrides: Any) -> SimReport:
     base = dict(
         subject="mux2",
         tool_version="5.047",
@@ -37,7 +38,7 @@ def _report(**overrides: object) -> SimReport:
         trace_absent_reason=None,
     )
     base.update(overrides)
-    return SimReport(**base)  # type: ignore[arg-type]
+    return SimReport.model_validate(base)
 
 
 # frob:tests python/regolith/harness/models/hdl/sim_artifacts.py::sim_artifact_cache_key kind="unit"
@@ -51,18 +52,22 @@ def test_sim_artifact_cache_key_is_deterministic_and_domain_separated() -> None:
 # frob:tests python/regolith/harness/models/hdl/sim_artifacts.py::sim_artifact_cache_key kind="unit"
 def test_sim_artifact_cache_key_changes_with_any_digest_or_version() -> None:
     base = sim_artifact_cache_key("blake3:src", "blake3:stim", "1+verilator5.047")
-    assert base != sim_artifact_cache_key("blake3:other", "blake3:stim", "1+verilator5.047")
-    assert base != sim_artifact_cache_key("blake3:src", "blake3:other", "1+verilator5.047")
-    assert base != sim_artifact_cache_key("blake3:src", "blake3:stim", "1+verilator5.048")
+    assert base != sim_artifact_cache_key(
+        "blake3:other", "blake3:stim", "1+verilator5.047"
+    )
+    assert base != sim_artifact_cache_key(
+        "blake3:src", "blake3:other", "1+verilator5.047"
+    )
+    assert base != sim_artifact_cache_key(
+        "blake3:src", "blake3:stim", "1+verilator5.048"
+    )
 
 
 # frob:tests python/regolith/harness/models/hdl/sim_artifacts.py::render_sim_report_json kind="unit"
 def test_render_sim_report_json_shape_and_determinism() -> None:
     report = _report(
         vectors_passed=1,
-        mismatches=(
-            SimMismatch(vector="v0", cycle=1, expected="8'h11", got="8'h00"),
-        ),
+        mismatches=(SimMismatch(vector="v0", cycle=1, expected="8'h11", got="8'h00"),),
     )
     first = render_sim_report_json(report)
     second = render_sim_report_json(report)
@@ -144,4 +149,3 @@ def test_verilator_trace_binary_args_emit_adds_trace_flag() -> None:
     argv = args.emit()
     assert "--trace" in argv
     assert argv[-2:] == ("tb.sv", "mux2.v")
-

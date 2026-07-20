@@ -822,8 +822,7 @@ class HdlSimAssertGenericModel(Model):
             return Err(outcome.danger_err)
         result = outcome.danger_ok
         _log.debug(
-            "%s: %s (vectors=%d errors=%d, stimulus trust_tier=%s, "
-            "trace_present=%s)",
+            "%s: %s (vectors=%d errors=%d, stimulus trust_tier=%s, trace_present=%s)",
             self.model_id,
             result.note,
             result.vectors,

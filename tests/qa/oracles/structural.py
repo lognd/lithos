@@ -46,3 +46,8 @@ def conformance_upper(inputs: Mapping[str, tuple[float, float]]) -> float:
 def hdl_build_errors(_inputs: Mapping[str, tuple[float, float]]) -> float:
     """A discharged HDL build reported exactly zero errors."""
     return 0.0
+
+
+def hdl_sim_mismatches(_inputs: Mapping[str, tuple[float, float]]) -> float:
+    """A discharged sim assert reported exactly zero vector mismatches."""
+    return 0.0

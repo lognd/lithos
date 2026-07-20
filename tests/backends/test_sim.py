@@ -6,6 +6,7 @@ stimulus ref, plus artifact-index registration."""
 from __future__ import annotations
 
 import json
+from typing import Any
 
 from regolith.backends.artifact_index import build_index, check_index_consistency
 from regolith.backends.artifacts import NativeArtifactStore
@@ -25,8 +26,8 @@ def _inputs(*, sim: dict[str, SimProducts]) -> BackendInputs:
     )
 
 
-def _products(**overrides: object) -> SimProducts:
-    base: dict[str, object] = dict(
+def _products(**overrides: Any) -> SimProducts:
+    base: dict[str, Any] = dict(
         tool_version="5.047",
         src_digest="blake3:src",
         stimulus_digest="blake3:stim",
@@ -40,7 +41,7 @@ def _products(**overrides: object) -> SimProducts:
         trace_vcd=b"$enddefinitions $end\n",
     )
     base.update(overrides)
-    return SimProducts(**base)  # type: ignore[arg-type]
+    return SimProducts.model_validate(base)
 
 
 def test_sim_backend_ships_trace_and_report_with_model_derived_tier() -> None:

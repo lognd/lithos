@@ -198,6 +198,61 @@ def test_deterministic_tagged_output_file_has_no_tool():
     assert row.provenance.tool is None
 
 
+def test_model_derived_tagged_sim_family_classifies_and_carries_tool_identity():
+    """WO-155 deliverable 7 (T-0068): a `sim/` family's `trace.vcd`
+    classifies as `vcd_trace`/`text` (the new common-extension entry)
+    and carries the `model_derived` tier + tool identity (AD-45) --
+    NOT the `real_tool`/`deterministic` pair alone."""
+    provenance = ArtifactProvenance(
+        tier="model_derived",
+        tool=ToolIdentity(name="verilator", version_digest="5.047"),
+    )
+    files = (
+        OutputFile.of(
+            "sim/mux2/trace.vcd", b"$enddefinitions $end\n", provenance=provenance
+        ),
+        OutputFile.of(
+            "sim/mux2/sim_report.json", b'{"subject": "mux2"}\n', provenance=provenance
+        ),
+    )
+    index = build_index("proj", files).danger_ok
+    rows = {r.relpath: r for r in index.rows}
+    assert rows["sim/mux2/trace.vcd"].kind == "vcd_trace"
+    assert rows["sim/mux2/trace.vcd"].viewer == "text"
+    assert rows["sim/mux2/trace.vcd"].provenance.tier == "model_derived"
+    trace_tool = rows["sim/mux2/trace.vcd"].provenance.tool
+    assert trace_tool is not None and trace_tool.name == "verilator"
+    assert rows["sim/mux2/sim_report.json"].kind == "json"
+    assert check_index_consistency(index, files).is_ok
+
+
+def test_check_index_consistency_catches_model_derived_missing_tool():
+    """A `model_derived` row with `tool=None` is drift too -- the
+    consistency rule generalizes past the old `real_tool`-only check
+    (WO-155 deliverable 7)."""
+    files: tuple[OutputFile, ...] = ()
+    bad_provenance = ArtifactProvenance(tier="model_derived", tool=None)
+    index = ArtifactIndex(
+        project="proj",
+        rows=(
+            ArtifactRow(
+                family="sim",
+                kind="json",
+                relpath="sim/mux2/sim_report.json",
+                content_hash="deadbeef",
+                bytes=4,
+                media_type="application/json",
+                viewer="json",
+                provenance=bad_provenance,
+            ),
+        ),
+    )
+    result = check_index_consistency(index, files)
+    assert result.is_err
+    assert result.danger_err.kind == ARTIFACT_INDEX_DRIFT
+    assert "sim/mux2/sim_report.json" in result.danger_err.message
+
+
 def test_check_index_consistency_catches_malformed_provenance_missing_tool():
     """A `real_tool` row with `tool=None` is drift, not a warning."""
     files: tuple[OutputFile, ...] = ()
