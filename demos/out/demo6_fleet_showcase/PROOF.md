@@ -13,7 +13,7 @@ Frame.GR_AB.section = GR_AB=w8x10         cause: optimize(mass_per_length, trace
 
 This is the complete `regolith ship` dist tree, produced by the real two-command flow (`build --release` then `ship`):
 
-- `dist/index.md` (sha256 `sha256:8deae159d341aed78049cf9f3379a29c091c13515a8ef2512493e892e97f9ce0`) -- the release-gate stamp and the content-hashed listing of every artifact family.
+- `dist/index.md` (sha256 `sha256:4339763a45eb3e4e1f04f1eaa1a40b2d3c9814c268e3a17d8300b029452ab0e0`) -- the release-gate stamp and the content-hashed listing of every artifact family.
 - `dist/drawings/` -- per-part SVG + PDF + DXF drawings.
 - `dist/3d/` -- per-part GLB + offline viewer.
 - `dist/bom/` -- the massed BOM (csv/json/md/pdf).
@@ -26,7 +26,7 @@ Every file above is content-addressed in this demo's `manifest.json` and re-veri
 | artifact | bytes | sha256 |
 |----------|-------|--------|
 | `dist/acceptance_ledger.json` | 11659 | `sha256:976011140c1b066788fc07175f1abd73261910f736bc21192b1a28a7ade3a4a4` |
-| `dist/artifact_index.json` | 10732 | `sha256:d7cc8b567f17e124bed11e04093a0c199f85204873a86feb5882d1d3d5272b95` |
+| `dist/artifact_index.json` | 10732 | `sha256:c83376279d11e6fb7baa2365c09323c346ff960feb028b8fd355b3839d3387d2` |
 | `dist/calc/audit_index.json` | 8655 | `sha256:5cfe46fb19d8a991a1fe58e71fb70611bde1d188ddc27c209258acdff2cf9222` |
 | `dist/calc/bearing__300d3d669aa3.pdf` | 6034 | `sha256:f0cee94357bbd37f8d4c24557a66bc059423020566bc8ce0fc8825cf67cfc340` |
 | `dist/calc/bom__c11c49a454b8.pdf` | 6873 | `sha256:230a8412f977fcb993b38528adb7c0de1fa3ed185017a19f27e5a1940ad57f8c` |
@@ -51,6 +51,6 @@ Every file above is content-addressed in this demo's `manifest.json` and re-veri
 | `dist/drawings/drawings/contract_graph.pdf` | 2482 | `sha256:a50e754852e7d94515b547d12cbc30a3cb8ba60fd0492d80ec3e6acd3fb61a1e` |
 | `dist/drawings/drawings/contract_graph.svg` | 3359 | `sha256:e2e6291b1f14fa491de9e5c2b5cfde282f9168a73ce2fca9f9cb6ebfc38777da` |
 | `dist/gate_summary.json` | 207 | `sha256:b9e5cf143ea623f49d73e617e86de503c1b1157f4fe620f6cb5e0abcf3997089` |
-| `dist/index.md` | 3706 | `sha256:8deae159d341aed78049cf9f3379a29c091c13515a8ef2512493e892e97f9ce0` |
-| `dist/manifest.json` | 6975 | `sha256:5931d3b500b2c4200e0eca57a88bde845002cb61a9149755cdd06409b3e3c282` |
+| `dist/index.md` | 3741 | `sha256:4339763a45eb3e4e1f04f1eaa1a40b2d3c9814c268e3a17d8300b029452ab0e0` |
+| `dist/manifest.json` | 6975 | `sha256:d0873d5a3e59c12e95cebb222c0e7b17a49898703b9cf025f44c7d956c843ce1` |
 | `dist/parity_ledger.json` | 28939 | `sha256:304c091727d045b6656354f5b874f4a144a330560f2381fd4f8e1f7222223c3c` |
