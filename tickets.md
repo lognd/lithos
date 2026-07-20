@@ -198,6 +198,89 @@ thermal transient) all landed; lithos-side pack wiring exists only
 for bearing_life. Remainder = claim-survey + harness wiring for the
 four families (WO-111 deliverable 8 step 0 first).
 
+### Progress (2026-07-19, dispatch 2 -- scope: python/regolith/harness/models/**, tests/**)
+
+CORRECTION to the prior entry: re-surveyed `feldspar` (read-only,
+`crates/feldspar-library/src/mech/{frame,sections,statics,vibration}.rs`
++ `feldspar.pack:register`'s six exposed models) and found NONE of
+weld/fatigue/leadscrew/thermal-transient physics actually landed
+there -- the "all landed" claim above does not hold against the
+current feldspar checkout. Proceeded on the same honest route
+`bearing_life.py`/`fluid_pressure_drop.py` already set: thin in-tree
+closed-form lithos models, feldspar route checked-and-not-taken,
+documented in each module's own doc.
+
+Fleet-claim survey (families -> concrete corpus sites):
+- weld: `mech.weld_stress` (`weldment_frame.hema` `weld_static`,
+  `cnc_router_r1/frame.hema` `weld_static`) -- waived
+  `"entity-derived bound not literal at lowering (D103 ref-resolution
+  residual)"`, NOT a harness-model gap (`welds.all` forall over an
+  entity collection, same D103 shape as other blocked forall claims).
+  A harness model here could not discharge either corpus site until
+  D103's lowering fix lands (crates/regolith-lower, out of this
+  dispatch's scope) -- landed NOTHING for this family; recorded as
+  blocked-upstream, not missing.
+- fatigue: `mech.fatigue.damage` (`dune_buggy/upright_hub_front.hema`
+  `spindle_life`, `dune_buggy/halfshaft.hema` `spline_fatigue`) --
+  waived as a bare F126.1 model gap (real harness gap). LANDED:
+  `python/regolith/harness/models/fatigue_damage.py`
+  (`FatigueDamageModel`, single-block Marin/Goodman/Basquin Miner
+  damage; NAMED CUT: does not consume the `over=boundary.spectrum`
+  multi-block payload -- see module doc).
+- leadscrew/drive sizing: `mech.drive_torque`
+  (`cnc_router_r1/axis_module.hema` `reserve`, `forall ride.pos:`
+  sweep over the config domain, not an entity collection -- does not
+  hit D103) -- waived as a bare F126.1 model gap. LANDED:
+  `python/regolith/harness/models/drive_torque.py`
+  (`DriveTorqueModel`, ballscrew driving-torque vs 0.6x holding
+  torque).
+- thermal transient: no fleet claim found demanding a
+  lumped-capacitance STEP-RESPONSE distinctly from the landed
+  steady-state `lumped_thermal.py` (`reaction_wheel/wheel_assembly.
+  hema` uses steady-state already); `regen_engine/chamber.hema`'s
+  `starts` claim is Coffin-Manson LCF (a different physics family,
+  strain-based + thermal-transient PROFILE consumption), out of this
+  WO's stress-life scope. Recorded not-needed this wave (deliverable
+  8's "record what is not").
+
+Model posture ledger: both new models are `model_derived` (closed-
+form textbook physics evaluated from declared inputs, corner-swept
+per INV-9) -- no measured/authored data, no fabricated defaults;
+every Marin factor/Basquin `f`/ballscrew efficiency is a required
+declared input (`DomainError` refusal, never a silent default,
+D250.3).
+
+Escalation: `mech.weld_stress`'s D103 lowering fix is
+crates/regolith-lower territory (WO-112's/coordinator's), not this
+dispatch's scope -- no lithos schema/lowering change made here.
+Wiring either new model's `INPUTS`/`CLAIM_KIND` into
+`orchestrator/translate.py`'s claim-form dispatch (the step that
+would make `spindle_life`/`spline_fatigue`/`reserve` actually
+discharge end-to-end against the real `.hema` corpus, converting
+their waivers) is explicitly out of this dispatch's scope
+(`translate.py` owned by another lane this wave) -- flagged for the
+coordinator to land in the same wave as WO-111's close-out, per the
+WO's own "coordinate the lithos exposure commit with the
+coordinator" instruction.
+
+Verification: `.venv/bin/python -m pytest tests/harness/
+test_fatigue_damage.py tests/harness/test_drive_torque.py -q` -- 13
+passed. `.venv/bin/python -m pytest tests/harness -q` -- 685 passed.
+`frob check --only gates` -- 28 errors/2 warnings, ALL pre-existing
+baseline (none reference `fatigue_damage.py`/`drive_torque.py`/their
+tests); zero new TEST00x/DOC00x/TODO001 from this change.
+
+Files changed: `python/regolith/harness/models/fatigue_damage.py`
+(new), `python/regolith/harness/models/drive_torque.py` (new),
+`python/regolith/harness/models/__init__.py` (register both),
+`tests/harness/test_fatigue_damage.py` (new),
+`tests/harness/test_drive_torque.py` (new).
+
+Ticket left `in-progress` (not closed): the translate.py wiring half
+of deliverable 7 (real end-to-end fleet-claim discharge) is
+coordinator territory per the note above -- closing prematurely
+would overclaim "discharges end-to-end" before that half lands.
+
 <!-- ticket:T-0005 -->
 ```yaml
 id: T-0005

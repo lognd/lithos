@@ -25,6 +25,8 @@ from regolith.harness.models.cost_estimators import (
     CostFluidBomModel,
 )
 from regolith.harness.models.dfm import register_dfm_models
+from regolith.harness.models.drive_torque import DriveTorqueModel
+from regolith.harness.models.fatigue_damage import FatigueDamageModel
 from regolith.harness.models.fluid_pressure_drop import FluidPressureDropModel
 from regolith.harness.models.friction_factor import FrictionFactorModel
 from regolith.harness.models.hdl import register_hdl_models
@@ -151,6 +153,17 @@ def register_all(registry: ModelRegistry) -> None:
     # instruction), never a lithos-transcribed NEC clearance table
     # (D250.3/D266).
     registry.register(WorkingClearanceModel())
+    # WO-111 (D223): the lithos-side half of the feldspar model-growth
+    # survey -- feldspar carries no fatigue/leadscrew physics today
+    # (its own repo's `feldspar-library/src/mech/` census, see each
+    # model's own module doc), so these are the same thin in-tree
+    # closed-form choice `bearing_life.py`/`fluid_pressure_drop.py`
+    # already made: the dune_buggy `mech.fatigue.damage` claims
+    # (`spindle_life`, `spline_fatigue`) and the cnc_router_r1
+    # `mech.drive_torque` claim (`reserve`), each currently waived as
+    # a bare F126.1 model gap.
+    registry.register(FatigueDamageModel())
+    registry.register(DriveTorqueModel())
 
 
 __all__ = [
@@ -167,6 +180,8 @@ __all__ = [
     "CostCivilTakeoffModel",
     "CostElecBomModel",
     "CostFluidBomModel",
+    "DriveTorqueModel",
+    "FatigueDamageModel",
     "FluidPressureDropModel",
     "FrictionFactorModel",
     "LameCylinderModel",
