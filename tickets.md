@@ -769,7 +769,7 @@ RESERVED text pending WO-155/156/157.
 ```yaml
 id: T-0025
 title: 'WO-155: cuprite functional simulation gate -- hdl.sim_assert'
-state: queued
+state: in-progress
 kind: feature
 origin: agent
 created: '2026-07-18'
