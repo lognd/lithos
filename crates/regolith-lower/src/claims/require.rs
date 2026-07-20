@@ -35,9 +35,14 @@ pub(crate) struct ClaimLoweringCtx<'a> {
     pub(crate) decl_name: &'a str,
     pub(crate) subject_ref: &'a str,
     pub(crate) compute_producers: &'a BTreeMap<String, Obligation>,
-    /// The enclosing declaration (D103: its `parts:` entries map a
-    /// reference head like `comms` to the declared part type).
-    pub(crate) decl: &'a Decl,
+    /// The enclosing declaration's syntax node (D103: its `parts:`
+    /// entries map a reference head like `comms` to the declared part
+    /// type). A raw `&SyntaxNode` (not `&Decl`) since T-0065 (F-WO137-2)
+    /// widened this ctx's caller to a `PowerDecl` claim group too --
+    /// `part_type_of`/`cost_bom_lines` only ever walk `.descendants()`,
+    /// never anything `Decl`-kind-specific, so the node itself is all
+    /// either needs.
+    pub(crate) decl: &'a SyntaxNode,
     /// Every parsed file (D103: cross-file entity-field resolution).
     pub(crate) files: &'a [ParsedFile],
 }
@@ -820,8 +825,8 @@ pub(crate) fn find_field_value_text_in_node(node: &SyntaxNode, field_name: &str)
 /// (`comms: CommsPcb(...)` -> `CommsPcb`), if any.
 // frob:doc docs/modules/regolith-lower.md#claims
 // frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
-pub(crate) fn part_type_of(decl: &Decl, name: &str) -> Option<String> {
-    for node in decl.syntax().descendants() {
+pub(crate) fn part_type_of(decl: &SyntaxNode, name: &str) -> Option<String> {
+    for node in decl.descendants() {
         if let Some(field) = Field::cast(node) {
             if field.name() == name {
                 let value = full_predicate_text(&field);

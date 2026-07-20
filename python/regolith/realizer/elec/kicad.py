@@ -336,6 +336,20 @@ def import_pinned_layout(path: Path) -> Result[LayoutArtifact, LayoutImportError
 
 
 # frob:doc docs/modules/py-realizer.md#elec-kicad
+def elec_layout_kicad_drc(violation_count: float) -> bool:
+    """T-0053: a real, importable callable resolving the same predicate
+    `LayoutDrcModel.estimate` already encodes (DRC-clean iff the
+    blocking-violation count is under the 0.5 limit, i.e. < 1) --
+    exposed at module scope so `RealizerCapability.dfm_checks`'s id
+    (``"regolith.realizer.elec.kicad:elec_layout_kicad_drc"``, named
+    after `LayoutDrcModel.signature.name`) resolves to something real
+    instead of a bare `ModelSignature` name string. No behavior change
+    to `LayoutDrcModel` itself -- this is a descriptive mirror, not a
+    new gate."""
+    return violation_count < 1
+
+
+# frob:doc docs/modules/py-realizer.md#elec-kicad
 class LayoutDrcModel(Model):
     """Discharges `elec.layout.drc_clean` from an already-run DRC report.
 

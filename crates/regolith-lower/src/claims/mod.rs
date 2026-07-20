@@ -118,6 +118,55 @@ fn push_snapshot_records(snapshots: &EntitySnapshots, out: &mut Vec<SnapshotReco
     }
 }
 
+/// T-0065 (F-WO137-2): lower every `power <name>:` net's own
+/// `require <Group>:` claim groups in `file` -- mirrors
+/// `build_obligations`'s decl-loop claim-lowering call exactly, minus
+/// the decl-only concerns a power net has no equivalent of
+/// (compute-field producers, `plan:`, the converter-graph attach): a
+/// power net's own claims carry no declared materials/loads BOM, so
+/// `given` stays the honest empty default rather than reusing
+/// `given_for_decl` (which would misread the net's `loads:` bus-list
+/// field as a BOM `loads` entry). Extracted out of `build_obligations`
+/// (clippy::too_many_lines) -- pure DX split, no behavior change.
+fn push_power_net_obligations(
+    obligations: &mut Vec<Obligation>,
+    diagnostics: &mut Vec<Diagnostic>,
+    files: &[ParsedFile],
+    pf: &ParsedFile,
+    file: &File,
+) {
+    for power in file.power_nets() {
+        let Some(power_name) = power.name() else {
+            continue;
+        };
+        let given = Given {
+            materials: Vec::new(),
+            loads: Vec::new(),
+            backing: Vec::new(),
+            refs: Vec::new(),
+        };
+        let empty_compute_producers = BTreeMap::new();
+        // `subject_ref` is the honest empty default: `entities.rs`
+        // registers no `EntitySnapshots` scope for a `PowerDecl` today
+        // (only the generic `Decl` kinds get one), so a
+        // `snapshots.scopes.get(&power_name)` lookup here would always
+        // miss and resolve to this same empty string -- hardcoding it
+        // says that plainly instead of performing a lookup that can
+        // never hit.
+        let ctx = ClaimLoweringCtx {
+            path: &pf.path,
+            decl_name: &power_name,
+            subject_ref: "",
+            compute_producers: &empty_compute_producers,
+            decl: power.syntax(),
+            files,
+        };
+        for group in power.claims() {
+            push_group_obligations(obligations, diagnostics, &ctx, &group, &given, &pf.path);
+        }
+    }
+}
+
 /// The payload kind + content-address domain tag of an elec behavioral
 /// body's converter graph (WO-88, F112). One home for the string; the
 /// Python side mirrors it verbatim (`orchestrator/orchestrate.py`'s
@@ -254,7 +303,7 @@ pub fn build_obligations(
                 decl_name: &decl_name,
                 subject_ref: &subject_ref,
                 compute_producers: &compute_producers,
-                decl: &decl,
+                decl: decl.syntax(),
                 files,
             };
             // WO-88 deliverable 2/3: the range of require obligations
@@ -290,6 +339,15 @@ pub fn build_obligations(
                 realized_inputs,
             );
         }
+
+        // T-0065 (F-WO137-2): a `power <name>:` net is NOT a generic
+        // `Decl` (`File::decls()` only casts `SyntaxKind::Decl`; a power
+        // net is its own `SyntaxKind::PowerDecl` -- see
+        // `File::power_nets`), so it never reached the loop above and
+        // its own `require <Group>:` claim groups (nested directly in
+        // the net's body -- the parser fix beside this one now types
+        // them as real `RequireClaim` nodes) were silently dropped.
+        push_power_net_obligations(&mut out.obligations, &mut out.diagnostics, files, pf, &file);
     }
 
     // WO-28 (design/21 sec. 2, the lower.claims touch point): lower

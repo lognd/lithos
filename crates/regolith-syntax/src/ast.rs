@@ -2446,6 +2446,21 @@ impl PowerDecl {
     pub fn feeders(&self) -> Option<EdgesBlock> {
         self.syntax.children().find_map(EdgesBlock::cast)
     }
+
+    /// The power net's own `require <Group>:` claim groups (T-0065,
+    /// F-WO137-2): mirrors [`Decl::claims`] exactly (same
+    /// `SyntaxKind::RequireClaim` child-node shape), now reachable now
+    /// that [`crate::parser::Parser::parse_power_body`] types a nested
+    /// `require` line as a `RequireClaim` node instead of swallowing it
+    /// through the generic statement grammar.
+    #[must_use]
+    // frob:doc docs/modules/regolith-syntax.md#ast
+    pub fn claims(&self) -> Vec<RequireClaim> {
+        self.syntax
+            .children()
+            .filter_map(RequireClaim::cast)
+            .collect()
+    }
 }
 
 #[cfg(test)]

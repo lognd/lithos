@@ -1,7 +1,7 @@
 use super::common::{field_span, match_call, split_kwarg, split_top_level_args};
 use super::{
-    codes, push_general_comparison_obligation, AstNode, ClaimLoweringCtx, Decl, Diagnostic, Field,
-    Given, LabeledSpan, Obligation, SweepDomain, SyntaxKind,
+    codes, push_general_comparison_obligation, AstNode, ClaimLoweringCtx, Diagnostic, Field, Given,
+    LabeledSpan, Obligation, SweepDomain, SyntaxKind, SyntaxNode,
 };
 
 /// WO-54 deliverable 1 (toolchain/27 sec. 1.1, AD-29): lower an
@@ -151,13 +151,12 @@ pub(crate) fn parse_cost_claim_args(args: &str) -> Result<(String, Option<String
 /// `loads:` descent for the `parts:` block.
 // frob:doc docs/modules/regolith-lower.md#claims
 // frob:waive TEST001 reason="predicate-scanning helper exercised transitively through the claims lowering pipeline (claims/tests.rs, lower() integration test); no isolated unit test calls it directly"
-pub(crate) fn cost_bom_lines(decl: &Decl) -> Vec<(String, String)> {
+pub(crate) fn cost_bom_lines(decl: &SyntaxNode) -> Vec<(String, String)> {
     // A `parts:` block is its own node kind, not a `Field` (the
     // `contracts.rs::part_type_refs` precedent), so find it by kind
     // and cast only its entry children.
     let mut lines = Vec::new();
     for block in decl
-        .syntax()
         .descendants()
         .filter(|n| n.kind() == SyntaxKind::PartsBlock)
     {

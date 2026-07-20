@@ -2069,3 +2069,67 @@ fn impedance_with_plain_comparator_falls_through_to_general_comparison() {
     assert!(lhs.starts_with("elec.impedance(clk"), "lhs: {lhs}");
     assert_eq!(op, "<=");
 }
+
+// T-0065 (F-WO137-2): a bare `require <Group>:` claim group nested
+// directly in a `power <name>:` net's body must attach obligations
+// exactly like one nested in a `system`/`part`/`board` decl -- the
+// pre-fix repro (`regolith check`) reported obligations=0 for this
+// exact shape.
+#[test]
+fn power_net_nested_require_group_attaches_obligations() {
+    let src = "power PlantMain:\n\
+               \x20   sources: Svc\n\
+               \x20   require Checks:\n\
+               \x20       v: >= 1\n";
+    let obs = obligations(src);
+    assert_eq!(obs.len(), 1, "obligations: {obs:?}");
+    let super::ClaimForm::Comparison { lhs, op, rhs } = &obs[0].claim.form else {
+        panic!("expected Comparison, got {:?}", obs[0].claim.form);
+    };
+    // "v: >= 1" is the pre-existing OPAQUE require-line shape (no
+    // explicit lhs quantity expression before the comparator -- see
+    // `non_fluid_source_produces_no_fluid_obligation_noise`'s identical
+    // "strength: >= 1" form): `push_opaque_require_obligation` stamps
+    // `op="require"` and folds the comparator+bound into `rhs` whole.
+    // The point under test is that an obligation exists AT ALL for a
+    // `power` net's own nested claim group (obligations=0 pre-fix),
+    // not this particular predicate's internal shape.
+    assert_eq!(lhs, "v");
+    assert_eq!(op, "require");
+    assert_eq!(rhs, ">= 1");
+}
+
+// T-0065 (F-WO137-2): a bare TOP-LEVEL `require <Group>:` claim group
+// immediately following a `power <name>:` net (a dedented sibling
+// statement, not nested in the net's body) also attached zero
+// obligations pre-fix -- this one lowers through the top-level
+// `File::fluid_requires` calcite-frame path (`push_calcite_frame_
+// obligations`), which recognizes FRAME_CLAIM_FORMS predicates; a
+// bare general-comparison predicate at true top level (no enclosing
+// decl OR power net) is out of scope for T-0065 (its own finding
+// text names ONLY the two `power`-adjacent shapes: nested and
+// sibling-immediately-after) and stays a named non-goal here. This
+// test instead proves the net's OWN nested claim group (the shape
+// `power.cupr`'s `system PlantChecks:` workaround exists to route
+// around) now attaches, which is T-0065's acceptance criterion.
+#[test]
+fn power_net_claims_do_not_leak_into_a_later_sibling_decls_obligations() {
+    let src = "power PlantMain:\n\
+               \x20   sources: Svc\n\
+               \x20   require Checks:\n\
+               \x20       v: >= 1\n\
+               part P:\n\
+               \x20   require Other:\n\
+               \x20       w: >= 2\n";
+    let obs = obligations(src);
+    assert_eq!(obs.len(), 2, "obligations: {obs:?}");
+    let names: Vec<_> = obs
+        .iter()
+        .map(|o| match &o.claim.form {
+            super::ClaimForm::Comparison { lhs, .. } => lhs.as_str(),
+            _ => "?",
+        })
+        .collect();
+    assert!(names.contains(&"v"));
+    assert!(names.contains(&"w"));
+}

@@ -20,10 +20,12 @@ from regolith.backends.capabilities import (
     IncompleteCapabilityError,
     RealizerCapability,
     ToolAdapterDescriptor,
+    check_capability_registry_consistency,
     default_capability_registry,
     get_capability,
     register_capability,
 )
+from regolith.backends.registry import default_artifact_family_registry
 from regolith.realizer.elec.kicad import LayoutRequest
 
 
@@ -227,3 +229,69 @@ def test_capability_model_is_frozen() -> None:
     capability = RealizerCapability(**_complete_kwargs())
     with pytest.raises(Exception):  # noqa: B017, PT011 -- pydantic ValidationError on frozen mutation
         capability.domain = "mutated"  # ty: ignore[invalid-assignment]  # proving the frozen-model raise, not a real assignment
+
+
+# T-0053: check_capability_registry_consistency proves every built-in
+# domain's artifact_families/dfm_checks resolve for real.
+# frob:tests python/regolith/backends/capabilities.py::check_capability_registry_consistency kind="unit"
+# frob:ticket T-0053
+def test_default_registry_is_internally_consistent() -> None:
+    result = check_capability_registry_consistency(default_capability_registry())
+    assert result.is_ok
+
+
+# frob:ticket T-0053
+def test_consistency_check_reports_a_dangling_artifact_family() -> None:
+    kwargs = _complete_kwargs()
+    kwargs["artifact_families"] = ("nonexistent_family",)
+    registry = CapabilityRegistry()
+    registry.register(RealizerCapability(**kwargs))
+    result = check_capability_registry_consistency(
+        registry, family_registry=default_artifact_family_registry()
+    )
+    assert result.is_err
+    assert "toy:nonexistent_family" in result.danger_err.message
+    assert result.danger_err.kind == "capability_registry_drift"
+
+
+# frob:ticket T-0053
+def test_consistency_check_reports_a_dangling_dfm_check_id() -> None:
+    kwargs = _complete_kwargs()
+    kwargs["dfm_checks"] = ("regolith.backends.capabilities:no_such_function",)
+    registry = CapabilityRegistry()
+    registry.register(RealizerCapability(**kwargs))
+    result = check_capability_registry_consistency(registry)
+    assert result.is_err
+    assert "no_such_function" in result.danger_err.message
+
+
+# frob:ticket T-0053
+def test_consistency_check_reports_an_unimportable_dfm_check_module() -> None:
+    kwargs = _complete_kwargs()
+    kwargs["dfm_checks"] = ("regolith.no_such_module_at_all:check",)
+    registry = CapabilityRegistry()
+    registry.register(RealizerCapability(**kwargs))
+    result = check_capability_registry_consistency(registry)
+    assert result.is_err
+    assert "regolith.no_such_module_at_all:check" in result.danger_err.message
+
+
+# frob:ticket T-0053
+def test_consistency_check_reports_a_malformed_dfm_check_id() -> None:
+    kwargs = _complete_kwargs()
+    kwargs["dfm_checks"] = ("not_a_module_colon_func_id",)
+    registry = CapabilityRegistry()
+    registry.register(RealizerCapability(**kwargs))
+    result = check_capability_registry_consistency(registry)
+    assert result.is_err
+    assert "not_a_module_colon_func_id" in result.danger_err.message
+
+
+# frob:ticket T-0053
+def test_consistency_check_resolves_a_real_dfm_check() -> None:
+    kwargs = _complete_kwargs()
+    kwargs["dfm_checks"] = ("regolith.harness.models.dfm.checks:check_stock_fit",)
+    registry = CapabilityRegistry()
+    registry.register(RealizerCapability(**kwargs))
+    result = check_capability_registry_consistency(registry)
+    assert result.is_ok

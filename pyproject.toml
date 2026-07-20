@@ -89,6 +89,7 @@ select = ["E", "F", "I", "UP", "B", "SIM"]
 # design; B008 is not meaningful for the CLI layer.
 [tool.ruff.lint.per-file-ignores]
 "python/regolith/backends/artifact_index.py" = ["E501"]
+"python/regolith/backends/capabilities.py" = ["E501"]
 "python/regolith/realizer/elec/perfboard.py" = ["E501"]
 "tests/backends/test_capabilities.py" = ["E501"]
 "tools/health/promotion_tickets.py" = ["E501"]

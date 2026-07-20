@@ -917,6 +917,25 @@ impl Parser<'_> {
             if matches!(self.current(), None | Some(SyntaxKind::Dedent)) {
                 break;
             }
+            // T-0065 (F-WO137-2): a bare `require <Group>:` claim group
+            // nested directly in a `power <name>:` body must attach
+            // obligations exactly like one nested in a `system`/`part`/
+            // `board` decl -- those bodies parse through
+            // `parse_stmt_block`, which special-cases `RequireKw` into a
+            // typed `SyntaxKind::RequireClaim` node BEFORE falling back
+            // to the generic statement grammar. This body's loop used to
+            // route `require` through the same `_ => parse_generic_stmt()`
+            // arm as every other unmatched lead, which parses it as an
+            // ordinary field/ctor/opaque statement instead of a claim
+            // group -- so `decl.claims()` (regolith-lower's
+            // `build_obligations`) never saw it: obligations=0. Checked
+            // by SyntaxKind (not `leading_ident_text`, which reads an
+            // `Ident` token) since `require` is the `RequireKw` keyword,
+            // not a contextual ident.
+            if self.current() == Some(SyntaxKind::RequireKw) {
+                self.parse_keyword_block(SyntaxKind::RequireClaim);
+                continue;
+            }
             let lead = self.leading_ident_text().map(str::to_string);
             match lead.as_deref() {
                 Some("feeders") => self.parse_fluid_line_block(SyntaxKind::EdgesBlock),

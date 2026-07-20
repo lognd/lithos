@@ -40,6 +40,10 @@ from regolith._schema.models import (
 )
 from regolith.backends import artifact_index
 from regolith.backends.artifacts import NativeArtifactStore
+from regolith.backends.capabilities import (
+    check_capability_registry_consistency,
+    default_capability_registry,
+)
 from regolith.backends.debug_taps import (
     TapHeaderRecord,
     TapSet,
@@ -1124,6 +1128,16 @@ def ship(
     if consistency.is_err:
         _log.error("ship: %s", consistency.danger_err.message)
         return Err(consistency.danger_err)
+    # T-0053: the capability registry's own consistency leg -- every
+    # domain's declared artifact_families/dfm_checks must resolve, the
+    # same "loud drift, never a silent gap" posture as the index check
+    # just above.
+    capability_consistency = check_capability_registry_consistency(
+        default_capability_registry()
+    )
+    if capability_consistency.is_err:
+        _log.error("ship: %s", capability_consistency.danger_err.message)
+        return Err(capability_consistency.danger_err)
     index_file = OutputFile.of(
         artifact_index.INDEX_FILENAME, artifact_index.index_bytes(index)
     )

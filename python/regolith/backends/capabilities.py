@@ -32,12 +32,18 @@ check set or claim vocabulary (it references the EXISTING sets only).
 
 from __future__ import annotations
 
+import importlib
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict
 from typani.result import Err, Ok, Result
 
 from regolith._schema.models import FeatureProgram
+from regolith.backends.registry import (
+    ArtifactFamilyRegistry,
+    default_artifact_family_registry,
+)
+from regolith.errors import BackendError
 from regolith.logging_setup import get_logger
 from regolith.realizer.elec.dwelling_wiring import DwellingCircuitPlan
 from regolith.realizer.elec.kicad import LayoutRequest
@@ -565,3 +571,81 @@ def default_capability_registry() -> CapabilityRegistry:
     registry.register(_wire_edm_capability())
     registry.register(_dwelling_wiring_capability())
     return registry
+
+
+# frob:doc docs/modules/py-backends.md#backends-capabilities
+def _resolve_dfm_check(check_id: str) -> bool:
+    """`True` iff `check_id` (a ``"module:function"`` id, the same
+    convention `RealizerCapability.dfm_checks` documents) imports to a
+    real callable -- a malformed id (no ``:``, unimportable module, or
+    missing/non-callable attribute) resolves `False` rather than raising,
+    so the caller (`check_capability_registry_consistency`) can collect
+    every dangling id in one pass instead of stopping at the first
+    `ImportError`."""
+    module_name, sep, func_name = check_id.partition(":")
+    if not sep:
+        return False
+    try:
+        module = importlib.import_module(module_name)
+    except ImportError:
+        return False
+    return callable(getattr(module, func_name, None))
+
+
+# frob:doc docs/modules/py-backends.md#backends-capabilities
+# frob:waive PERF004 reason="one-shot sorts after the loop (dangling_families/dangling_checks), never re-sorting inside it -- the artifact_index.check_index_consistency precedent"
+def check_capability_registry_consistency(
+    registry: CapabilityRegistry,
+    *,
+    family_registry: ArtifactFamilyRegistry | None = None,
+) -> Result[None, BackendError]:
+    """T-0053: the capability-registry consistency check -- every
+    registered domain's ``artifact_families`` must resolve in the
+    AD-36 family registry (`family_registry`, defaulting to the
+    built-in set) and every ``dfm_checks`` id must import to a real
+    callable (`_resolve_dfm_check`). Either failing is drift -- an
+    `Err` naming every dangling family/check id across every domain in
+    one pass, never a warning and never a stop-at-the-first-domain
+    result (the same "collect everything, then report" posture
+    `artifact_index.check_index_consistency` already takes)."""
+    families = (
+        family_registry
+        if family_registry is not None
+        else default_artifact_family_registry()
+    )
+    known_families = set(families.families())
+    dangling_families: list[str] = []
+    dangling_checks: list[str] = []
+    for domain in registry.domains():
+        capability = registry.get(domain)
+        assert capability is not None, (
+            f"domain {domain!r} in registry.domains() but missing from get()"
+        )
+        for family in capability.artifact_families:
+            if family not in known_families:
+                dangling_families.append(f"{domain}:{family}")
+        for check_id in capability.dfm_checks:
+            if not _resolve_dfm_check(check_id):
+                dangling_checks.append(f"{domain}:{check_id}")
+    dangling_families = sorted(dangling_families)
+    dangling_checks = sorted(dangling_checks)
+    if dangling_families or dangling_checks:
+        _log.error(
+            "capability registry drift: dangling_families=%s dangling_checks=%s",
+            dangling_families,
+            dangling_checks,
+        )
+        return Err(
+            BackendError(
+                kind="capability_registry_drift",
+                message=(
+                    f"dangling_families={dangling_families} "
+                    f"dangling_checks={dangling_checks}"
+                ),
+            )
+        )
+    _log.debug(
+        "capability registry consistency: OK (%d domain(s))",
+        len(registry.domains()),
+    )
+    return Ok(None)
