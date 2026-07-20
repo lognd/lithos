@@ -1082,7 +1082,7 @@ parse clean. No other ticket state was touched.
 ```yaml
 id: T-0028
 title: 'WO-158: riscv_hart_rv1 sim demo -- expected_signals-vs-sim cross-check'
-state: queued
+state: in-progress
 kind: feature
 origin: agent
 created: '2026-07-18'
@@ -1423,7 +1423,7 @@ Follow-on from T-0034 (lithos.strata system model): frob sys audit's LINT004 fla
 ```yaml
 id: T-0036
 title: Backfill branch/line coverage below ratcheted floors
-state: queued
+state: in-progress
 kind: feature
 origin: human
 created: '2026-07-19'
