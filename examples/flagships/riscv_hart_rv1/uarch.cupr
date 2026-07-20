@@ -50,6 +50,29 @@ block PcIncrement:
         pc_next:       digital(out, width=64)
     promises:
         timing.prop(pc_in -> pc_next): allocated
+    # WO-157 (T-0027, D264): a declared directed-vector stimulus for
+    # this decl's known-HDL `extern` edge auto-emits one real
+    # `hdl.sim_assert` obligation (`regolith_lower::claims::sim`) --
+    # the sequential-PC-plus-4 and taken-branch-redirect cases the
+    # RTL's own comment names, hand-typed/authored trust tier (D260
+    # ruling 3; no model-backed upgrade is representable for a
+    # directed vector). See `pc_incr_directed_vectors` beside this
+    # file.
+    require Sim:
+        stimulus: sim(pc_incr_directed_vectors)
+
+    # WO-157 (T-0027, D264): the `stimulus: sim(...)` claim line rides
+    # the ordinary require-claim mechanism verbatim (`sim.rs`'s own
+    # docstring), so it ALSO forms a generic claim obligation whose
+    # call-shaped predicate has no scalar-comparison lowering -- the
+    # same `translate()` wall boot_priv/frm_legal hit above. The REAL
+    # coverage this stimulus buys is the separate, auto-emitted
+    # `hdl.sim_assert` obligation (WO-155), which discharges for real
+    # against `pc_incr_directed_vectors` (verified: census `discharged`
+    # rises 4->5 with this change, `tools/health/fleet.py` census).
+    waive stimulus:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall) -- the real sim(...) coverage is the separate auto-emitted hdl.sim_assert obligation, which discharges for real"
+        by doc(memos/release-residuals.md)
 impl PcIncrement by extern("pc_incr.v", verilog2001) as pc_incr_rtl
 
 block DecodeStage:

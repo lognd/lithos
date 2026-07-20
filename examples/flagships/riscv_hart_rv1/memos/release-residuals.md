@@ -25,6 +25,11 @@ The claim's comparator/form does not lower to a one-sided scalar bound (translat
 - `mret_restores` (unsupported_op): comparator 'require' defers
 - `sret_needs_sm` (unsupported_op): comparator 'require' defers
 - `sret_restores` (unsupported_op): comparator 'require' defers
+- `stimulus` (unsupported_op): comparator 'require' defers -- the
+  `stimulus: sim(pc_incr_directed_vectors)` claim line rides this same
+  require-claim mechanism (WO-157/T-0027, D264); the REAL coverage it
+  buys is the separate auto-emitted `hdl.sim_assert` obligation below,
+  which discharges for real.
 
 Retirement: the claim-form lowering increment for the named form (charter 30 sec. 1.3 WO-shaped escalation).
 
@@ -48,3 +53,23 @@ Retirement: realized impl-side narrowings (e.g. a real per-extension conformance
 ## Discharged for real (WO-113, closing WO109-F3)
 
 The three ClockSi rows retired: WO-109's probe-env plugin loading made the feldspar pack load in the release environment, so `clk_z0.lo`/`clk_z0.hi` and `clk_rs` DISCHARGE for real; their stale "not installed" waivers were shadowing the discharges (the exact D224.2 debt shape) and are deleted.
+
+## Discharged for real (WO-157, T-0027, D264): PcIncrement functional simulation
+
+`uarch.cupr`'s `PcIncrement` decl now declares a directed-vector
+stimulus (`stimulus: sim(pc_incr_directed_vectors)`, see
+`pc_incr_directed_vectors` beside this file: three hand-typed vectors
+-- sequential PC+4, a taken-branch redirect, and a PC+4 low-word
+wraparound -- `trust_tier=authored` per D260 ruling 3). Since
+`PcIncrement` also carries a known-HDL `extern("pc_incr.v",
+verilog2001)` conformance edge, `regolith_lower::claims::sim`
+auto-emits one `hdl.sim_assert` obligation (WO-155), which DISCHARGES
+FOR REAL through the verilator-backed `std.hdl` pack -- the flagship's
+census `discharged` count rises from 4 to 5 (obligations 79 -> 81:
+the sim_assert obligation plus the `stimulus` predicate-form byproduct
+above), a real reclassification per the F152 honesty bar, not an
+invented obligation. This is the sim-half of WO-157's four-project
+adoption; sdr_transceiver/mainboard_mx/la_jig8 stimulus coverage and
+mainboard/la_jig8's own PcIncrement-shaped subjects are out of THIS
+change's scope (see T-0027's Done report / the follow-up ticket it
+files for the remainder).

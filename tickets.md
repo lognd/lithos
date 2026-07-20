@@ -969,7 +969,47 @@ acceptance:
 threat: null
 ```
 
-<!-- ticket:T-0028 -->
+## Progress note (2026-07-20, sim-half slice)
+
+Landed: `riscv_hart_rv1`'s `PcIncrement` decl declares a directed-vector
+stimulus (`uarch.cupr`'s `require Sim: stimulus:
+sim(pc_incr_directed_vectors)`, new file `pc_incr_directed_vectors`
+beside it, `trust_tier=authored`). `regolith_lower::claims::sim`
+auto-emits one real `hdl.sim_assert` obligation which DISCHARGES for
+real via the verilator-backed `std.hdl` pack (verified:
+`discharged` 4->5, `obligations` 79->81 -- the sim_assert plus the
+`stimulus` claim-line's own predicate-form byproduct, waived
+identically to `boot_priv`/`frm_legal` in `memos/release-residuals.md`).
+Fleet census golden (`tests/golden/data/fleet_census.json`)
+regenerated via `REGOLITH_UPDATE_GOLDEN=1 python -m tools.health.fleet`
+(only `riscv_hart_rv1`'s row changed; 17/17 projects green,
+0 rigor regressions). `tests/orchestrator tests/harness tests/golden`
+all green (1021 passed/1 skipped + 155 passed/23 xfailed).
+
+NOT done this pass -- named absences, not silence: sdr_transceiver/
+mainboard_mx/la_jig8 stimulus + timing-budget authoring (deliverable
+1 remainder); the waiver burn + census rows for those three; the
+coverage/named-absence sweep (deliverable 4 -- its own placement call
+names `tools/health/`, outside this ticket's declared scope); the
+E1105 cross-check wiring point (deliverable 5 -- lives in
+`python/regolith/harness/models/hdl/**` internals, reserved for
+another agent this wave); the INV-<N> ship-path check (deliverable 6)
+and its `docs/spec/regolith/13-invariants.md` close-out (deliverable
+7 -- also outside this ticket's declared scope). Also verified and
+recorded as a real, named gap (not fabricated): `std.timing`'s
+`TimingBudgetModel` (WO-156) is defined but never registered in
+`python/regolith/harness/models/__init__.py::register_all`, and
+`translate.py`'s dispatch table has no `elec.timing_budget` route, so
+`sdr_transceiver`'s existing `budget ddr_timing: kind=timing` clause
+(`board.cupr`) cannot discharge today regardless of corpus authoring.
+All of the above filed as T-0072 (its own scope covers
+`tools/health/**`, the hdl internals, and the invariants doc).
+
+Escalation note: T-0027's own declared scope (`examples/**`,
+`python/regolith/**`) does NOT cover `tools/health/**` (a repo-root
+path, not under `python/regolith/`) or `docs/spec/regolith/**` --
+confirmed structurally out of scope, hence T-0072 rather than silent
+scope creep.
 ```yaml
 id: T-0028
 title: 'WO-158: riscv_hart_rv1 sim demo -- expected_signals-vs-sim cross-check'
@@ -2253,3 +2293,23 @@ attachments: []
 acceptance: []
 threat: null
 ```
+
+<!-- ticket:T-0072 -->
+```yaml
+id: T-0072
+title: 'WO-157 remainder: mainboard_mx/la_jig8/sdr_transceiver stimulus coverage +
+  tools/health coverage sweep + E1105 cross-check + INV ship-path check'
+state: queued
+kind: feature
+origin: human
+created: '2026-07-20'
+blocked_by: []
+parent: null
+scope:
+- examples/systems/**,examples/boards/**,tools/health/**,python/regolith/harness/models/hdl/**,docs/spec/regolith/13-invariants.md,tests/**
+evidence: []
+attachments: []
+acceptance: []
+threat: null
+```
+Filed while working T-0027 (WO-157). T-0027's own dispatch scope (examples/**, orchestrator/translate.py, timing.py, docs/spec/cuprite/**, tests/**, pyproject per-file-ignores) structurally excludes WO-157 deliverables 4/5/6/7: the coverage/named-absence sweep (WO's own placement call names tools/health/ as its home, out of T-0027 scope), the E1105 cross-check wiring point (lives in python/regolith/harness/models/hdl/** internals, explicitly reserved for another agent this wave per the dispatch note), the INV-<N> ship-path check, and the INV ledger close-out in docs/spec/regolith/13-invariants.md (also out of T-0027 scope). T-0027 landed only the sim-half stimulus adoption for riscv_hart_rv1/PcIncrement (census discharged 4->5, obligations 79->81, honest waiver reclassification in memos/release-residuals.md) plus verified there is currently NO model registration/translate.py route for elec.timing_budget (std.timing's TimingBudgetModel, WO-156, is defined but never registered in python/regolith/harness/models/__init__.py::register_all, and translate.py's dispatch table has no elec.timing_budget entry) -- sdr_transceiver's existing budget ddr_timing: kind=timing clause in board.cupr therefore cannot discharge today regardless of corpus authoring; wiring that gap plus stimulus artifacts for sdr_transceiver/mainboard_mx/la_jig8 plus all of deliverables 4-7 remain for this follow-up ticket.

@@ -231,20 +231,20 @@
     }
   },
   "riscv_hart_rv1": {
-    "accepted_deviation": 75,
-    "deferred": 75,
-    "discharged": 4,
+    "accepted_deviation": 76,
+    "deferred": 76,
+    "discharged": 5,
     "families": [
       "calc",
       "drawings",
       "hdl"
     ],
-    "obligations": 79,
+    "obligations": 81,
     "violated": 0,
     "waived_by_class": {
       "a": 60,
       "b": 0,
-      "c": 15,
+      "c": 16,
       "d": 0
     }
   },

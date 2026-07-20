@@ -1,0 +1,46 @@
+{
+  "top_module": "pc_incr",
+  "ports": [
+    {"name": "pc_in", "width": 64, "direction": "in"},
+    {"name": "sel_branch", "width": 1, "direction": "in"},
+    {"name": "branch_target", "width": 64, "direction": "in"},
+    {"name": "pc_next", "width": 64, "direction": "out"}
+  ],
+  "vectors": [
+    {
+      "name": "sequential_pc_plus_4",
+      "inputs": [
+        {"signal": "pc_in", "value": "64'h0000000000001000"},
+        {"signal": "sel_branch", "value": "1'b0"},
+        {"signal": "branch_target", "value": "64'h0000000000000000"}
+      ],
+      "expect": [
+        {"signal": "pc_next", "expected": "64'h0000000000001004"}
+      ]
+    },
+    {
+      "name": "taken_branch_redirect",
+      "inputs": [
+        {"signal": "pc_in", "value": "64'h0000000000002000"},
+        {"signal": "sel_branch", "value": "1'b1"},
+        {"signal": "branch_target", "value": "64'h0000000000004000"}
+      ],
+      "expect": [
+        {"signal": "pc_next", "expected": "64'h0000000000004000"}
+      ]
+    },
+    {
+      "name": "sequential_pc_plus_4_wraparound_low_word",
+      "inputs": [
+        {"signal": "pc_in", "value": "64'h00000000fffffffc"},
+        {"signal": "sel_branch", "value": "1'b0"},
+        {"signal": "branch_target", "value": "64'h0000000000000000"}
+      ],
+      "expect": [
+        {"signal": "pc_next", "expected": "64'h0000000100000000"}
+      ]
+    }
+  ],
+  "method": "hand-typed",
+  "trust_tier": "authored"
+}
