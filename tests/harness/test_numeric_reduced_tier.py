@@ -166,6 +166,20 @@ def test_buck_efficiency_worst_point_is_interior_capable() -> None:
     assert evidence.model_id == "buck_efficiency_loss_budget@1"
 
 
+# frob:ticket T-0036
+# frob:tests python/regolith/harness/models/buck_efficiency.py::BuckEfficiencyModel.evaluate_point kind="unit"
+def test_buck_efficiency_evaluate_point_zero_total_power_is_zero_eta() -> None:
+    """T-0036 branch backfill: an all-zero operating point (`v_out=0`,
+    `i_out=0`, `p_fixed=0`) drives `total <= 0.0`, the model's own
+    div-by-zero guard -- efficiency reads honestly as 0.0, never a
+    ZeroDivisionError or a NaN."""
+    model = BuckEfficiencyModel()
+    eta = model.evaluate_point(
+        {"v_out": 0.0, "i_out": 0.0, "r_series": 0.05, "p_fixed": 0.0}
+    )
+    assert eta == 0.0
+
+
 def test_buck_transient_discharges_a_fast_loop() -> None:
     """f_c = 50 kHz, tol = 2%: t_s = ln(50)/(2 pi 5e4) = 12.5 us; even
     +50% eps clears a 500 us window."""

@@ -768,6 +768,7 @@ class TestExplainReport:
         assert report.isascii()
 
 
+# frob:ticket T-0036
 class TestDrawingAttestation:
     # frob:tests python/regolith/backends/drawings/attest.py::sign_drawing kind="unit"
     # frob:tests python/regolith/backends/drawings/attest.py::verify_drawing kind="unit"
@@ -813,6 +814,19 @@ class TestDrawingAttestation:
             model
         )
         assert not verify_drawing(regenerated_model, att, keys)
+
+    # frob:ticket T-0036
+    # frob:tests python/regolith/backends/drawings/attest.py::verify_drawing kind="unit"
+    def test_verify_fails_for_untrusted_key(self, tmp_path):
+        """T-0036 branch backfill: an attestation signed by a key that
+        never appears in `keys.designations` fails verification via the
+        untrusted-key branch (no `PublicKeyDesignation` to check
+        against) -- distinct from the tamper/regeneration branch above."""
+        model = mech_part_drawing("pillow_block", _geometry())
+        key = generate_signing_key(str(tmp_path), "unknown-signer").danger_ok
+        att = sign_drawing(model, key, pack_name="reviewer", pack_version="1.0.0")
+        empty_keys = TrustKeySet(designations=())
+        assert not verify_drawing(model, att, empty_keys)
 
 
 class TestSvgRenderer:

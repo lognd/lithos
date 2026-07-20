@@ -204,6 +204,339 @@ class TestConsistencySweeps:
         assert consistency._check_worktrees().ok
 
 
+# frob:ticket T-0036
+class TestConsistencySweepFixtures:
+    """T-0036 phase 2 backfill: fixture-driven branch coverage for
+    ``tools.health.consistency``'s sub-checks the real-tree tests above
+    can only ever see the CLEAN branch of. Each test builds a small
+    synthetic tree under ``tmp_path`` and points ``consistency.REPO_ROOT``
+    / ``consistency.HEALTH_OUT`` at it via monkeypatch, so the FAILING
+    branches (duplicates, liars, competing registries, dirty goldens,
+    unresolved refs, stale waivers, unbalanced books, uncovered
+    families) get exercised without ever touching the real repo tree."""
+
+    # frob:ticket T-0036
+    def test_check_dnums_flags_duplicate_heading(self, tmp_path, monkeypatch) -> None:  # noqa: ANN001
+        log_dir = tmp_path / "docs" / "workflow" / "design-log"
+        log_dir.mkdir(parents=True)
+        (log_dir / "a.md").write_text("# D999 First\n")
+        (log_dir / "b.md").write_text("# D999 Second\n")
+        monkeypatch.setattr(consistency, "REPO_ROOT", tmp_path)
+        result = consistency._check_dnums()
+        assert result.ok is False
+        assert result.note == "1 collision(s)"
+
+    # frob:ticket T-0036
+    def test_check_dnums_addendum_reuse_not_a_collision(
+        self, tmp_path, monkeypatch
+    ) -> None:  # noqa: ANN001
+        log_dir = tmp_path / "docs" / "workflow" / "design-log"
+        log_dir.mkdir(parents=True)
+        (log_dir / "a.md").write_text("# D999 First\n")
+        (log_dir / "b.md").write_text("# D999 addendum\n")
+        monkeypatch.setattr(consistency, "REPO_ROOT", tmp_path)
+        assert consistency._check_dnums().ok is True
+
+    # frob:ticket T-0036
+    def test_check_wo_status_flags_false_done(self, tmp_path, monkeypatch) -> None:  # noqa: ANN001
+        wo_dir = tmp_path / "docs" / "workflow" / "work-orders"
+        wo_dir.mkdir(parents=True)
+        (wo_dir / "WO-99-thing.md").write_text("Status: todo\n")
+        (tmp_path / "TODO.md").write_text("- [x] **WO-99** thing\n")
+        monkeypatch.setattr(consistency, "REPO_ROOT", tmp_path)
+        result = consistency._check_wo_status()
+        assert result.ok is False
+        assert "false-done" in result.note
+
+    # frob:ticket T-0036
+    def test_check_wo_status_residual_status_is_report_only(
+        self, tmp_path, monkeypatch
+    ) -> None:  # noqa: ANN001
+        wo_dir = tmp_path / "docs" / "workflow" / "work-orders"
+        wo_dir.mkdir(parents=True)
+        (wo_dir / "WO-99-thing.md").write_text("Status: in-progress\n")
+        (tmp_path / "TODO.md").write_text("- [x] **WO-99** thing\n")
+        monkeypatch.setattr(consistency, "REPO_ROOT", tmp_path)
+        result = consistency._check_wo_status()
+        assert result.ok is True
+        assert "1 residual" in result.note
+
+    # frob:ticket T-0036
+    def test_check_extensions_core_mismatch_fails(self, monkeypatch) -> None:  # noqa: ANN001
+        from regolith import compiler
+
+        monkeypatch.setattr(compiler, "extensions", lambda: [("bogus", "lang")])
+        result = consistency._check_extensions()
+        assert result.ok is False
+        assert result.note == "core set mismatch"
+
+    # frob:ticket T-0036
+    def test_check_extensions_flags_competing_registry(
+        self, tmp_path, monkeypatch
+    ) -> None:  # noqa: ANN001
+        from regolith import compiler
+
+        monkeypatch.setattr(
+            compiler,
+            "extensions",
+            lambda: [(e, "lang") for e in consistency._KNOWN_EXTENSIONS],
+        )
+        py_dir = tmp_path / "python" / "pkg"
+        py_dir.mkdir(parents=True)
+        (py_dir / "bad.py").write_text('EXTS = (".hema", ".cupr", ".fluo")\n')
+        monkeypatch.setattr(consistency, "REPO_ROOT", tmp_path)
+        result = consistency._check_extensions()
+        assert result.ok is False
+        assert "1 competing" in result.note
+
+    # frob:ticket T-0036
+    def test_check_goldens_dirty_flags_porcelain_lines(self, monkeypatch) -> None:  # noqa: ANN001
+        class _FakeProc:
+            stdout = " M tests/golden/foo.txt\n"
+
+        monkeypatch.setattr(
+            consistency.subprocess, "run", lambda *a, **k: _FakeProc()
+        )
+        result = consistency._check_goldens()
+        assert result.ok is False
+        assert result.note == "1 dirty file(s)"
+
+    # frob:ticket T-0036
+    def test_check_goldens_clean_when_no_porcelain_output(self, monkeypatch) -> None:  # noqa: ANN001
+        class _FakeProc:
+            stdout = ""
+
+        monkeypatch.setattr(
+            consistency.subprocess, "run", lambda *a, **k: _FakeProc()
+        )
+        assert consistency._check_goldens().ok is True
+
+    # frob:ticket T-0036
+    def test_check_waivers_flags_unresolved_ref(self, tmp_path, monkeypatch) -> None:  # noqa: ANN001
+        ex_dir = tmp_path / "examples"
+        ex_dir.mkdir()
+        (ex_dir / "p.hema").write_text('waived by doc("missing_memo.md")\n')
+        monkeypatch.setattr(consistency, "REPO_ROOT", tmp_path)
+        monkeypatch.setattr(
+            consistency, "HEALTH_OUT", tmp_path / ".regolith" / "health"
+        )
+        result = consistency._check_waivers()
+        assert result.ok is False
+        assert "1 bad-ref" in result.note
+
+    # frob:ticket T-0036
+    def test_check_waivers_resolved_ref_and_no_fleet_cache_is_clean(
+        self, tmp_path, monkeypatch
+    ) -> None:
+        ex_dir = tmp_path / "examples"
+        ex_dir.mkdir()
+        (ex_dir / "memo.md").write_text("memo\n")
+        (ex_dir / "p.hema").write_text('waived by doc("memo.md")\n')
+        monkeypatch.setattr(consistency, "REPO_ROOT", tmp_path)
+        monkeypatch.setattr(
+            consistency, "HEALTH_OUT", tmp_path / ".regolith" / "health"
+        )
+        result = consistency._check_waivers()
+        assert result.ok is True
+        assert result.note == "0 bad-ref, 0 stale"
+
+    # frob:ticket T-0036
+    def test_check_waivers_flags_stale_from_fleet_cache(
+        self, tmp_path, monkeypatch
+    ) -> None:  # noqa: ANN001
+        import json
+
+        health_out = tmp_path / ".regolith" / "health"
+        health_out.mkdir(parents=True)
+        (health_out / "fleet_results.json").write_text(
+            json.dumps({"proj_a": {"stale_waivers": 2}})
+        )
+        (tmp_path / "examples").mkdir()
+        monkeypatch.setattr(consistency, "REPO_ROOT", tmp_path)
+        monkeypatch.setattr(consistency, "HEALTH_OUT", health_out)
+        result = consistency._check_waivers()
+        assert result.ok is False
+        assert "2 stale" in result.note
+
+    # frob:ticket T-0036
+    def test_check_calc_books_no_cache_is_skipped_ok(
+        self, tmp_path, monkeypatch
+    ) -> None:  # noqa: ANN001
+        monkeypatch.setattr(consistency, "HEALTH_OUT", tmp_path / "absent")
+        result = consistency._check_calc_books()
+        assert result.ok is True
+        assert result.note == "no fleet cache (skipped)"
+
+    # frob:ticket T-0036
+    def test_check_calc_books_flags_unbalanced_package(
+        self, tmp_path, monkeypatch
+    ) -> None:  # noqa: ANN001
+        import json
+
+        health_out = tmp_path / ".regolith" / "health"
+        health_out.mkdir(parents=True)
+        (health_out / "fleet_results.json").write_text(
+            json.dumps(
+                {
+                    "good_pkg": {"calc_book_balanced": True},
+                    "bad_pkg": {"calc_book_balanced": False},
+                }
+            )
+        )
+        monkeypatch.setattr(consistency, "HEALTH_OUT", health_out)
+        result = consistency._check_calc_books()
+        assert result.ok is False
+        assert "1 unbalanced of 2" in result.note
+
+    # frob:ticket T-0036
+    def test_check_demos_coverage_flags_missing_family(self, monkeypatch) -> None:  # noqa: ANN001
+        monkeypatch.setattr(
+            consistency,
+            "D222_FAMILY_DEMOS",
+            {"drawings": "demo7_drawings_multiview", "ghost_family": "no_such_demo"},
+        )
+        result = consistency._check_demos_coverage()
+        assert result.ok is False
+        assert "1 family(ies) uncovered" in result.note
+
+    # frob:ticket T-0036
+    def test_check_organization_reports_failed_sub_checks(self, monkeypatch) -> None:  # noqa: ANN001
+        from tools.stdlib.organization import SubCheck as OrgSubCheck
+
+        monkeypatch.setattr(
+            consistency,
+            "run_organization_checks",
+            lambda: [OrgSubCheck("std_prefix", False, 1, "bad")],
+        )
+        result = consistency._check_organization()
+        assert result.ok is False
+        assert "failed: std_prefix" in result.note
+
+    # frob:ticket T-0036
+    def test_check_docs_agreement_reports_failed_sub_checks(self, monkeypatch) -> None:  # noqa: ANN001
+        from tools.health.docs_agreement import SubCheck as DocsSubCheck
+
+        monkeypatch.setattr(
+            consistency,
+            "run_docs_agreement_checks",
+            lambda: [DocsSubCheck("readme_index", False, 1, "bad")],
+        )
+        result = consistency._check_docs_agreement()
+        assert result.ok is False
+        assert "failed: readme_index" in result.note
+
+    # frob:ticket T-0036
+    def test_check_diag_codes_reports_violations(self, monkeypatch) -> None:  # noqa: ANN001
+        monkeypatch.setattr(
+            consistency.diag_codes, "run", lambda: (False, 2, "2 bare kinds")
+        )
+        result = consistency._check_diag_codes()
+        assert result.ok is False
+        assert result.count == 2
+
+    # frob:ticket T-0036
+    def test_check_units_is_always_ok_but_reports_flagged_count(
+        self, monkeypatch
+    ) -> None:  # noqa: ANN001
+        from tools.health.report import LegSummary as _LegSummary
+
+        monkeypatch.setattr(
+            consistency.units,
+            "run",
+            lambda: _LegSummary(
+                leg="units", ok=True, counts={"flagged": 3}, evidence="3 flagged"
+            ),
+        )
+        result = consistency._check_units()
+        assert result.ok is True
+        assert result.count == 3
+
+    # frob:ticket T-0036
+    def test_run_smoke_skips_waivers_and_calc_books(self, monkeypatch) -> None:  # noqa: ANN001
+        calls: list[str] = []
+
+        def _stub(name: str, ok: bool = True):  # noqa: ANN001
+            def _inner() -> consistency.SubCheck:
+                calls.append(name)
+                return consistency.SubCheck(name, ok, 0, "stub")
+
+            return _inner
+
+        for name in (
+            "_check_dnums",
+            "_check_wo_status",
+            "_check_extensions",
+            "_check_goldens",
+            "_check_worktrees",
+            "_check_organization",
+            "_check_docs_agreement",
+            "_check_demos_coverage",
+            "_check_diag_codes",
+            "_check_units",
+            "_check_waivers",
+            "_check_calc_books",
+        ):
+            monkeypatch.setattr(consistency, name, _stub(name))
+
+        summary = consistency.run(smoke=True)
+        assert "_check_waivers" not in calls
+        assert "_check_calc_books" not in calls
+        assert summary.counts["sweeps"] == 10
+        assert summary.ok is True
+
+    # frob:ticket T-0036
+    def test_run_not_ok_when_a_sweep_fails(self, monkeypatch) -> None:  # noqa: ANN001
+        def _stub(name: str, ok: bool):  # noqa: ANN001
+            return lambda: consistency.SubCheck(name, ok, 0, "stub")
+
+        for name in (
+            "_check_dnums",
+            "_check_wo_status",
+            "_check_extensions",
+            "_check_goldens",
+            "_check_worktrees",
+            "_check_organization",
+            "_check_docs_agreement",
+            "_check_demos_coverage",
+            "_check_diag_codes",
+            "_check_units",
+            "_check_waivers",
+            "_check_calc_books",
+        ):
+            ok = name != "_check_wo_status"
+            monkeypatch.setattr(consistency, name, _stub(name, ok))
+
+        summary = consistency.run(smoke=False)
+        assert summary.ok is False
+        assert "_check_wo_status" in summary.evidence
+        assert summary.counts["failed"] == 1
+
+    # frob:ticket T-0036
+    def test_main_smoke_flag_returns_zero_on_green(self, monkeypatch, capsys) -> None:  # noqa: ANN001
+        monkeypatch.setattr(
+            consistency,
+            "run",
+            lambda smoke=False: consistency.LegSummary(
+                leg="consistency", ok=True, counts={"sweeps": 1}, evidence="clean"
+            ),
+        )
+        rc = consistency.main(["--smoke"])
+        assert rc == 0
+        assert "consistency" in capsys.readouterr().out
+
+    # frob:ticket T-0036
+    def test_main_returns_one_on_red(self, monkeypatch, capsys) -> None:  # noqa: ANN001
+        monkeypatch.setattr(
+            consistency,
+            "run",
+            lambda smoke=False: consistency.LegSummary(
+                leg="consistency", ok=False, counts={"sweeps": 1}, evidence="failed"
+            ),
+        )
+        rc = consistency.main([])
+        assert rc == 1
+
+
 class TestReportShape:
     # frob:tests tools/health/report.py::HealthReport.ok kind="unit"
     # frob:tests tools/health/report.py kind="integration"
