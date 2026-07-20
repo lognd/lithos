@@ -732,9 +732,45 @@ the `sim/` artifact family itself (`trace.vcd`/`sim_report.json`,
 charter 38 sec. 5) are a `python/regolith/backends/**` emission hook
 this WO's implementer escalated rather than landed (a concurrent
 agent owns that tree this cycle); leg (c) (the coverage sweep) is
-WO-157 entirely, unstarted; leg (a)'s timing share and all of leg
-(c)'s timing budget totality are WO-156, unstarted. Do not read this
-entry as `discharged` until the cited WOs' close-outs update it.
+WO-157 entirely, unstarted. Do not read this entry as `discharged`
+until the cited WOs' close-outs update it.
+
+WO-156 STATUS (partial, timing's own share, this entry still does NOT
+flip to `discharged`): leg (a)'s timing-grounding half has landed --
+`std.timing` (`python/regolith/harness/models/timing.py`) closes a
+`kind=timing` budget as a source-generic `elec.timing_budget` harness
+model, source-ordered summing each `TimingContribution`'s PESSIMAL
+(worst-corner) reading against the declared limit through the ONE
+`Model.discharge` path every other model uses (no second closure
+mechanism; `close_budget`, `regolith-ir/src/budget.rs`, is unmodified).
+Every contribution is grounded BY CONSTRUCTION (a `pydantic`
+`model_validator` refuses a bare literal, D257's citation-less-value
+bar applied at this consumer): either a `CitedInterval` datasheet
+value or an extracted route length converted to delay via a cited
+stackup `Dk` (`route_delay_ns`, the standard TEM `v_p = c/sqrt(Dk)`
+relation -- a conservative-choice ruling recorded in the module's own
+docstring, not escalated). A budget that cannot close is named with
+the REUSED `E0432`/`BUDGET_CANNOT_CLOSE` code and its worst
+contributor (`close_timing_budget`, no new diagnostic family); the
+calc-book timing table renders through the existing generic
+`inputs_from_given`/`build_calc_book` path (`timing_closure_given_loads`)
+with every contribution's citation visible in the rendered bytes, not
+a bespoke renderer. D266 (2026-07-16) withdrew the real `stdlib/
+ti.mcu` datasheet corpus this WO's own body cited as its first data
+source pending counsel review; every test fixture here is SYNTHETIC
+(the WO-138/WO-139 conversion precedent), so no stdlib record change
+lands in this WO. STILL OPEN, why this entry's timing share does not
+flip: (1) end-to-end wiring of a real `.cupr` project's `budget
+kind=timing:` block through `orchestrator/translate.py` so a declared
+budget's contributions are populated from real records/extracted
+routes automatically -- this WO built the grounding CAPABILITY
+(harness model + math + calc-sheet rendering), not the fleet-corpus
+wiring; that adoption is WO-157's scope (named there: "fleet corpus
+adoption ... burning waiver rows"); (2) leg (c)'s timing-budget
+TOTALITY (the coverage sweep proving no clocked subject silently
+lacks a timing budget) is WO-157 entirely, unstarted, per this WO's
+own out-of-scope note. Do not read the timing share as `discharged`
+until WO-157 closes it out.
 
 **Every released cuprite design's simulation and timing verdicts are
 grounded: (a) a shipped sim artifact always names the exact
