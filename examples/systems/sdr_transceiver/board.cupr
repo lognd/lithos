@@ -87,6 +87,26 @@ board PeregrinePcb:
         # past 2mm would flip which one fires. Both are provenance-
         # carrying (E0432 names worst contributors; E06xx names the
         # rule). Discharge: post-route, from extracted lengths.
+        #
+        # NAMED ABSENCE (T-0027/WO-157, D250.3, checked 2026-07-20):
+        # this budget produces NO obligation today, not even a waived
+        # one -- verified empirically (a real `regolith build --release`
+        # here shows no obligation/deferral naming `ddr_timing` or
+        # `setup_slack` anywhere in the build report). The missing datum
+        # is structural, not a citation: `BudgetStmt`
+        # (`crates/regolith-syntax/src/ast.rs`) exposes only the
+        # budget's `name()`/`value()` (limit); its nested `require:`
+        # line is invisible to `decl.claims()` (direct children only),
+        # so no Rust lowering pass ever walks into a `budget kind=timing:`
+        # body to emit an `elec.timing_budget` obligation from it. Until
+        # that Rust-side pass exists (tracked in T-0072), THIS budget
+        # cannot flip regardless of whether tDQSQ/tQH citations exist
+        # for the ECP5 controller or route-length/Dk data exists for
+        # the jlc_6l_ctrl_imp stackup -- the harness-side half
+        # (`std.timing`'s `TimingBudgetModel`, registered; `translate.py`'s
+        # `elec.timing_budget` route, wired) is real and unit-tested
+        # (`tests/orchestrator/test_translate_timing.py`), but nothing
+        # in this corpus can reach it yet.
 
     # ---- The PDN as a noise budget (cuprite 04 sec. 6): target
     # impedance across regulator / bulk / ceramics / plane; the

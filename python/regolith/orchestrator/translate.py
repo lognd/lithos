@@ -160,6 +160,13 @@ from regolith.harness.models.power import (
 )
 from regolith.harness.models.shaft_torsion import CLAIM_KIND as _TWIST_KIND
 from regolith.harness.models.shaft_torsion import INPUTS as _TWIST_INPUTS
+from regolith.harness.models.timing import CLAIM_KIND as _TIMING_BUDGET_KIND
+from regolith.harness.models.timing import (
+    CONTRIBUTIONS_KIND as _TIMING_CONTRIBUTIONS_KIND,
+)
+from regolith.harness.models.timing import (
+    CONTRIBUTIONS_PORT as _TIMING_CONTRIBUTIONS_PORT,
+)
 from regolith.harness.models.workload_realization import CLAIM_KIND as _REALIZATION_KIND
 from regolith.logging_setup import get_logger
 from regolith.orchestrator.dfm_staging import (
@@ -239,6 +246,27 @@ _HDL_STIMULUS_REF_FIELD = "stimulus_ref"
 _HDL_CLAIM_KINDS = frozenset(
     {_HDL_BUILD_KIND, _HDL_SIM_ASSERT_KIND, _HDL_EQUIV_DIRECTED_KIND}
 )
+
+# WO-157 (T-0027, D264): `elec.timing_budget`'s forward-looking
+# `given.loads` marker names, mirroring the `_HDL_SRC_REF_FIELD`/
+# `_HDL_STIMULUS_REF_FIELD` precedent verbatim -- NO Rust-side lowering
+# emits a `budget kind=timing:` obligation yet (confirmed empirically:
+# `BudgetStmt` (`regolith-syntax/src/ast.rs`) exposes only `name()`/
+# `value()` (the limit), and `decl.claims()` only walks a decl's DIRECT
+# `RequireClaim` children -- a `require:` line nested inside a `budget
+# kind=timing:` body is invisible to obligation formation today, a
+# confirmed gap in `crates/regolith-syntax`/`crates/regolith-lower`,
+# outside this dispatch's `Language: Python` scope, exactly the
+# WO-67/WO-69/WO-82 precedent `_HDL_SRC_REF_FIELD`'s own comment
+# names). This route is wired NOW, conservative-choice mirroring the
+# `stimulus_ref` pattern exactly (a whole `timing_contribution_table`
+# is authored as ONE externally-referenced JSON artifact, sidestepping
+# any guess at how individual per-contribution citation fields would
+# serialize into `given.loads` text), so whichever future WO adds the
+# Rust-side emission only has to match these three field names.
+_TIMING_BUDGET_NAME_FIELD = "timing_budget_name"
+_TIMING_LIMIT_NS_FIELD = "timing_limit_ns"
+_TIMING_CONTRIBUTIONS_REF_FIELD = "timing_contributions_ref"
 
 _CAM_NEEDS_MACHINE = frozenset({_CAM_ENVELOPE_KIND})
 _CAM_NEEDS_TARGET = frozenset(
@@ -4345,6 +4373,111 @@ def _translate_hdl(
     )
 
 
+def _translate_timing_budget(
+    obligation: Obligation,
+    plan_context: PlanContext | None,
+) -> Result[DischargeRequest, Deferral]:
+    """Lower an `elec.timing_budget` obligation (WO-156/WO-157) into the
+    `std.timing` pack's `DischargeRequest` shape: resolve the declared
+    `timing_contributions_ref` to a hash-pinned `timing_contribution_
+    table` payload (`TimingContributionTable`, `harness/models/timing.py`)
+    -- the SAME `resolve_plan_bytes` project-relative extern-ref
+    resolution `_translate_hdl` uses for `hdl_src_ref`/`stimulus_ref`,
+    reusing the one `PlanContext` plumbing rather than inventing a
+    second one (NO DUPLICATION). Every resolution failure is a named
+    :class:`Deferral`, never a silent pass.
+
+    Conservative-choice ruling (recorded here, not escalated, per the
+    coordinator's own instruction): WO-157's text underdetermines HOW a
+    budget's per-contribution citations arrive at this function (no
+    Rust-side lowering emits this obligation yet -- see this module's
+    `_TIMING_BUDGET_NAME_FIELD` block comment for the confirmed gap).
+    This mirrors the `stimulus_ref`/`signal_table` wiring exactly: the
+    WHOLE `TimingContributionTable` (budget name + every grounded
+    contribution, each citation already embedded) is authored as ONE
+    externally-referenced JSON artifact rather than guessing at a
+    per-field `given.loads` serialization a future Rust pass might
+    choose differently -- the same posture `_translate_hdl` already
+    took for `stimulus_ref`.
+    """
+    fields = _load_fields(obligation.given.loads)
+    budget_name = fields.get(_TIMING_BUDGET_NAME_FIELD)
+    limit_text = fields.get(_TIMING_LIMIT_NS_FIELD)
+    contributions_ref = fields.get(_TIMING_CONTRIBUTIONS_REF_FIELD)
+    if not budget_name or not limit_text or not contributions_ref:
+        return Err(
+            Deferral(
+                reason="timing_budget_clause_incomplete",
+                detail=(
+                    "obligation carries no "
+                    f"{_TIMING_BUDGET_NAME_FIELD}/{_TIMING_LIMIT_NS_FIELD}/"
+                    f"{_TIMING_CONTRIBUTIONS_REF_FIELD} given"
+                ),
+            )
+        )
+    try:
+        limit_ns = float(limit_text)
+    except ValueError:
+        return Err(
+            Deferral(
+                reason="timing_limit_not_numeric",
+                detail=f"{_TIMING_LIMIT_NS_FIELD} {limit_text!r} is not a number",
+            )
+        )
+    if plan_context is None:
+        return Err(
+            Deferral(
+                reason="plan_context_unconfigured",
+                detail=(
+                    "no extern-ref resolution context was configured for "
+                    "this build (this entry point does not thread a "
+                    "plan/extern context)"
+                ),
+            )
+        )
+    contributions_bytes = resolve_plan_bytes(plan_context, contributions_ref)
+    if contributions_bytes.is_err:
+        failure = contributions_bytes.danger_err
+        _log.error(
+            "timing contributions ref %s did not resolve: %s",
+            contributions_ref,
+            failure.detail,
+        )
+        return Err(
+            Deferral(
+                reason="timing_contributions_ref_unresolved",
+                detail=(
+                    f"declared timing contributions {contributions_ref!r} "
+                    f"does not resolve: {failure.detail}"
+                ),
+            )
+        )
+    _, contributions_digest = contributions_bytes.danger_ok
+    payloads = {
+        _TIMING_CONTRIBUTIONS_PORT: _payload_ref(
+            _TIMING_CONTRIBUTIONS_KIND, contributions_digest, contributions_ref
+        )
+    }
+    _log.debug(
+        "translated elec.timing_budget obligation subject=%s budget=%s "
+        "limit_ns=%g contributions=%s",
+        obligation.subject_ref,
+        budget_name,
+        limit_ns,
+        contributions_ref,
+    )
+    return Ok(
+        DischargeRequest(
+            claim_kind=_TIMING_BUDGET_KIND,
+            limit=limit_ns,
+            inputs={},
+            deterministic=True,
+            payloads=payloads,
+            regimes=(),
+        )
+    )
+
+
 def _translate_bare_unit_cost(
     obligation: Obligation,
     args_text: str,
@@ -4713,6 +4846,8 @@ def translate(
         return _pin_model(
             _translate_hdl(obligation, claim_kind_name, plan_context), model_pin
         )
+    if claim_kind_name == _TIMING_BUDGET_KIND:
+        return _pin_model(_translate_timing_budget(obligation, plan_context), model_pin)
     if isinstance(form, ClaimForm1) and form.op == "conforms":
         return _pin_model(_translate_conformance(obligation), model_pin)
     if isinstance(form, ClaimForm1) and form.op == "implies":

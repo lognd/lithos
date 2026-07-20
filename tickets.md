@@ -1010,6 +1010,62 @@ Escalation note: T-0027's own declared scope (`examples/**`,
 path, not under `python/regolith/`) or `docs/spec/regolith/**` --
 confirmed structurally out of scope, hence T-0072 rather than silent
 scope creep.
+
+## Progress note (2026-07-20, phase 2: the timing half)
+
+Coordinator-directed follow-on closing the harness-side gap phase 1
+found. Landed: `TimingBudgetModel` registered
+(`python/regolith/harness/models/__init__.py::register_all`); an
+additive `elec.timing_budget` dispatch entry in
+`orchestrator/translate.py` (`_translate_timing_budget`, resolving a
+`timing_contributions_ref` given-field to a hash-pinned
+`timing_contribution_table` payload -- conservative choice recorded
+in the function's own docstring: mirrors the `stimulus_ref`/
+`signal_table` wiring exactly, one externally-authored JSON artifact
+rather than guessing at a future per-field `given.loads` serialization).
+New test file `tests/orchestrator/test_translate_timing.py` (4 tests,
+green): a positive translate case, an unresolvable-ref deferral, an
+incomplete-clause deferral, and a real end-to-end discharge against
+`TimingBudgetModel` (`model_id=timing_budget@1`) via
+`orchestrator.discharge.discharge_one` -- real, non-mocked, exactly
+the testing LEVEL `test_translate_hdl.py`/`test_hdl_sim_gate_cache.py`
+already set as precedent for WO-155's own sim gate.
+
+BLOCKER (not worked around): no `.cupr` `budget kind=timing:` clause
+can ever reach this new route today -- `BudgetStmt`
+(`crates/regolith-syntax/src/ast.rs`) only exposes `name()`/`value()`
+(the limit); its nested `require:`/`members:`/`allocate:`/`locked:`
+sub-lines are not modeled as claim children, and `decl.claims()` only
+walks a decl's DIRECT `RequireClaim` children. A genuine WO-72-style
+test (real `.cupr` fixture through `compiler.check()` +
+`discharge_all`) needs a Rust-side lowering pass this ticket's scope
+(`examples/**`, `python/regolith/**`, `docs/spec/cuprite/**`,
+`tests/**`) cannot add. FLEET ruling: `sdr_transceiver`'s
+`budget ddr_timing: kind=timing` (`board.cupr`) is confirmed
+(real `regolith build --release`, before/after this change: 88
+obligations/5 discharged/83 accepted, unchanged) to form NO
+obligation at all today -- nothing to waive, so nothing was
+fabricated; a "NAMED ABSENCE" comment is recorded in place beside the
+clause (D250.3) naming the exact missing datum (the Rust lowering
+pass, not a citation gap) instead of inventing a waiver row. Full
+detail + the concrete Rust-side follow-on shape recorded in T-0072's
+own Update note (2026-07-20, T-0027 phase 2).
+
+Gates: `pytest tests/orchestrator/test_translate_timing.py -q` exit 0
+(4 passed); `pytest tests/orchestrator tests/harness tests/golden -q`
+exit 0 (1192 passed, 1 skipped, 23 xfailed); `ruff check`/`ruff
+format --check` clean on every touched `.py` file; `frob check
+--only gates` zero findings against any touched file (grepped by
+path).
+
+Process note: while producing this note I discovered and repaired a
+self-inflicted tickets.md corruption from the PHASE 1 edit (the
+`<!-- ticket:T-0028 -->` HTML marker was dropped by an earlier Edit's
+old_string/new_string boundary, breaking `frob ticket show T-0028`);
+restored, re-verified `frob ticket show T-0027/T-0028/T-0072` all
+parse clean. No other ticket state was touched.
+
+<!-- ticket:T-0028 -->
 ```yaml
 id: T-0028
 title: 'WO-158: riscv_hart_rv1 sim demo -- expected_signals-vs-sim cross-check'
@@ -2313,3 +2369,42 @@ acceptance: []
 threat: null
 ```
 Filed while working T-0027 (WO-157). T-0027's own dispatch scope (examples/**, orchestrator/translate.py, timing.py, docs/spec/cuprite/**, tests/**, pyproject per-file-ignores) structurally excludes WO-157 deliverables 4/5/6/7: the coverage/named-absence sweep (WO's own placement call names tools/health/ as its home, out of T-0027 scope), the E1105 cross-check wiring point (lives in python/regolith/harness/models/hdl/** internals, explicitly reserved for another agent this wave per the dispatch note), the INV-<N> ship-path check, and the INV ledger close-out in docs/spec/regolith/13-invariants.md (also out of T-0027 scope). T-0027 landed only the sim-half stimulus adoption for riscv_hart_rv1/PcIncrement (census discharged 4->5, obligations 79->81, honest waiver reclassification in memos/release-residuals.md) plus verified there is currently NO model registration/translate.py route for elec.timing_budget (std.timing's TimingBudgetModel, WO-156, is defined but never registered in python/regolith/harness/models/__init__.py::register_all, and translate.py's dispatch table has no elec.timing_budget entry) -- sdr_transceiver's existing budget ddr_timing: kind=timing clause in board.cupr therefore cannot discharge today regardless of corpus authoring; wiring that gap plus stimulus artifacts for sdr_transceiver/mainboard_mx/la_jig8 plus all of deliverables 4-7 remain for this follow-up ticket.
+
+### Update (2026-07-20, T-0027 phase 2)
+
+The harness-side gap named above is now closed: `TimingBudgetModel`
+registered (`python/regolith/harness/models/__init__.py::register_all`);
+`translate.py` gained an additive `elec.timing_budget` dispatch entry
+(`_translate_timing_budget`, resolving a `timing_contributions_ref`
+to a `timing_contribution_table` payload, mirroring the `stimulus_ref`
+pattern) -- proven end to end (hand-built `Obligation` -> real
+`TimingBudgetModel` discharge, `tests/orchestrator/
+test_translate_timing.py`, 4 tests green).
+
+BLOCKER, confirmed empirically and NOT worked around (crates/** is
+outside T-0027's scope): NO Rust lowering pass ever emits an
+`elec.timing_budget` obligation from a real `.cupr` `budget
+kind=timing:` clause. `BudgetStmt` (`crates/regolith-syntax/src/ast.rs`)
+exposes only `name()`/`value()` (the limit); its nested `require:`/
+`members:`/`allocate:`/`locked:` sub-lines are not modeled as claim
+children at all, and `decl.claims()` only walks a decl's DIRECT
+`RequireClaim` children -- so a `require:` line nested inside a
+`budget kind=timing:` body is invisible to obligation formation.
+Verified against `sdr_transceiver`'s real `budget ddr_timing:
+kind=timing` clause: a real `regolith build --release` there shows
+NO obligation or deferral naming `ddr_timing`/`setup_slack` anywhere
+in the build report, before or after this change (88 obligations/5
+discharged/83 accepted, unchanged) -- so THIS budget cannot flip
+regardless of whether real tDQSQ/tQH citations exist for the ECP5
+controller or route-length/Dk data exists for the jlc_6l_ctrl_imp
+stackup; the missing datum is structural (a lowering pass), not a
+citation. Named in place: `examples/systems/sdr_transceiver/board.cupr`
+carries an inline "NAMED ABSENCE" comment beside the clause per
+D250.3, rather than a fabricated waiver (there is nothing to waive --
+no obligation exists to waive). This follow-up ticket's own scope
+already covers the needed Rust work's consumer side; add to its plan:
+a `BudgetStmt` nested-claims accessor (`regolith-syntax`) + a
+`push_timing_budget_obligations` pass mirroring `sim.rs`'s own shape
+(`regolith-lower`) -- both outside `python/regolith/**`/`examples/**`,
+so this ticket's scope line may need a `crates/regolith-syntax/**`,
+`crates/regolith-lower/**` addition when picked up.

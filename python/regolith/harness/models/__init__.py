@@ -47,6 +47,7 @@ from regolith.harness.models.power import (
 )
 from regolith.harness.models.shaft_torsion import ShaftTorsionModel
 from regolith.harness.models.sheet_bend import SheetBendModel
+from regolith.harness.models.timing import TimingBudgetModel
 from regolith.harness.models.tolerance_stack import ToleranceStackModel
 from regolith.harness.models.workload_realization import WorkloadRealizationModel
 from regolith.harness.registry import ModelRegistry
@@ -164,6 +165,16 @@ def register_all(registry: ModelRegistry) -> None:
     # a bare F126.1 model gap.
     registry.register(FatigueDamageModel())
     registry.register(DriveTorqueModel())
+    # WO-156/WO-157 (D264): `elec.timing_budget` -- source-generic
+    # contribution-sum closure over a request-carried
+    # `timing_contribution_table` payload (the `signal_table`
+    # payload-carried-structured-data pattern, one model instance
+    # serves every `budget kind=timing` closure). Previously defined
+    # but never registered -- WO-157's own adoption sweep found the
+    # gap (no route could ever reach this model); see
+    # `orchestrator.translate._translate_timing_budget` for the
+    # corresponding dispatch entry.
+    registry.register(TimingBudgetModel())
 
 
 __all__ = [
@@ -191,6 +202,7 @@ __all__ = [
     "ShaftTorsionModel",
     "PostEmbedmentModel",
     "SheetBendModel",
+    "TimingBudgetModel",
     "ToleranceStackModel",
     "WorkloadRealizationModel",
     "AmpacityModel",
