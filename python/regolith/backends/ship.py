@@ -1052,6 +1052,9 @@ def ship(
             _log.error("ship: %s", agreement.danger_err.message)
             return Err(agreement.danger_err)
         calc_book = _build_calc_book(report, project_root)
+        # WO-152 deliverable 5 (T-0070): the project's own records/ dir
+        # is the ship-time mask/waveform lookup root -- a project with
+        # no records/ simply resolves nothing and gets no sheets.
         harness = _harness_files(
             project,
             tap_map_bytes,
@@ -1060,6 +1063,8 @@ def ship(
             json.loads(report.final.payload_json or "{}"),
             tuple(report.final.results),
             calc_book,
+            records_dirs=(str(Path(project_root) / "records"),),
+            package=project,
         )
         expected_file = next(
             f for f in harness if f.relpath == "harness/expected_signals.json"
