@@ -852,3 +852,122 @@ def test_check_bringup_expectation_authored_posture_passes_when_no_record_refs_p
         package="examples.tracks.cuprite",
     )
     assert result.is_ok
+
+
+# frob:tests python/regolith/backends/harness_pack.py::harness_files kind="unit"
+def test_harness_files_emits_a_waveform_sheet_for_a_record_backed_tap(
+    monkeypatch,
+) -> None:
+    """WO-152 deliverable 5 integration: a tap whose expected-signal row
+    cites a resolvable `record`-kind ref (here the real
+    `examples/tracks/cuprite/records/masks.toml` `monotonic_rise`
+    fixture, the same one WO-151's own tests cite) gets exactly one
+    `harness/waveform_tap_<channel>.svg` sheet, built through the same
+    `bringup_waveform_view` -> `render_svg` path `test_waveform_chart.
+    py::TestBringupWaveformView` exercises directly."""
+    obligation = _rail_obligation("rail_ripple", "sub-hash-0")
+    payload = _payload([obligation])
+    results = (_discharged_result(0, "sub-hash-0"),)
+    tap_set = _tap_set("Scope0.out")
+    record_row = ExpectedSignal(
+        channel=0,
+        target_path="Scope0.out",
+        kind="rail",
+        quantity="voltage",
+        expected="1.0",
+        units="V",
+        provenance=Provenance(kind="record", ref="monotonic_rise(5ms)"),
+    )
+    monkeypatch.setattr(
+        "regolith.backends.harness_pack.build_expected_signals",
+        lambda *a, **k: (record_row,),
+    )
+    files = harness_files(
+        "proj",
+        b'{"schema":"x"}',
+        tap_set,
+        None,
+        payload,
+        results,
+        None,
+        records_dirs=("examples/tracks/cuprite/records",),
+        package="examples.tracks.cuprite",
+    )
+    sheets = [f for f in files if f.relpath == "harness/waveform_tap_0.svg"]
+    assert len(sheets) == 1
+    assert b"chart-axis" in sheets[0].content
+    assert b"monotonic_rise" in sheets[0].content
+
+
+# frob:tests python/regolith/backends/harness_pack.py::harness_files kind="unit"
+def test_harness_files_emits_no_waveform_sheet_without_a_record_ref(
+    monkeypatch,
+) -> None:
+    """The negative half of the above: a tap whose expected-signal row
+    carries NO `record`-kind provenance (here `calc_sheet`, the common
+    case) gets no `harness/waveform_tap_*.svg` at all -- never an empty
+    placeholder sheet (D224's honest-absence discipline, extended to
+    this view)."""
+    obligation = _rail_obligation("rail_ripple", "sub-hash-0")
+    payload = _payload([obligation])
+    results = (_discharged_result(0, "sub-hash-0"),)
+    tap_set = _tap_set("Scope0.out")
+    calc_sheet_row = ExpectedSignal(
+        channel=0,
+        target_path="Scope0.out",
+        kind="rail",
+        quantity="voltage",
+        expected="3.465",
+        units="V",
+        provenance=Provenance(kind="calc_sheet", ref="sheet-digest-0"),
+    )
+    monkeypatch.setattr(
+        "regolith.backends.harness_pack.build_expected_signals",
+        lambda *a, **k: (calc_sheet_row,),
+    )
+    files = harness_files(
+        "proj",
+        b'{"schema":"x"}',
+        tap_set,
+        None,
+        payload,
+        results,
+        None,
+        records_dirs=("examples/tracks/cuprite/records",),
+        package="examples.tracks.cuprite",
+    )
+    sheets = [f for f in files if f.relpath.startswith("harness/waveform_tap_")]
+    assert sheets == []
+
+
+# frob:tests python/regolith/backends/harness_pack.py::_waveform_sheet_for_tap kind="unit"
+def test_waveform_sheet_for_tap_skips_an_unresolvable_record_ref() -> None:
+    """An unresolvable `record` ref (no matching key under
+    `records_dirs`) logs a warning and yields `None`, not a raised
+    exception or a fabricated chart -- mirrors `resolve_mask_ref`'s own
+    honest-`Err` contract."""
+    from regolith.backends.harness_pack import _waveform_sheet_for_tap
+
+    tap = Tap(
+        channel=0,
+        kind="rail",
+        target_path="Scope0.out",
+        why="claim rail_ripple",
+        source="derived",
+    )
+    row = ExpectedSignal(
+        channel=0,
+        target_path="Scope0.out",
+        kind="rail",
+        quantity="voltage",
+        expected="1.0",
+        units="V",
+        provenance=Provenance(kind="record", ref="no_such_record"),
+    )
+    sheet = _waveform_sheet_for_tap(
+        tap,
+        row,
+        ("examples/tracks/cuprite/records",),
+        "examples.tracks.cuprite",
+    )
+    assert sheet is None

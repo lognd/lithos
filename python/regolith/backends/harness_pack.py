@@ -739,6 +739,54 @@ def _capture_config(kind: str, taps: tuple[Tap, ...]) -> str:
     return "\n".join(lines)
 
 
+def _waveform_sheet_for_tap(
+    tap: Tap,
+    row: ExpectedSignal,
+    records_dirs: tuple[str, ...],
+    package: str,
+) -> OutputFile | None:
+    """WO-152 deliverable 5 integration: `harness_files`'s per-tap
+    helper deciding whether ONE allocated tap gets a
+    `bringup_waveform_view` sheet.
+
+    Only a row whose provenance cites a `record`-kind ref (a real
+    waveform/mask record, `resolve_mask_ref`-resolvable under
+    `records_dirs`) produces a sheet -- every other tap (no
+    obligation, a bare claim ref, a calc-sheet numeric) yields `None`,
+    never an empty placeholder sheet. An unresolvable `record` ref is
+    logged and skipped here too: resolution failure for THIS ref shape
+    is not yet a ship-refusing gate (`check_expectation_provenance`
+    only resolves `calc_sheet`/`claim` refs today), so this view stays
+    silent rather than fabricate a chart from nothing."""
+    if row.provenance.kind != "record":
+        return None
+    resolved = resolve_mask_ref(row.provenance.ref, records_dirs, package=package)
+    if resolved.is_err:
+        _log.warning(
+            "harness_files: tap %d (%s) cites record ref %r which does not "
+            "resolve under %s -- no waveform sheet emitted",
+            tap.channel,
+            tap.target_path,
+            row.provenance.ref,
+            records_dirs,
+        )
+        return None
+    from regolith.backends.drawings.renderer import render_svg
+
+    model = bringup_waveform_view(
+        tap, row.expected or "", row.units, resolved.danger_ok
+    )
+    svg_bytes = render_svg(model)
+    _log.info(
+        "harness_files: tap %d (%s) -> waveform sheet from record %s/%s",
+        tap.channel,
+        tap.target_path,
+        resolved.danger_ok.package,
+        resolved.danger_ok.key,
+    )
+    return OutputFile.of(f"harness/waveform_tap_{tap.channel}.svg", svg_bytes)
+
+
 # frob:doc docs/modules/py-backends.md#backends-harness-pack
 def harness_files(
     project: str,
@@ -748,13 +796,20 @@ def harness_files(
     payload: dict,
     results: tuple[ObligationResult, ...],
     calc_book: CalcBook | None,
+    records_dirs: tuple[str, ...] = (),
+    package: str = "",
 ) -> tuple[OutputFile, ...]:
     """Every `harness/` family file for a debug ship (charter 40 sec. 3):
     the canonical tap map (WO-125's own bytes, unmodified -- one truth),
-    `expected_signals.json`, `bringup.md`, and per-kind sigrok-cli
-    capture configs (only for kinds that actually have allocated taps --
-    an empty group is a named absence in `bringup.md`'s unallocated
-    section, never an empty capture file)."""
+    `expected_signals.json`, `bringup.md`, per-kind sigrok-cli capture
+    configs (only for kinds that actually have allocated taps -- an
+    empty group is a named absence in `bringup.md`'s unallocated
+    section, never an empty capture file), and, WO-152 deliverable 5,
+    one `harness/waveform_tap_<channel>.svg` per tap whose expected-
+    signal row cites a resolvable waveform/mask record (`records_dirs`/
+    `package` locate the record the same way
+    `check_bringup_expectation_authored_posture` does) -- never an
+    empty sheet for a tap with no such record."""
     expected = build_expected_signals(tap_set, payload, results, calc_book)
     files: list[OutputFile] = [
         OutputFile.of("harness/tap_map.json", tap_map_bytes),
@@ -780,5 +835,20 @@ def harness_files(
                 config.encode("ascii"),
             )
         )
-    _log.info("harness_files: %d file(s) for %s", len(files), project)
+    expected_by_channel = {row.channel: row for row in expected}
+    waveform_sheets = 0
+    for tap in tap_set.taps:
+        row = expected_by_channel.get(tap.channel)
+        if row is None:
+            continue
+        sheet = _waveform_sheet_for_tap(tap, row, records_dirs, package)
+        if sheet is not None:
+            files.append(sheet)
+            waveform_sheets += 1
+    _log.info(
+        "harness_files: %d file(s) for %s (%d waveform sheet(s))",
+        len(files),
+        project,
+        waveform_sheets,
+    )
     return tuple(files)
