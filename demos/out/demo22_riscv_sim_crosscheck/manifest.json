@@ -1,0 +1,335 @@
+{
+  "artifacts": [
+    {
+      "bytes": 716,
+      "deterministic": true,
+      "path": "crosscheck.json",
+      "sha256": "sha256:a40e44216fd2cd418fe9ee9ff56b5495f01890362b7014499023aff985a19de9"
+    },
+    {
+      "bytes": 44462,
+      "deterministic": true,
+      "path": "debug/acceptance_ledger.json",
+      "sha256": "sha256:60e07f2b8833787c91ceae451bc888b26ab2886521909f0afb5d157bbf0ca157"
+    },
+    {
+      "bytes": 9531,
+      "deterministic": true,
+      "path": "debug/artifact_index.json",
+      "sha256": "sha256:237bb10d88c37770b7295edb4afb0d1a2d03f08c20e941c44fff44a194d22282"
+    },
+    {
+      "bytes": 29361,
+      "deterministic": true,
+      "path": "debug/calc/audit_index.json",
+      "sha256": "sha256:67e395f391fa70856c4e20def128d459f690e8ee6d1e9ad720134726a34dd0c6"
+    },
+    {
+      "bytes": 37402,
+      "deterministic": true,
+      "path": "debug/calc/calc_book.json",
+      "sha256": "sha256:bcd016febe03ffae488d570c1d1e1d176ae4f47be91b30742f3f61c24be4d363"
+    },
+    {
+      "bytes": 6156,
+      "deterministic": true,
+      "path": "debug/calc/clk_rs__632e8824a899.pdf",
+      "sha256": "sha256:9bc046314f61e3d01d49ffea90956282332084aa16b8758e1868b1d670e2602d"
+    },
+    {
+      "bytes": 5984,
+      "deterministic": true,
+      "path": "debug/calc/clk_z0.hi__632e8824a899.pdf",
+      "sha256": "sha256:fd22e2659052e04f24c9669d6949d5357118d26f68b70965185d3c4903797f1d"
+    },
+    {
+      "bytes": 5984,
+      "deterministic": true,
+      "path": "debug/calc/clk_z0.lo__632e8824a899.pdf",
+      "sha256": "sha256:bac07fb677afa48cdbe7d4cf2f20f17564d9d6fe5eae80593352830b60a1b793"
+    },
+    {
+      "bytes": 6121,
+      "deterministic": true,
+      "path": "debug/calc/hdl.build__c5c1cf91fe37.pdf",
+      "sha256": "sha256:58aa9d96f753d7c52ab38a843cbe1c5c997996b283eb3cd8ec98fa60645789a1"
+    },
+    {
+      "bytes": 6403,
+      "deterministic": true,
+      "path": "debug/calc/hdl.sim_assert__c5c1cf91fe37.pdf",
+      "sha256": "sha256:5e6bad126539e3629ebb5be79363ab354fd2a9b50824a4157ca87f3b9c744a30"
+    },
+    {
+      "bytes": 1827,
+      "deterministic": true,
+      "path": "debug/drawings/drawings/contract_graph.drawing.json",
+      "sha256": "sha256:64e8059c9ff5981c8114d69002bb37206e0a132a198a69d6fee646bb0491bc7e"
+    },
+    {
+      "bytes": 2610,
+      "deterministic": true,
+      "path": "debug/drawings/drawings/contract_graph.dxf",
+      "sha256": "sha256:5685f690a7122b3f61db2031e70fe812ac3a077e1adb3212e9b779a3151fffe4"
+    },
+    {
+      "bytes": 2001,
+      "deterministic": true,
+      "path": "debug/drawings/drawings/contract_graph.explain.txt",
+      "sha256": "sha256:dbee7dfcecce281cbc1158893c4387e0e99d814d099cd249d3881fc96c73a279"
+    },
+    {
+      "bytes": 3500,
+      "deterministic": true,
+      "path": "debug/drawings/drawings/contract_graph.pdf",
+      "sha256": "sha256:9cf6e5291537b72038e39a739d7a33c36f96d05fd5ac9c65b010393f31c791c2"
+    },
+    {
+      "bytes": 4361,
+      "deterministic": true,
+      "path": "debug/drawings/drawings/contract_graph.svg",
+      "sha256": "sha256:1a7ef513e0422ee383cae36027948ddaeac97274dcb7ff3bc6b9e7edc8b80859"
+    },
+    {
+      "bytes": 207,
+      "deterministic": true,
+      "path": "debug/gate_summary.json",
+      "sha256": "sha256:70b6fd55574675636ae6c388cb334f9a7ab3da6b627204e603af56b882cfde0d"
+    },
+    {
+      "bytes": 988,
+      "deterministic": true,
+      "path": "debug/harness/bringup.md",
+      "sha256": "sha256:9e05d46f2afe5943af36631495636a36e3fee8fd769cc8b55894d1c1bdae9c98"
+    },
+    {
+      "bytes": 257,
+      "deterministic": true,
+      "path": "debug/harness/capture_clocks.sigrok-cli",
+      "sha256": "sha256:6d7a781595f63c76a42f9ee95e3d7d59bd32680b68e0bcb153837d205a597b2e"
+    },
+    {
+      "bytes": 447,
+      "deterministic": true,
+      "path": "debug/harness/expected_signals.json",
+      "sha256": "sha256:d63ee70156ead76f5557d057efdfe2a17945048e033bf57b81669bc9ff4376e5"
+    },
+    {
+      "bytes": 1526,
+      "deterministic": true,
+      "path": "debug/harness/tap_map.json",
+      "sha256": "sha256:72df4ef66b2024d2fa11a6765e3a0bf783d380f2b0e3e7be08e259bfd243b11b"
+    },
+    {
+      "bytes": 127,
+      "deterministic": true,
+      "path": "debug/hdl/hdl/pc_incr_rtl/source_manifest.json",
+      "sha256": "sha256:5d319c5b87a8945fe979d812b4e962d1c936767fb1dfeb9586337e9a8d84113e"
+    },
+    {
+      "bytes": 382,
+      "deterministic": true,
+      "path": "debug/hdl/hdl/pc_incr_rtl/src/debug_taps.v",
+      "sha256": "sha256:c9f73693ee9bba64865e160c93066e881367c8c2c8ad19d76b45e284cadf0963"
+    },
+    {
+      "bytes": 1046,
+      "deterministic": true,
+      "path": "debug/hdl/hdl/pc_incr_rtl/src/pc_incr.v",
+      "sha256": "sha256:d7baf63a2cb16d15a8bf0b1d936aadc5460428238ac57ea9c5e79755aa99220b"
+    },
+    {
+      "bytes": 683,
+      "deterministic": true,
+      "path": "debug/hdl/hdl/pc_incr_rtl/tier_report.json",
+      "sha256": "sha256:83a883832d675d6eea63a0df935efadd46f865da2a6a540e8a6e4829e3737f64"
+    },
+    {
+      "bytes": 3358,
+      "deterministic": true,
+      "path": "debug/index.md",
+      "sha256": "sha256:c616f9615e4f01d688506b09a6d8c14d88780c7cc5d02533317a288e50b2c699"
+    },
+    {
+      "bytes": 12686,
+      "deterministic": true,
+      "path": "debug/manifest.json",
+      "sha256": "sha256:0e345a1fe3ae2804ec9b94f6accef23b8ba0af1b61981df0bfea4ba02e71a274"
+    },
+    {
+      "bytes": 99430,
+      "deterministic": true,
+      "path": "debug/parity_ledger.json",
+      "sha256": "sha256:8dfce201876727cb71fcc6bbcc1ef65a5bf3e38c92545d2c37fe5b4a1335405c"
+    },
+    {
+      "bytes": 44462,
+      "deterministic": true,
+      "path": "release/acceptance_ledger.json",
+      "sha256": "sha256:60e07f2b8833787c91ceae451bc888b26ab2886521909f0afb5d157bbf0ca157"
+    },
+    {
+      "bytes": 7559,
+      "deterministic": true,
+      "path": "release/artifact_index.json",
+      "sha256": "sha256:86a834630ed61f90d1ff2eee1030bd3c1cb9fb7aeb68d7013d879f429c6f2289"
+    },
+    {
+      "bytes": 29361,
+      "deterministic": true,
+      "path": "release/calc/audit_index.json",
+      "sha256": "sha256:67e395f391fa70856c4e20def128d459f690e8ee6d1e9ad720134726a34dd0c6"
+    },
+    {
+      "bytes": 37402,
+      "deterministic": true,
+      "path": "release/calc/calc_book.json",
+      "sha256": "sha256:bcd016febe03ffae488d570c1d1e1d176ae4f47be91b30742f3f61c24be4d363"
+    },
+    {
+      "bytes": 6156,
+      "deterministic": true,
+      "path": "release/calc/clk_rs__632e8824a899.pdf",
+      "sha256": "sha256:9bc046314f61e3d01d49ffea90956282332084aa16b8758e1868b1d670e2602d"
+    },
+    {
+      "bytes": 5984,
+      "deterministic": true,
+      "path": "release/calc/clk_z0.hi__632e8824a899.pdf",
+      "sha256": "sha256:fd22e2659052e04f24c9669d6949d5357118d26f68b70965185d3c4903797f1d"
+    },
+    {
+      "bytes": 5984,
+      "deterministic": true,
+      "path": "release/calc/clk_z0.lo__632e8824a899.pdf",
+      "sha256": "sha256:bac07fb677afa48cdbe7d4cf2f20f17564d9d6fe5eae80593352830b60a1b793"
+    },
+    {
+      "bytes": 6121,
+      "deterministic": true,
+      "path": "release/calc/hdl.build__c5c1cf91fe37.pdf",
+      "sha256": "sha256:58aa9d96f753d7c52ab38a843cbe1c5c997996b283eb3cd8ec98fa60645789a1"
+    },
+    {
+      "bytes": 6403,
+      "deterministic": true,
+      "path": "release/calc/hdl.sim_assert__c5c1cf91fe37.pdf",
+      "sha256": "sha256:5e6bad126539e3629ebb5be79363ab354fd2a9b50824a4157ca87f3b9c744a30"
+    },
+    {
+      "bytes": 1827,
+      "deterministic": true,
+      "path": "release/drawings/drawings/contract_graph.drawing.json",
+      "sha256": "sha256:64e8059c9ff5981c8114d69002bb37206e0a132a198a69d6fee646bb0491bc7e"
+    },
+    {
+      "bytes": 2610,
+      "deterministic": true,
+      "path": "release/drawings/drawings/contract_graph.dxf",
+      "sha256": "sha256:5685f690a7122b3f61db2031e70fe812ac3a077e1adb3212e9b779a3151fffe4"
+    },
+    {
+      "bytes": 2001,
+      "deterministic": true,
+      "path": "release/drawings/drawings/contract_graph.explain.txt",
+      "sha256": "sha256:dbee7dfcecce281cbc1158893c4387e0e99d814d099cd249d3881fc96c73a279"
+    },
+    {
+      "bytes": 3500,
+      "deterministic": true,
+      "path": "release/drawings/drawings/contract_graph.pdf",
+      "sha256": "sha256:9cf6e5291537b72038e39a739d7a33c36f96d05fd5ac9c65b010393f31c791c2"
+    },
+    {
+      "bytes": 4361,
+      "deterministic": true,
+      "path": "release/drawings/drawings/contract_graph.svg",
+      "sha256": "sha256:1a7ef513e0422ee383cae36027948ddaeac97274dcb7ff3bc6b9e7edc8b80859"
+    },
+    {
+      "bytes": 207,
+      "deterministic": true,
+      "path": "release/gate_summary.json",
+      "sha256": "sha256:70b6fd55574675636ae6c388cb334f9a7ab3da6b627204e603af56b882cfde0d"
+    },
+    {
+      "bytes": 127,
+      "deterministic": true,
+      "path": "release/hdl/hdl/pc_incr_rtl/source_manifest.json",
+      "sha256": "sha256:5d319c5b87a8945fe979d812b4e962d1c936767fb1dfeb9586337e9a8d84113e"
+    },
+    {
+      "bytes": 1046,
+      "deterministic": true,
+      "path": "release/hdl/hdl/pc_incr_rtl/src/pc_incr.v",
+      "sha256": "sha256:d7baf63a2cb16d15a8bf0b1d936aadc5460428238ac57ea9c5e79755aa99220b"
+    },
+    {
+      "bytes": 683,
+      "deterministic": true,
+      "path": "release/hdl/hdl/pc_incr_rtl/tier_report.json",
+      "sha256": "sha256:83a883832d675d6eea63a0df935efadd46f865da2a6a540e8a6e4829e3737f64"
+    },
+    {
+      "bytes": 2851,
+      "deterministic": true,
+      "path": "release/index.md",
+      "sha256": "sha256:7d39df5ba3f6a372fd698f3ef32dd71f2337843769a399457dd5c41919a3543a"
+    },
+    {
+      "bytes": 11977,
+      "deterministic": true,
+      "path": "release/manifest.json",
+      "sha256": "sha256:97e254e3c15babc341696d5f4ab43713e74aeaa41767dfe13bfff04715114b65"
+    },
+    {
+      "bytes": 99430,
+      "deterministic": true,
+      "path": "release/parity_ledger.json",
+      "sha256": "sha256:8dfce201876727cb71fcc6bbcc1ef65a5bf3e38c92545d2c37fe5b4a1335405c"
+    },
+    {
+      "bytes": 528,
+      "deterministic": true,
+      "path": "sim/fixture_mux2_broken/sim_report.json",
+      "sha256": "sha256:c2bf286ed04f3e78160022ab2638e1b6fa4d06c77578a35356e3212d19c9b476"
+    },
+    {
+      "bytes": 688,
+      "deterministic": true,
+      "path": "sim/fixture_mux2_broken/trace.vcd",
+      "sha256": "sha256:a59875aae435300820815fac218e57820fa0dca524f05a1a4420413769987d20"
+    },
+    {
+      "bytes": 461,
+      "deterministic": true,
+      "path": "sim/fixture_mux2_ok/sim_report.json",
+      "sha256": "sha256:502d6b85fc4fd4d00eab4084e805d2f52f0f8acc37dc0e3f3585c8abf2fbb9a0"
+    },
+    {
+      "bytes": 676,
+      "deterministic": true,
+      "path": "sim/fixture_mux2_ok/trace.vcd",
+      "sha256": "sha256:4755348b913a3d60495ece5a6294a9eafdcbab4f5afa93b83eb8ee5283a191fe"
+    },
+    {
+      "bytes": 467,
+      "deterministic": true,
+      "path": "sim/uarch/sim_report.json",
+      "sha256": "sha256:6eec92417366f08ef8734d7c50199321d8fb8284dfc656e59926af30c96c8127"
+    },
+    {
+      "bytes": 1596,
+      "deterministic": true,
+      "path": "sim/uarch/trace.vcd",
+      "sha256": "sha256:a97fc529f02a776e5f9f36ced0d615237805cbfdd2255c4892d53d618132ccdb"
+    }
+  ],
+  "cause_row": "n/a",
+  "demo": "demo22_riscv_sim_crosscheck",
+  "domain": "riscv_hart_rv1 hdl.sim_assert discharge + expected_signals cross-check",
+  "live": true,
+  "optimized_quantity": "n/a (obligation-discharge + cross-check surface, not an optimizer surface)",
+  "surface": "riscv_hart_rv1 sim demo: expected_signals-vs-sim cross-check (WO-158)",
+  "winner": "n/a"
+}

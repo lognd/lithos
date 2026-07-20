@@ -1099,6 +1099,59 @@ acceptance:
 threat: null
 ```
 
+### Progress note (2026-07-20)
+
+Implemented `demos/demo22_riscv_sim_crosscheck.py` (registered in
+`demos/run_all.py::DEMOS`) + its unit-test companion
+`tests/test_wo158_riscv_sim_crosscheck.py`. Real, driven end to end:
+
+- `regolith build --release` + `regolith ship` (release and
+  `--emit-profile debug`) on `riscv_hart_rv1` through the real CLI.
+- census delta asserted live against
+  `tests/golden/data/fleet_census.json['riscv_hart_rv1']` (81
+  obligations / 5 discharged / 76 accepted deviations today) against
+  the recon's own cited BEFORE baseline (79/4/75) -- reclassification,
+  never invented obligations.
+- the E1105 cross-check (`cross_check_expected_vs_sim`): the shipped
+  debug-profile `harness/expected_signals.json` window vs a REAL
+  `HdlSimAssertGenericModel` discharge of `pc_incr.v` +
+  `pc_incr_directed_vectors` (the same discharging model class, same
+  authored source+stimulus the pipeline's own obligation uses), fed
+  through the real unmodified `SimBackend` to emit
+  `sim/uarch/{trace.vcd,sim_report.json}`. The real fleet finding
+  today is an honest NO_OVERLAP (the one allocated channel is an SI
+  impedance claim, `HartPackage.clk_in`, naming no net `pc_incr`'s own
+  port list carries) -- named, not silently dropped. Two
+  clearly-labeled fixture cross-checks (mux2/mux2_broken, WO-155's own
+  non-fixture designs) prove the mechanism itself distinguishes
+  agreement from disagreement.
+- timing closure (WO-156): shipped as an honest partial -- WO-156
+  landed the model/route generally (T-0027 follow-up) but
+  `riscv_hart_rv1`'s own corpus declares no `kind=timing` budget
+  clause, so there is no table for this flagship to ship; PROOF.md
+  names this plainly.
+
+Named gap filed forward as **T-0073**: `regolith ship` has no `sim=`/
+`"sim"` spec-block channel threading a discharge's `SimArtifactFamily`
+into `BackendInputs.sim` the way `hdl=`/`firmware=` already are --
+wiring that is out of T-0028's own scope (a CLI/`ship()` pipeline
+change, not the "minimal additive helper" `python/regolith/
+backends/**` scope allows). This demo obtains the real family by
+calling the discharging model directly (documented in the demo's own
+module docstring) instead.
+
+Verification (all green): `pytest tests/test_wo158_riscv_sim_crosscheck.py`
+(4/4 unit tests), `pytest tests/backends tests/test_wo108_demos.py
+tests/test_wo158_riscv_sim_crosscheck.py` (full suite), the demo's own
+manifest determinism proven by running it twice (byte-identical
+`manifest.json`), `frob check --only gates` clean for every file this
+ticket touched (one pre-existing PERF004 warning waived; two
+pre-existing COV002 findings in `tests/harness/test_hdl_models.py`
+verified unrelated -- that file was already modified in the working
+tree under ticket T-0068 before this session started, never touched
+by T-0028). No state transition; leaving `close` to the ticket owner
+per the dispatch instructions.
+
 <!-- ticket:T-0029 -->
 ```yaml
 id: T-0029
@@ -2543,3 +2596,23 @@ a `BudgetStmt` nested-claims accessor (`regolith-syntax`) + a
 (`regolith-lower`) -- both outside `python/regolith/**`/`examples/**`,
 so this ticket's scope line may need a `crates/regolith-syntax/**`,
 `crates/regolith-lower/**` addition when picked up.
+
+<!-- ticket:T-0073 -->
+```yaml
+id: T-0073
+title: 'ship() sim= wiring: thread SimArtifactFamily into BackendInputs.sim (CLI +
+  spec block)'
+state: queued
+kind: feature
+origin: human
+created: '2026-07-20'
+blocked_by: []
+parent: null
+scope:
+- python/regolith/backends/ship.py,python/regolith/cli/app.py
+evidence: []
+attachments: []
+acceptance: []
+threat: null
+```
+Discovered while working T-0028 (WO-158 demo). SimBackend (WO-155 deliverable 7, python/regolith/backends/sim.py) and the hdl.sim_assert discharging model (HdlSimAssertGenericModel) both work and are tested (tests/backends/test_sim.py, tests/harness/test_hdl_models.py), but backends/ship.py::ship() has no sim= parameter and cli/app.py has no "sim" ship-spec block parser -- unlike hdl=/firmware=, which both have caller-supplied channels wired end to end. A real 'regolith ship' run today never emits sim/uarch/{trace.vcd,sim_report.json} even when the build's own hdl.sim_assert obligation discharged for real (verified against riscv_hart_rv1's real build+ship: hdl/ and calc/hdl.sim_assert__*.pdf ship, but no sim/ family). demos/demo22_riscv_sim_crosscheck.py works around this by calling HdlSimAssertGenericModel directly and feeding SimBackend by hand (documented in the demo's own module docstring), but the CLI/ship() wiring gap itself is real and should close: thread the discharge's own SimArtifactFamily (from the harness EvidenceStore/obligation result, mirroring how hdl=/firmware= already resolve from report.final) into BackendInputs.sim, plus a "sim" ship-spec block (_sim_from_spec-style parser in cli/app.py, mirroring _hdl_from_spec) for the caller-supplied override channel hdl=/firmware= already have.

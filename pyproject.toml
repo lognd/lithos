@@ -119,6 +119,13 @@ select = ["E", "F", "I", "UP", "B", "SIM"]
 "tests/test_flagship_factory_p1.py" = ["E501"]
 "tests/backends/test_calc.py" = ["E501"]
 "tests/backends/test_harness_pack.py" = ["E501"]
+# WO-158 (T-0028, D264): the `frob:tests`/`frob:waive` directive lines
+# (source-file test-id form, test-file symbol form, PERF004 waiver)
+# must stay single physical lines (frob's directive parser has no
+# line-continuation form), same posture as `harness/models/hdl/
+# models.py`'s own precedent above.
+"demos/demo22_riscv_sim_crosscheck.py" = ["E501"]
+"tests/test_wo158_riscv_sim_crosscheck.py" = ["E501"]
 "tests/backends/test_waveform_chart.py" = ["E501"]
 "python/regolith/cli/*.py" = ["B008"]
 # Generated from Rust doc comments (AD-5): line length follows the

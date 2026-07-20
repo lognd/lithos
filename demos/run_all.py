@@ -56,6 +56,7 @@ DEMOS = (
     "demo19_wire_edm_die_set",
     "demo20_fluid_demo",
     "demo21_dwelling_wiring",
+    "demo22_riscv_sim_crosscheck",
 )
 
 
