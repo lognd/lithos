@@ -295,3 +295,12 @@ def test_consistency_check_resolves_a_real_dfm_check() -> None:
     registry.register(RealizerCapability(**kwargs))
     result = check_capability_registry_consistency(registry)
     assert result.is_ok
+
+
+# frob:tests python/regolith/realizer/elec/kicad.py::elec_layout_kicad_drc kind="unit"
+def test_elec_layout_kicad_drc_both_branches() -> None:
+    """The T-0053 predicate passes at zero violations and fails above."""
+    from regolith.realizer.elec.kicad import elec_layout_kicad_drc
+
+    assert elec_layout_kicad_drc(0) is True
+    assert elec_layout_kicad_drc(3) is False

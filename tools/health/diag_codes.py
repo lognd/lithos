@@ -251,6 +251,12 @@ EXEMPT: dict[tuple[str, str], str] = {
         "python/regolith/backends/perfboard.py",
         "board_assignment_ir_unavailable",
     ): "deferred: WO-165 close-out (perfboard realized-IR refusal)",
+    # capability-registry consistency refusal (T-0053): code assignment
+    # rides the next make-codes batch, same deferral shape as above.
+    (
+        "python/regolith/backends/capabilities.py",
+        "capability_registry_drift",
+    ): "deferred: T-0053 close-out (capability consistency refusal)",
 }
 
 
